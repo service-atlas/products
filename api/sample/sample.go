@@ -1,8 +1,8 @@
 package sampleHandler
 
 import (
-	service "chi-boilerplate/service/sample"
 	"net/http"
+	service "products/service/sample"
 )
 
 func NewSampleCallHandler(s *service.SampleService) *SampleCallHandler {
