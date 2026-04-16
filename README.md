@@ -1,108 +1,53 @@
-# Chi Boilerplate
+# Service Atlas Products
 
-A lightweight, modular boilerplate for building RESTful APIs with Go and the Chi router framework. This project provides a clean architecture pattern with separation of concerns between handlers, services, and repositories.
+> [!WARNING]
+> **Status:** Draft — Open for Discussion | **Version:** 0.2.0 | **Date:** 2026-03-30
+> **Work in Progress:** This project is currently under active development and follows the specifications outlined in the RFC below.
 
-Inspired by [Yappr](https://github.com/Melkeydev/yappr)
+Service Atlas Products is the business semantic layer of the Service Atlas ecosystem. While the core backend models the technical dependencies of services, this project maps those interactions to real-world business value through **Platforms**, **Products**, and **Flows**.
 
-## Features
+## Core Concepts
 
-- Built with [Chi router](https://github.com/go-chi/chi) - a lightweight, idiomatic and composable router for building Go HTTP services
-- Clean architecture with separation of concerns:
-  - API handlers (presentation layer)
-  - Services (business logic layer)
-  - Repositories (data access layer)
-- Middleware support:
-  - Logging
-  - Error recovery
-  - Response compression
-  - CORS configuration
-- Environment variable configuration
-- API testing with Bruno HTTP client
-- Unit testing examples
+The project introduces a hierarchical model to organize the service graph from a product perspective:
 
-## Project Structure
+- **Platform**: The top-level grouping of related business offerings (e.g., "Consumer App", "Internal Tools").
+- **Product**: A cohesive set of capabilities within a platform (e.g., "Shopping Cart", "User Profile").
+- **Flow**: A named, human-readable path of data moving through specific services. It answers: *"What is this chain of interactions called, and what business purpose does it serve?"*
+- **Flow Step**: An individual link in a Flow, validated against `data` typed dependencies in the Service Atlas engineering graph.
 
-```
-.
-├── api/                  # API handlers (presentation layer)
-│   ├── sample/           # Sample API endpoints
-│   └── system/           # System API endpoints
-├── HTTP_COLLECTION/      # Bruno HTTP client collection for API testing
-├── repo/                 # Repositories (data access layer)
-│   └── sample/           # Sample repository implementation
-├── router/               # Router configuration
-├── service/              # Services (business logic layer)
-│   └── sample/           # Sample service implementation
-├── go.mod                # Go module definition
-├── go.sum                # Go module checksums
-└── main.go               # Application entry point
-```
 
-## API Endpoints
+## Architecture & Integration
 
-- `GET /api/time` - Returns the current server time
-- `GET /api/sample/` - Returns a sample response
-- `GET /api/sample/error` - Returns a sample error response
+Service Atlas Products operates as a standalone service with its own relational storage (**Postgres**), while integrating with the Service Atlas backend (**Neo4j**).
 
-## Installation
+- **Source of Truth**: Business definitions (Platforms, Products, Flows) live here in Postgres.
+- **Validation**: Every Flow Step is verified against the engineering graph in the backend to ensure the represented data interaction actually exists.
+- **Frontend Integration**: When `PRODUCTS_SERVICE_URL` is configured, the Service Atlas UI enables the product-layer features, bridging engineering health with business impact.
+
+## Development Setup
 
 ### Prerequisites
+- **Go 1.26+**
+- **Postgres** (Schema definitions coming soon)
+- Access to a running **Service Atlas Backend** instance
 
-- Go 1.24 or higher
-
-### Steps
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/chi-boilerplate.git
-   cd chi-boilerplate
-   ```
-
-2. Install dependencies:
+### Running the Service
+1. Clone the repository and install dependencies:
    ```bash
    go mod download
    ```
-
-3. Run the application:
+2. Start the server:
    ```bash
    go run main.go
    ```
+   The service listens on port `8080` by default (configurable via `PORT` environment variable).
 
-The server will start on port 8080 by default. You can change the port by setting the `PORT` environment variable.
+## Roadmap
 
-## Configuration
+- [ ] Implementation of Platform, Product, and Flow CRUD operations.
+- [ ] Integration with Service Atlas Backend for `data` dependency validation.
+- [ ] Risk propagation: Highlighting business flows affected by technical debt.
+- [ ] Broken flow detection: Automated alerts when underlying service dependencies change.
 
-The application can be configured using environment variables:
-
-- `PORT` - The port on which the server will listen (default: 8080)
-
-## Testing
-
-### Unit Tests
-
-Run the unit tests with:
-
-```bash
-go test ./...
-```
-
-### API Testing
-
-The project includes a Bruno HTTP client collection for testing the API endpoints. To use it:
-
-1. Install [Bruno](https://www.usebruno.com/)
-2. Open the HTTP_COLLECTION directory in Bruno
-3. Use the provided requests to test the API endpoints
-
-## Development
-
-### Adding a New Endpoint
-
-1. Create a new handler in the appropriate package under `api/`
-2. Implement the necessary service logic in `service/`
-3. If needed, add data access logic in `repo/`
-4. Register the new endpoint in `router/router.go`
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
+*Inspired by [this RFC](https://github.com/service-atlas/services/discussions/179)*

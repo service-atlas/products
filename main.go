@@ -1,7 +1,6 @@
 package main
 
 import (
-	"chi-boilerplate/router"
 	"context"
 	"errors"
 	"log"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"products/router"
 	"syscall"
 	"time"
 )

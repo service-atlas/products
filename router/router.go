@@ -1,16 +1,17 @@
 package router
 
 import (
-	sampleHandler "chi-boilerplate/api/sample"
-	systemHandler "chi-boilerplate/api/system"
-	"chi-boilerplate/internal"
-	sampleRepo "chi-boilerplate/repo/sample"
-	"chi-boilerplate/service/sample"
+	"log/slog"
+	"net/http"
+	sampleHandler "products/api/sample"
+	systemHandler "products/api/system"
+	"products/internal"
+	sampleRepo "products/repo/sample"
+	"products/service/sample"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"log/slog"
-	"net/http"
 )
 
 func SetupRouter() http.Handler {

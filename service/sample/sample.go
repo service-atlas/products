@@ -1,6 +1,6 @@
 package sampleService
 
-import repo "chi-boilerplate/repo/sample"
+import repo "products/repo/sample"
 
 type SampleService struct {
 	repo *repo.SampleRepo
