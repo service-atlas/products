@@ -11,7 +11,7 @@ type CORSConfig struct {
 }
 
 func getDefaultCORSConfig() CORSConfig {
-	return CORSConfig{AllowedOrigins: []string{"*"}, AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"}}
+	return CORSConfig{AllowedOrigins: []string{"*"}, AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}}
 }
 
 func GetCORSConfig() CORSConfig {
