@@ -1,0 +1,35 @@
+databaseChangeLog:
+  -  changeSet:
+       id:  tagDatabase-v1.0.0
+       author:  jlpdeveloper
+       changes:
+         -  tagDatabase:
+              tag:  v1.0.0
+  - changeSet:
+      id: create-platforms-table
+      author: jlpdeveloper
+      changes:
+        - createTable:
+            tableName: platforms
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 1
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
