@@ -2,7 +2,7 @@ package config
 
 import (
 	"bytes"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
@@ -59,18 +59,13 @@ func TestGetConfigValue_MissingEnvVar_LogsAndReturnsEmpty(t *testing.T) {
 				t.Cleanup(func() { _ = os.Unsetenv(env) })
 			}
 
-			// Capture logs without leaking global state beyond this subtest
+			// Capture logs from slog
 			buf := &bytes.Buffer{}
-			prevOut := log.Writer()
-			prevFlags := log.Flags()
-			prevPrefix := log.Prefix()
-			log.SetOutput(buf)
-			log.SetFlags(0)
-			log.SetPrefix("")
+			logger := slog.New(slog.NewJSONHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+			prevLogger := slog.Default()
+			slog.SetDefault(logger)
 			t.Cleanup(func() {
-				log.SetOutput(prevOut)
-				log.SetFlags(prevFlags)
-				log.SetPrefix(prevPrefix)
+				slog.SetDefault(prevLogger)
 			})
 
 			// Call the function and assert empty string
@@ -80,9 +75,10 @@ func TestGetConfigValue_MissingEnvVar_LogsAndReturnsEmpty(t *testing.T) {
 
 			// Ensure the log contains the expected message substring
 			logged := buf.String()
-			expectedSub := "Environment variable " + env + " not found"
-			if !strings.Contains(logged, expectedSub) {
-				t.Fatalf("expected log to contain %q, got %q", expectedSub, logged)
+			expectedSub := "\"msg\":\"Environment variable not found\""
+			expectedKey := "\"key\":\"" + env + "\""
+			if !strings.Contains(logged, expectedSub) || !strings.Contains(logged, expectedKey) {
+				t.Fatalf("expected log to contain %q and %q, got %q", expectedSub, expectedKey, logged)
 			}
 		})
 	}
