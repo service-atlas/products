@@ -123,3 +123,43 @@ databaseChangeLog:
             referencedColumnNames: id
             referencedTableName: products
             onDelete: CASCADE
+  - changeSet:
+      id: create-flow-steps-table
+      author: jlpdeveloper
+      changes:
+        - createTable:
+            tableName: flow_steps
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 1
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: flow_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: next
+                  type: UUID
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseColumnNames: flow_id
+            baseTableName: flow_steps
+            constraintName: fk_flow_steps_flows
+            referencedColumnNames: id
+            referencedTableName: flows
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            columnNames: flow_id, current, next
+            constraintName: uq_flow_steps_flow_current_next
+            tableName: flow_steps
