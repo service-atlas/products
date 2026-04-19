@@ -1,6 +1,6 @@
 
 -- name: GetPlatforms :many
-SELECT id, name, description, created_at, updated_at FROM platforms;
+SELECT id, name, description, created_at, updated_at FROM platforms order by id;
 
 -- name: GetPlatform :one
 SELECT id, name, description, created_at, updated_at FROM platforms WHERE id = @id;
