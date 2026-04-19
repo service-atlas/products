@@ -3,3 +3,4 @@ databaseChangeLog:
   - include:
       file: changelogs/initial_tables.yml
       labels: v1.0.0
+      context: sqlc

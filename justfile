@@ -11,7 +11,7 @@ generate_schema: liquibase_update_sql sqlc_generate
 
 [working-directory: "migrations"]
 liquibase_update_sql:
-  liquibase update-sql --output-file=../schema.sql
+  liquibase update-sql --context-filter="sqlc" --output-file=../schema.sql
 
 sqlc_generate:
   Write-Host "Generating SQL code into go"
