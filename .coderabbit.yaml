@@ -9,6 +9,7 @@ reviews:
   collapse_walkthrough: true
   path_filters:
     - "!internal/db/"
+    - "!schema.sql"
   path_instructions:
     - path: "**/*_test.go"
       instructions: |
