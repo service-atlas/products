@@ -42,6 +42,20 @@ Service Atlas Products operates as a standalone service with its own relational 
    ```
    The service listens on port `8080` by default (configurable via `PORT` environment variable).
 
+## Database & Tooling
+
+This project uses several tools to manage the database schema and generate Go code:
+
+- **[Just](https://github.com/casey/just)**: A handy command runner. Instead of `make`, we use `just` to run common tasks.
+  - Run `just --list` to see available commands.
+- **[Liquibase](https://www.liquibase.org/)**: Manages database migrations.
+  - Migrations are defined in `migrations/changelog.yml`.
+  - We use it to generate `schema.sql` which `sqlc` then uses.
+  - **Important**: For changes that don't affect the schema (e.g., indexes, views, or stored procedures), add `context: "!sqlc"` to the changeset. This prevents these objects from being included in the generated `schema.sql`, keeping the `sqlc` model clean. See `migrations/changelog.yml` for an example.
+- **[sqlc](https://sqlc.dev/)**: Generates type-safe Go code from SQL.
+  - SQL queries are located in the `queries/` directory.
+  - Run `just generate_schema` to update the schema and regenerate the Go code.
+
 ## Roadmap
 
 - [ ] Implementation of Platform, Product, and Flow CRUD operations.
