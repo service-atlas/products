@@ -6,6 +6,7 @@ set quiet := true
 hello:
   Write-Host "Hello, world!"
 
+# Generates schema from liquibase then converts it to SQLC golang code
 generate_schema: liquibase_update_sql sqlc_generate
 
 [working-directory: "migrations"]
