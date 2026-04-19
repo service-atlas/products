@@ -1,0 +1,16 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "queries/"
+    schema: "schema.sql"  # still required but can be a dummy/empty file
+#    database:
+#      uri: "postgresql://postgres:postgres@localhost:5432/products"
+    gen:
+      go:
+        package: "db"
+        out: "internal/db"
+        sql_package: "pgx/v5"
+        output_models_file_name: "models.go"
+#        rename:
+#          get_platform: "Platform"
+#          get_platforms: "Platform"
