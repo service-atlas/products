@@ -35,6 +35,8 @@ databaseChangeLog:
               - column:
                   name: updated_at
                   type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
   - changeSet:
       id: create-products-table
       author: jlpdeveloper
