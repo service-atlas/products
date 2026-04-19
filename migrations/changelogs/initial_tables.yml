@@ -1,0 +1,167 @@
+databaseChangeLog:
+  -  changeSet:
+       id:  tagDatabase-v1.0.0
+       author:  jlpdeveloper
+       changes:
+         -  tagDatabase:
+              tag:  v1.0.0
+  - changeSet:
+      id: create-platforms-table
+      author: jlpdeveloper
+      changes:
+        - createTable:
+            tableName: platforms
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 1
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: create-products-table
+      author: jlpdeveloper
+      changes:
+        - createTable:
+            tableName: products
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 1
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: platform_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseColumnNames: platform_id
+            baseTableName: products
+            constraintName: fk_products_platforms
+            referencedColumnNames: id
+            referencedTableName: platforms
+            onDelete: CASCADE
+  - changeSet:
+      id: create-flows-table
+      author: jlpdeveloper
+      changes:
+        - createTable:
+            tableName: flows
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 1
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: product_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseColumnNames: product_id
+            baseTableName: flows
+            constraintName: fk_flows_products
+            referencedColumnNames: id
+            referencedTableName: products
+            onDelete: CASCADE
+  - changeSet:
+      id: create-flow-steps-table
+      author: jlpdeveloper
+      changes:
+        - createTable:
+            tableName: flow_steps
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 1
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: flow_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: next
+                  type: UUID
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseColumnNames: flow_id
+            baseTableName: flow_steps
+            constraintName: fk_flow_steps_flows
+            referencedColumnNames: id
+            referencedTableName: flows
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            columnNames: flow_id, current, next
+            constraintName: uq_flow_steps_flow_current_next
+            tableName: flow_steps
