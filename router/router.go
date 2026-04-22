@@ -41,7 +41,7 @@ func registerSystemCallHandler(r *chi.Mux) {
 	r.Get("/api/time", h.GetTime)
 }
 
-func registerPlatformCallHandler(q *db.Queries, r *chi.Mux) {
+func registerPlatformCallHandler(q db.Querier, r *chi.Mux) {
 	handler := platformHandler.NewPlatformHandler(q)
 	r.Route("/api/platforms", func(u chi.Router) {
 		u.Post("/", handler.CreatePlatform)
