@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"products/internal/db"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -40,6 +41,10 @@ func (h *PlatformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request)
 		Description: pgtype.Text{
 			Valid:  true,
 			String: req.Description,
+		},
+		Timestamp: pgtype.Timestamptz{
+			Valid: true,
+			Time:  time.Now(),
 		},
 	}); err != nil {
 		http.Error(w, "Failed to create platform", http.StatusInternalServerError)
