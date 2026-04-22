@@ -3,20 +3,21 @@ package router
 import (
 	"log/slog"
 	"net/http"
-	sampleHandler "products/api/sample"
+	platformHandler "products/api/platform"
 	systemHandler "products/api/system"
 	"products/internal"
-	sampleRepo "products/repo/sample"
-	"products/service/sample"
+	"products/internal/db"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
-func SetupRouter() http.Handler {
+func SetupRouter(dbConn db.DBTX) http.Handler {
 	slog.Debug("Setting up router")
 	router := chi.NewRouter()
+
+	queries := db.New(dbConn)
 
 	router.Use(internal.StructuredLogger(slog.Default()))
 	router.Use(middleware.Recoverer)
@@ -30,14 +31,9 @@ func SetupRouter() http.Handler {
 	}))
 
 	registerSystemCallHandler(router)
-	db := getDb()
-	registerSampleCallHandler(db, router)
+	registerPlatformCallHandler(queries, router)
 	slog.Debug("Router setup complete")
 	return router
-}
-
-func getDb() string {
-	return "sample-db"
 }
 
 func registerSystemCallHandler(r *chi.Mux) {
@@ -45,13 +41,9 @@ func registerSystemCallHandler(r *chi.Mux) {
 	r.Get("/api/time", h.GetTime)
 }
 
-func registerSampleCallHandler(s string, r *chi.Mux) {
-	repo := sampleRepo.NewSampleRepo(s)
-	service := sampleService.NewSampleService(repo)
-	handler := sampleHandler.NewSampleCallHandler(service)
-	r.Route("/api/sample", func(u chi.Router) {
-		u.Get("/", handler.GetSample)
-		u.Get("/error", handler.GetError)
-
+func registerPlatformCallHandler(q *db.Queries, r *chi.Mux) {
+	handler := platformHandler.NewPlatformHandler(q)
+	r.Route("/api/platforms", func(u chi.Router) {
+		u.Post("/", handler.CreatePlatform)
 	})
 }
