@@ -1,0 +1,66 @@
+info:
+  name: Create Platform
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/platforms"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Platform 1",
+        "description": "An Example Platform"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Success Example
+    description: Example of a successful post call
+    request:
+      url: "{{baseUrl}}/api/platforms"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+            "name": "Platform 1",
+            "description": "An Example Platform"
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: vary
+          value: Origin
+        - name: date
+          value: Wed, 22 Apr 2026 01:28:40 GMT
+        - name: content-length
+          value: "0"
+      body:
+        type: text
+        data: ""
+
+docs: |-
+  # Create Platform
+
+  Create Platform POST call. See Example for body definition.
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 201 | Sucessfully Created | 
+  | 500 | Error | 
