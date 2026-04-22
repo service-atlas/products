@@ -17,6 +17,10 @@ sqlc_generate:
   sqlc generate
   echo "Go code generated"
 
+# Run liquibase update
+[working-directory: "migrations"]
+lbupdate:
+  liquibase update
 
 # Run tests with short output
 [default]
@@ -25,9 +29,9 @@ test:
   go test -v --short ./...
 
 # Run database in docker
-db_up:
+up:
   docker-compose up -d
 
 # Stop database
-db_stop:
+stop:
   docker-compose stop
