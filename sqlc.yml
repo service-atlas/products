@@ -11,6 +11,4 @@ sql:
         out: "internal/db"
         sql_package: "pgx/v5"
         output_models_file_name: "models.go"
-#        rename:
-#          get_platform: "Platform"
-#          get_platforms: "Platform"
+        emit_interface: true
