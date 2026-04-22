@@ -9,10 +9,10 @@ import (
 )
 
 type PlatformHandler struct {
-	queries *db.Queries
+	queries PlatformQuerier
 }
 
-func NewPlatformHandler(q *db.Queries) *PlatformHandler {
+func NewPlatformHandler(q PlatformQuerier) *PlatformHandler {
 	return &PlatformHandler{
 		queries: q,
 	}
