@@ -50,12 +50,11 @@ jobs:
       - uses: actions/setup-go@v5.5.0
         with:
           go-version: ${{ vars.GO_VERSION }}
+      
+      - uses: taiki-e/install-action@just
 
       - name: run tests
-        shell: bash
-        run: |
-          go test -v ./... -covermode=count -coverprofile=coverage.out
-          go tool cover -func=coverage.out
+        run: just test-full-cover
 
       - name: Go Coverage Badge  # Pass the `coverage.out` output to this action
         uses: tj-actions/coverage-badge-go@v3
