@@ -1,7 +1,30 @@
-# use PowerShell instead of sh:
+# use PowerShell instead of sh on Windows:
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
 set quiet := true
+
+# Run tests (short)
+[default]
+test:
+  echo "Running tests"
+  go test --short -v ./...
+
+# Run all tests (including long ones)
+test-full:
+  echo "Running all tests"
+  go test -v ./...
+
+# Run tests with short output and coverage
+test-cover:
+  echo "Running tests with coverage"
+  go test --short -v ./... -covermode=count -coverprofile="coverage.out"
+  go tool cover -func="coverage.out"
+
+# Run all tests with coverage
+test-full-cover:
+  echo "Running all tests with coverage"
+  go test -v ./... -covermode=count -coverprofile="coverage.out"
+  go tool cover -func="coverage.out"
 
 # Generates schema from liquibase then converts it to SQLC golang code
 generate_schema: liquibase_update_sql sqlc_generate
@@ -21,12 +44,6 @@ sqlc_generate:
 [working-directory: "migrations"]
 lbupdate:
   liquibase update
-
-# Run tests with short output
-[default]
-test:
-  echo "Running tests"
-  go test -v --short ./...
 
 # Run database in docker
 up:
