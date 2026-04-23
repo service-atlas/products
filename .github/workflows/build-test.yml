@@ -51,4 +51,4 @@ jobs:
       - uses: taiki-e/install-action@just
 
       - name: run tests
-        run: just test
+        run: just test-cover

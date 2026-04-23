@@ -17,14 +17,14 @@ test-full:
 # Run tests with short output and coverage
 test-cover:
   echo "Running tests with coverage"
-  go test --short -v ./... -covermode=count -coverprofile={{invocation_directory()}}/coverage.out
-  go tool cover -func {{invocation_directory()}}/coverage.out
+  go test --short -v ./... -covermode=count -coverprofile="coverage.out"
+  go tool cover -func="coverage.out"
 
 # Run all tests with coverage
 test-full-cover:
   echo "Running all tests with coverage"
-  go test -v ./... -covermode=count -coverprofile={{invocation_directory()}}/coverage.out
-  go tool cover -func {{invocation_directory()}}/coverage.out
+  go test -v ./... -covermode=count -coverprofile="coverage.out"
+  go tool cover -func="coverage.out"
 
 # Generates schema from liquibase then converts it to SQLC golang code
 generate_schema: liquibase_update_sql sqlc_generate
