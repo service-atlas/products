@@ -62,5 +62,6 @@ docs: |-
   ## Possible Status Codes
   | Status Code | Notes |
   | -- | --|
-  | 201 | Sucessfully Created | 
+  | 201 | Successfully Created | 
+  | 400 | Name Missing |
   | 500 | Error | 
