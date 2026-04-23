@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	internalConfig "products/internal/config"
@@ -58,14 +58,19 @@ func main() {
 func getDbConn() (db.DBTX, error) {
 	user := internalConfig.GetConfigValue("DB_USERNAME")
 	pass := internalConfig.GetConfigValue("DB_PASSWORD")
-	url := internalConfig.GetConfigValue("DB_URL")
+	dbHostPort := internalConfig.GetConfigValue("DB_URL")
 
-	if user == "" || pass == "" || url == "" {
+	if user == "" || pass == "" || dbHostPort == "" {
 		slog.Error("Database environment variables DB_USERNAME, DB_PASSWORD, or DB_URL are not set")
 		return nil, errors.New("database environment variables not set")
 	}
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s", user, pass, url)
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(user, pass),
+		Host:   dbHostPort,
+	}
+	connStr := u.String()
 	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		slog.Error("Failed to parse database config", "error", err)
