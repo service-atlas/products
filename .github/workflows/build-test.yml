@@ -52,4 +52,4 @@ jobs:
         shell: bash
         run: |
           go test --short -v ./... -covermode=count -coverprofile=coverage.out
-          go tool cover -func=coverage.out -o=coverage.out
+          go tool cover -func=coverage.out
