@@ -39,12 +39,12 @@ func (h *PlatformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request)
 	if err := h.queries.CreatePlatform(r.Context(), db.CreatePlatformParams{
 		Name: req.Name,
 		Description: pgtype.Text{
-			Valid:  true,
+			Valid:  req.Description != "",
 			String: req.Description,
 		},
 		Timestamp: pgtype.Timestamptz{
 			Valid: true,
-			Time:  time.Now(),
+			Time:  time.Now().UTC(),
 		},
 	}); err != nil {
 		http.Error(w, "Failed to create platform", http.StatusInternalServerError)
