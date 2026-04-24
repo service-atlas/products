@@ -9,11 +9,13 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
 	internalConfig "products/internal/config"
 	"products/internal/db"
 	"products/router"
-	"syscall"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -65,11 +67,17 @@ func getDbConn() (db.DBTX, error) {
 		return nil, errors.New("database environment variables not set")
 	}
 
-	u := &url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(user, pass),
-		Host:   dbHostPort,
+	if !strings.Contains(dbHostPort, "://") {
+		dbHostPort = "postgres://" + dbHostPort
 	}
+	u, err := url.Parse(dbHostPort)
+	if err != nil {
+		slog.Error("Failed to parse DB_URL", "error", err)
+		return nil, err
+	}
+	u.Scheme = "postgres"
+	u.User = url.UserPassword(user, pass)
+
 	connStr := u.String()
 	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
