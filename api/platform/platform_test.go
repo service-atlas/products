@@ -9,11 +9,14 @@ import (
 	"net/http/httptest"
 	"products/internal/db"
 	"testing"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type mockPlatformQuerier struct {
 	err            error
 	createPlatform func(ctx context.Context, arg db.CreatePlatformParams) error
+	getPlatforms   func(ctx context.Context) ([]db.Platform, error)
 }
 
 func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg db.CreatePlatformParams) error {
@@ -32,6 +35,9 @@ func (m *mockPlatformQuerier) GetPlatform(ctx context.Context, id int32) (db.Pla
 }
 
 func (m *mockPlatformQuerier) GetPlatforms(ctx context.Context) ([]db.Platform, error) {
+	if m.getPlatforms != nil {
+		return m.getPlatforms(ctx)
+	}
 	return nil, m.err
 }
 
@@ -100,6 +106,69 @@ func TestCreatePlatform(t *testing.T) {
 
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+		})
+	}
+}
+
+func TestGetPlatforms(t *testing.T) {
+	tests := []struct {
+		name           string
+		dbErr          error
+		platforms      []db.Platform
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			platforms: []db.Platform{
+				{ID: 1, Name: "Platform 1", Description: pgtype.Text{String: "Desc 1", Valid: true}},
+				{ID: 2, Name: "Platform 2", Description: pgtype.Text{String: "Desc 2", Valid: true}},
+			},
+			dbErr:          nil,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Empty Success",
+			platforms:      []db.Platform{},
+			dbErr:          nil,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "DB Error",
+			platforms:      nil,
+			dbErr:          errors.New("db error"),
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mDB := &mockPlatformQuerier{
+				err: tt.dbErr,
+				getPlatforms: func(ctx context.Context) ([]db.Platform, error) {
+					return tt.platforms, tt.dbErr
+				},
+			}
+			h := NewPlatformHandler(mDB)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/platforms", nil)
+			rr := httptest.NewRecorder()
+
+			h.GetPlatforms(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusOK {
+				var got []db.Platform
+				err := json.Unmarshal(rr.Body.Bytes(), &got)
+				if err != nil {
+					t.Fatalf("failed to unmarshal response: %v", err)
+				}
+				if len(got) != len(tt.platforms) {
+					t.Errorf("expected %d platforms, got %d", len(tt.platforms), len(got))
+				}
 			}
 		})
 	}
