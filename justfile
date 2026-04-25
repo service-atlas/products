@@ -52,3 +52,9 @@ up:
 # Stop database
 stop:
   docker-compose stop
+
+# Switch to main, fetch and update
+main:
+  git switch main
+  git fetch
+  git pull
