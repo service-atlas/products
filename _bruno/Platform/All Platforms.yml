@@ -1,0 +1,64 @@
+info:
+  name: All Platforms
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/platforms"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body
+      operator: isArray
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/api/platforms"
+      method: GET
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: content-type
+          value: application/json
+        - name: vary
+          value: Origin, Accept-Encoding
+        - name: date
+          value: Fri, 24 Apr 2026 01:01:47 GMT
+        - name: content-length
+          value: "139"
+      body:
+        type: json
+        data: |-
+          [
+            {
+              "ID": 3,
+              "Name": "Platform 1",
+              "Description": "An Example Platform",
+              "CreatedAt": "2026-04-21T20:28:39.996859-05:00",
+              "UpdatedAt": "2026-04-21T20:28:39.996859-05:00"
+            }
+          ]
+
+docs: |-
+  # Get All Platforms
+
+  Gets all platforms in the system. This call is intentionally not paginated as the expected number of platforms is expected to be small. See sample response for data shape.
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 200 | Success | 
+  | 500 | Error | 

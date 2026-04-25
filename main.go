@@ -9,11 +9,13 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
 	internalConfig "products/internal/config"
 	"products/internal/db"
 	"products/router"
-	"syscall"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -56,21 +58,11 @@ func main() {
 }
 
 func getDbConn() (db.DBTX, error) {
-	user := internalConfig.GetConfigValue("DB_USERNAME")
-	pass := internalConfig.GetConfigValue("DB_PASSWORD")
-	dbHostPort := internalConfig.GetConfigValue("DB_URL")
-
-	if user == "" || pass == "" || dbHostPort == "" {
-		slog.Error("Database environment variables DB_USERNAME, DB_PASSWORD, or DB_URL are not set")
-		return nil, errors.New("database environment variables not set")
+	connStr, err := getConnStr()
+	if err != nil {
+		return nil, err
 	}
 
-	u := &url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(user, pass),
-		Host:   dbHostPort,
-	}
-	connStr := u.String()
 	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		slog.Error("Failed to parse database config", "error", err)
@@ -91,4 +83,28 @@ func getDbConn() (db.DBTX, error) {
 
 	slog.Info("Successfully connected to database")
 	return pool, nil
+}
+
+func getConnStr() (string, error) {
+	user := internalConfig.GetConfigValue("DB_USERNAME")
+	pass := internalConfig.GetConfigValue("DB_PASSWORD")
+	dbHostPort := internalConfig.GetConfigValue("DB_URL")
+
+	if user == "" || pass == "" || dbHostPort == "" {
+		slog.Error("Database environment variables DB_USERNAME, DB_PASSWORD, or DB_URL are not set")
+		return "", errors.New("database environment variables not set")
+	}
+
+	if !strings.Contains(dbHostPort, "://") {
+		dbHostPort = "postgres://" + dbHostPort
+	}
+	u, err := url.Parse(dbHostPort)
+	if err != nil {
+		slog.Error("Failed to parse DB_URL", "error", err)
+		return "", err
+	}
+	u.Scheme = "postgres"
+	u.User = url.UserPassword(user, pass)
+
+	return u.String(), nil
 }
