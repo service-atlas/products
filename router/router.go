@@ -46,5 +46,6 @@ func registerPlatformCallHandler(q db.Querier, r *chi.Mux) {
 	r.Route("/api/platforms", func(u chi.Router) {
 		u.Post("/", handler.CreatePlatform)
 		u.Get("/", handler.GetPlatforms)
+		u.Get("/{id}", handler.GetPlatform)
 	})
 }
