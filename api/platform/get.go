@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"products/internal/db"
 	"time"
 )
 
@@ -15,11 +16,15 @@ func (h *PlatformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch platforms", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	if platforms == nil {
+		platforms = []db.Platform{}
+	}
+
 	err = json.NewEncoder(w).Encode(platforms)
 	if err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 }
