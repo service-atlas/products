@@ -204,7 +204,7 @@ func TestGetPlatform(t *testing.T) {
 			name:           "Not Found",
 			id:             "999",
 			dbPlatform:     db.Platform{},
-			dbErr:          nil,
+			dbErr:          errors.New("no rows in result set"),
 			expectedStatus: http.StatusNotFound,
 		},
 		{
@@ -226,7 +226,8 @@ func TestGetPlatform(t *testing.T) {
 			}
 			h := NewPlatformHandler(mDB)
 
-			req := httptest.NewRequest(http.MethodGet, "/api/platform?id="+tt.id, nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/platforms/"+tt.id, nil)
+			req.SetPathValue("id", tt.id)
 			rr := httptest.NewRecorder()
 
 			h.GetPlatform(rr, req)
