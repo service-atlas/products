@@ -10,6 +10,7 @@ import (
 	"products/internal/db"
 	"testing"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -204,7 +205,7 @@ func TestGetPlatform(t *testing.T) {
 			name:           "Not Found",
 			id:             "999",
 			dbPlatform:     db.Platform{},
-			dbErr:          errors.New("no rows in result set"),
+			dbErr:          pgx.ErrNoRows,
 			expectedStatus: http.StatusNotFound,
 		},
 		{

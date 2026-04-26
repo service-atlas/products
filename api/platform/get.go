@@ -3,10 +3,13 @@ package platformHandler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"products/internal/db"
 	"strconv"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (h *PlatformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +43,7 @@ func (h *PlatformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	platform, err := h.queries.GetPlatform(contextWithTimeOut, int32(id))
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Platform not found", http.StatusNotFound)
 			return
 		}
