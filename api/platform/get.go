@@ -20,14 +20,13 @@ func (h *PlatformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	if platforms == nil {
 		platforms = []db.Platform{}
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(platforms)
 	if err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+
 }
 
 func (h *PlatformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
