@@ -13,7 +13,7 @@ type Querier interface {
 	DeletePlatform(ctx context.Context, id int32) (int32, error)
 	GetPlatform(ctx context.Context, id int32) (Platform, error)
 	GetPlatforms(ctx context.Context) ([]Platform, error)
-	UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) error
+	UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int32, error)
 }
 
 var _ Querier = (*Queries)(nil)
