@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"products/internal/db"
+	"strconv"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -19,7 +20,7 @@ type mockPlatformQuerier struct {
 	createPlatform func(ctx context.Context, arg db.CreatePlatformParams) error
 	getPlatforms   func(ctx context.Context) ([]db.Platform, error)
 	getPlatform    func(ctx context.Context, id int32) (db.Platform, error)
-	deletePlatform func(ctx context.Context, id int32) error
+	deletePlatform func(ctx context.Context, id int32) (int32, error)
 }
 
 func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg db.CreatePlatformParams) error {
@@ -29,11 +30,11 @@ func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg db.CreateP
 	return m.err
 }
 
-func (m *mockPlatformQuerier) DeletePlatform(ctx context.Context, id int32) error {
+func (m *mockPlatformQuerier) DeletePlatform(ctx context.Context, id int32) (int32, error) {
 	if m.deletePlatform != nil {
 		return m.deletePlatform(ctx, id)
 	}
-	return m.err
+	return -1, m.err
 }
 
 func (m *mockPlatformQuerier) GetPlatform(ctx context.Context, id int32) (db.Platform, error) {
@@ -286,8 +287,11 @@ func TestDeletePlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{
 				err: tt.dbErr,
-				deletePlatform: func(ctx context.Context, id int32) error {
-					return tt.dbErr
+				deletePlatform: func(ctx context.Context, id int32) (int32, error) {
+					if i, e := strconv.Atoi(tt.id); e == nil {
+						return int32(i), tt.dbErr
+					}
+					return -1, tt.dbErr
 				},
 			}
 			h := NewPlatformHandler(mDB)

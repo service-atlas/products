@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (h *PlatformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request) {
@@ -16,8 +18,12 @@ func (h *PlatformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	err = h.queries.DeletePlatform(contextWithTimeOut, int32(id))
+	_, err = h.queries.DeletePlatform(contextWithTimeOut, int32(id))
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			http.Error(w, "Platform not found", http.StatusNotFound)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
