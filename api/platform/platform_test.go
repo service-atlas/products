@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"products/internal/db"
+	"strconv"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -19,6 +20,7 @@ type mockPlatformQuerier struct {
 	createPlatform func(ctx context.Context, arg db.CreatePlatformParams) error
 	getPlatforms   func(ctx context.Context) ([]db.Platform, error)
 	getPlatform    func(ctx context.Context, id int32) (db.Platform, error)
+	deletePlatform func(ctx context.Context, id int32) (int32, error)
 }
 
 func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg db.CreatePlatformParams) error {
@@ -28,8 +30,11 @@ func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg db.CreateP
 	return m.err
 }
 
-func (m *mockPlatformQuerier) DeletePlatform(ctx context.Context, id int32) error {
-	return m.err
+func (m *mockPlatformQuerier) DeletePlatform(ctx context.Context, id int32) (int32, error) {
+	if m.deletePlatform != nil {
+		return m.deletePlatform(ctx, id)
+	}
+	return -1, m.err
 }
 
 func (m *mockPlatformQuerier) GetPlatform(ctx context.Context, id int32) (db.Platform, error) {
@@ -246,6 +251,65 @@ func TestGetPlatform(t *testing.T) {
 				if got.ID != tt.dbPlatform.ID || got.Name != tt.dbPlatform.Name {
 					t.Errorf("expected platform %+v, got %+v", tt.dbPlatform, got)
 				}
+			}
+		})
+	}
+}
+
+func TestDeletePlatform(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		dbErr          error
+		expectedStatus int
+	}{
+		{
+			name:           "Success",
+			id:             "1",
+			dbErr:          nil,
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "Invalid ID",
+			id:             "abc",
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "DB Error",
+			id:             "1",
+			dbErr:          errors.New("db error"),
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name:           "Not Found",
+			id:             "999",
+			dbErr:          pgx.ErrNoRows,
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mDB := &mockPlatformQuerier{
+				err: tt.dbErr,
+				deletePlatform: func(ctx context.Context, id int32) (int32, error) {
+					if i, e := strconv.Atoi(tt.id); e == nil {
+						return int32(i), tt.dbErr
+					}
+					return -1, tt.dbErr
+				},
+			}
+			h := NewPlatformHandler(mDB)
+
+			req := httptest.NewRequest(http.MethodDelete, "/api/platforms/"+tt.id, nil)
+			req.SetPathValue("id", tt.id)
+			rr := httptest.NewRecorder()
+
+			h.DeletePlatform(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
 			}
 		})
 	}

@@ -11,5 +11,5 @@ INSERT INTO platforms (name, description, created_at, updated_at) VALUES (@name,
 -- name: UpdatePlatform :exec
 UPDATE platforms SET name = @name, description = @description, updated_at = @updatedAt WHERE id = @id;
 
--- name: DeletePlatform :exec
-DELETE FROM platforms WHERE id = @id;
+-- name: DeletePlatform :one
+DELETE FROM platforms WHERE id = @id RETURNING id;

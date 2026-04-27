@@ -47,5 +47,6 @@ func registerPlatformCallHandler(q db.Querier, r *chi.Mux) {
 		u.Post("/", handler.CreatePlatform)
 		u.Get("/", handler.GetPlatforms)
 		u.Get("/{id}", handler.GetPlatform)
+		u.Delete("/{id}", handler.DeletePlatform)
 	})
 }
