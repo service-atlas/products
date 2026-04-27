@@ -2,6 +2,7 @@ package platformHandler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -20,7 +21,7 @@ func (h *PlatformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 	defer cancel()
 	_, err = h.queries.DeletePlatform(contextWithTimeOut, int32(id))
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Platform not found", http.StatusNotFound)
 			return
 		}

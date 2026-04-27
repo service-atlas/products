@@ -281,6 +281,12 @@ func TestDeletePlatform(t *testing.T) {
 			dbErr:          errors.New("db error"),
 			expectedStatus: http.StatusInternalServerError,
 		},
+		{
+			name:           "Not Found",
+			id:             "999",
+			dbErr:          pgx.ErrNoRows,
+			expectedStatus: http.StatusNotFound,
+		},
 	}
 
 	for _, tt := range tests {
