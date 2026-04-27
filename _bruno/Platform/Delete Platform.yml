@@ -78,11 +78,12 @@ examples:
 docs: |-
   # Delete Platform by Id
 
-  Deletes a platform based on the id
+  Deletes a platform based on the id.
 
   ## Possible Status Codes
   | Status Code | Notes |
   | -- | --|
   | 204 | Success | 
+  | 404 | Id not found |
   | 400 | Platform id not valid | 
   | 500 | Error | 
