@@ -18,7 +18,7 @@ func (h *PlatformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 	defer cancel()
 	err = h.queries.DeletePlatform(contextWithTimeOut, int32(id))
 	if err != nil {
-		http.Error(w, "Failed to fetch platform", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
