@@ -26,13 +26,14 @@ func (q *Queries) CreatePlatform(ctx context.Context, arg CreatePlatformParams) 
 	return err
 }
 
-const deletePlatform = `-- name: DeletePlatform :exec
-DELETE FROM platforms WHERE id = $1
+const deletePlatform = `-- name: DeletePlatform :one
+DELETE FROM platforms WHERE id = $1 RETURNING id
 `
 
-func (q *Queries) DeletePlatform(ctx context.Context, id int32) error {
-	_, err := q.db.Exec(ctx, deletePlatform, id)
-	return err
+func (q *Queries) DeletePlatform(ctx context.Context, id int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deletePlatform, id)
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getPlatform = `-- name: GetPlatform :one
@@ -53,7 +54,7 @@ func (q *Queries) GetPlatform(ctx context.Context, id int32) (Platform, error) {
 }
 
 const getPlatforms = `-- name: GetPlatforms :many
-SELECT id, name, description, created_at, updated_at FROM platforms
+SELECT id, name, description, created_at, updated_at FROM platforms order by id
 `
 
 func (q *Queries) GetPlatforms(ctx context.Context) ([]Platform, error) {
