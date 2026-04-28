@@ -33,31 +33,6 @@ settings:
   maxRedirects: 5
 
 examples:
-  - name: Success Example
-    description: Example of a successful post call
-    request:
-      url: "{{baseUrl}}/api/platforms"
-      method: POST
-      body:
-        type: json
-        data: |-
-          {
-            "name": "Platform 1",
-            "description": "An Example Platform"
-          }
-    response:
-      status: 201
-      statusText: Created
-      headers:
-        - name: vary
-          value: Origin
-        - name: date
-          value: Wed, 22 Apr 2026 01:28:40 GMT
-        - name: content-length
-          value: "0"
-      body:
-        type: text
-        data: ""
   - name: sample
     request:
       url: "{{baseUrl}}/api/platforms/:id"
