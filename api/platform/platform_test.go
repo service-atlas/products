@@ -322,12 +322,14 @@ func TestDeletePlatform(t *testing.T) {
 func TestUpdatePlatform(t *testing.T) {
 	tests := []struct {
 		name           string
+		pathID         string
 		requestBody    any
 		dbErr          error
 		expectedStatus int
 	}{
 		{
-			name: "Success",
+			name:   "Success",
+			pathID: "1",
 			requestBody: db.Platform{
 				ID:          1,
 				Name:        "Updated Platform",
@@ -337,7 +339,28 @@ func TestUpdatePlatform(t *testing.T) {
 			expectedStatus: http.StatusNoContent,
 		},
 		{
-			name: "Missing Name",
+			name:   "Invalid Path ID",
+			pathID: "abc",
+			requestBody: db.Platform{
+				ID:   1,
+				Name: "Updated Platform",
+			},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "ID Mismatch",
+			pathID: "2",
+			requestBody: db.Platform{
+				ID:   1,
+				Name: "Updated Platform",
+			},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "Missing Name",
+			pathID: "1",
 			requestBody: db.Platform{
 				ID:   1,
 				Name: "",
@@ -347,12 +370,14 @@ func TestUpdatePlatform(t *testing.T) {
 		},
 		{
 			name:           "Invalid JSON",
+			pathID:         "1",
 			requestBody:    "not a json",
 			dbErr:          nil,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name: "Platform Not Found",
+			name:   "Platform Not Found",
+			pathID: "999",
 			requestBody: db.Platform{
 				ID:   999,
 				Name: "Non-existent",
@@ -361,7 +386,8 @@ func TestUpdatePlatform(t *testing.T) {
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name: "DB Error",
+			name:   "DB Error",
+			pathID: "1",
 			requestBody: db.Platform{
 				ID:   1,
 				Name: "Test Platform",
@@ -388,7 +414,10 @@ func TestUpdatePlatform(t *testing.T) {
 				body, _ = json.Marshal(tt.requestBody)
 			}
 
-			req := httptest.NewRequest(http.MethodPut, "/api/platforms", bytes.NewBuffer(body))
+			req := httptest.NewRequest(http.MethodPut, "/api/platforms/"+tt.pathID, bytes.NewBuffer(body))
+			if tt.pathID != "" {
+				req.SetPathValue("id", tt.pathID)
+			}
 			rr := httptest.NewRecorder()
 
 			h.UpdatePlatform(rr, req)
