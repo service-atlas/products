@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"products/internal"
 	"products/internal/db"
-	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -19,9 +19,8 @@ func (h *PlatformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
 		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
 		return
 	}
@@ -31,13 +30,13 @@ func (h *PlatformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if req.ID != int32(id) {
+	if req.ID != id {
 		http.Error(w, "Platform ID does not match path", http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	_, err = h.queries.UpdatePlatform(contextWithTimeOut, db.UpdatePlatformParams{
+	_, err := h.queries.UpdatePlatform(contextWithTimeOut, db.UpdatePlatformParams{
 		ID:          req.ID,
 		Name:        req.Name,
 		Description: req.Description,

@@ -55,3 +55,71 @@ func TestGetDateFromRequestPath(t *testing.T) {
 		})
 	}
 }
+
+func TestGetIntFromRequestPath(t *testing.T) {
+	tests := []struct {
+		name    string
+		varName string
+		pathVal string
+		want    int32
+		wantOk  bool
+	}{
+		{
+			name:    "Valid positive ID",
+			varName: "id",
+			pathVal: "123",
+			want:    123,
+			wantOk:  true,
+		},
+		{
+			name:    "Zero ID",
+			varName: "id",
+			pathVal: "0",
+			want:    0,
+			wantOk:  false,
+		},
+		{
+			name:    "Negative ID",
+			varName: "id",
+			pathVal: "-1",
+			want:    0,
+			wantOk:  false,
+		},
+		{
+			name:    "Non-numeric ID",
+			varName: "id",
+			pathVal: "abc",
+			want:    0,
+			wantOk:  false,
+		},
+		{
+			name:    "Empty ID",
+			varName: "id",
+			pathVal: "",
+			want:    0,
+			wantOk:  false,
+		},
+		{
+			name:    "Overflow ID",
+			varName: "id",
+			pathVal: "2147483648",
+			want:    0,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.SetPathValue(tt.varName, tt.pathVal)
+
+			got, ok := GetIntFromRequestPath(tt.varName, req)
+			if ok != tt.wantOk {
+				t.Errorf("GetIntFromRequestPath() ok = %v, wantOk %v", ok, tt.wantOk)
+			}
+			if got != tt.want {
+				t.Errorf("GetIntFromRequestPath() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

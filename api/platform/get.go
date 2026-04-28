@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"products/internal"
 	"products/internal/db"
-	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -33,15 +33,14 @@ func (h *PlatformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PlatformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
-	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
 		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	platform, err := h.queries.GetPlatform(contextWithTimeOut, int32(id))
+	platform, err := h.queries.GetPlatform(contextWithTimeOut, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Platform not found", http.StatusNotFound)

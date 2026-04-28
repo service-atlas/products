@@ -211,6 +211,27 @@ func TestGetPlatform(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
+			name:           "Invalid ID (Zero)",
+			id:             "0",
+			dbPlatform:     db.Platform{},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid ID (Negative)",
+			id:             "-1",
+			dbPlatform:     db.Platform{},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid ID (Overflow)",
+			id:             "2147483648",
+			dbPlatform:     db.Platform{},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
 			name:           "Not Found",
 			id:             "999",
 			dbPlatform:     db.Platform{},
@@ -286,6 +307,24 @@ func TestDeletePlatform(t *testing.T) {
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
+			name:           "Invalid ID (Zero)",
+			id:             "0",
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid ID (Negative)",
+			id:             "-1",
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid ID (Overflow)",
+			id:             "2147483648",
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
 			name:           "Not Found",
 			id:             "999",
 			dbErr:          pgx.ErrNoRows,
@@ -341,6 +380,36 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "Invalid Path ID",
 			pathID: "abc",
+			requestBody: db.Platform{
+				ID:   1,
+				Name: "Updated Platform",
+			},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "Invalid Path ID (Zero)",
+			pathID: "0",
+			requestBody: db.Platform{
+				ID:   0,
+				Name: "Updated Platform",
+			},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "Invalid Path ID (Negative)",
+			pathID: "-1",
+			requestBody: db.Platform{
+				ID:   -1,
+				Name: "Updated Platform",
+			},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "Invalid Path ID (Overflow)",
+			pathID: "2147483648",
 			requestBody: db.Platform{
 				ID:   1,
 				Name: "Updated Platform",
