@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (h *PlatformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +41,10 @@ func (h *PlatformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 		ID:          req.ID,
 		Name:        req.Name,
 		Description: req.Description,
+		Updatedat: pgtype.Timestamptz{
+			Valid: true,
+			Time:  time.Now().UTC(),
+		},
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
