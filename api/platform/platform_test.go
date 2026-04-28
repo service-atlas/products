@@ -21,7 +21,7 @@ type mockPlatformQuerier struct {
 	getPlatforms   func(ctx context.Context) ([]db.Platform, error)
 	getPlatform    func(ctx context.Context, id int32) (db.Platform, error)
 	deletePlatform func(ctx context.Context, id int32) (int32, error)
-	updatePlatform func(ctx context.Context, id int32) (int32, error)
+	updatePlatform func(ctx context.Context, arg db.UpdatePlatformParams) (int32, error)
 }
 
 func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg db.CreatePlatformParams) error {
@@ -54,7 +54,7 @@ func (m *mockPlatformQuerier) GetPlatforms(ctx context.Context) ([]db.Platform, 
 
 func (m *mockPlatformQuerier) UpdatePlatform(ctx context.Context, arg db.UpdatePlatformParams) (int32, error) {
 	if m.updatePlatform != nil {
-		return m.updatePlatform(ctx, arg.ID)
+		return m.updatePlatform(ctx, arg)
 	}
 	return -1, m.err
 }
@@ -401,8 +401,26 @@ func TestUpdatePlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{
 				err: tt.dbErr,
-				updatePlatform: func(ctx context.Context, id int32) (int32, error) {
-					return id, tt.dbErr
+				updatePlatform: func(ctx context.Context, arg db.UpdatePlatformParams) (int32, error) {
+					if tt.name == "Success" {
+						expectedBody := tt.requestBody.(db.Platform)
+						if arg.ID != expectedBody.ID {
+							t.Errorf("expected ID %d, got %d", expectedBody.ID, arg.ID)
+						}
+						if arg.Name != expectedBody.Name {
+							t.Errorf("expected Name %s, got %s", expectedBody.Name, arg.Name)
+						}
+						if arg.Description.String != expectedBody.Description.String {
+							t.Errorf("expected Description %s, got %s", expectedBody.Description.String, arg.Description.String)
+						}
+						if !arg.Updatedat.Valid {
+							t.Error("expected UpdatedAt to be valid")
+						}
+						if arg.Updatedat.Time.IsZero() {
+							t.Error("expected UpdatedAt to be non-zero")
+						}
+					}
+					return arg.ID, tt.dbErr
 				},
 			}
 			h := NewPlatformHandler(mDB)
