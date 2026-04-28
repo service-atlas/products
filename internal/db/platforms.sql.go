@@ -83,8 +83,8 @@ func (q *Queries) GetPlatforms(ctx context.Context) ([]Platform, error) {
 	return items, nil
 }
 
-const updatePlatform = `-- name: UpdatePlatform :exec
-UPDATE platforms SET name = $1, description = $2, updated_at = $3 WHERE id = $4
+const updatePlatform = `-- name: UpdatePlatform :one
+UPDATE platforms SET name = $1, description = $2, updated_at = $3 WHERE id = $4 RETURNING id
 `
 
 type UpdatePlatformParams struct {
@@ -94,12 +94,14 @@ type UpdatePlatformParams struct {
 	ID          int32
 }
 
-func (q *Queries) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) error {
-	_, err := q.db.Exec(ctx, updatePlatform,
+func (q *Queries) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int32, error) {
+	row := q.db.QueryRow(ctx, updatePlatform,
 		arg.Name,
 		arg.Description,
 		arg.Updatedat,
 		arg.ID,
 	)
-	return err
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }

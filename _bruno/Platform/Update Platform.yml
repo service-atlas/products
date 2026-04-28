@@ -1,0 +1,77 @@
+info:
+  name: Update Platform
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/platforms/:id"
+  params:
+    - name: id
+      value: "3"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "id": 3,
+        "name": "Platform 1.1",
+        "description": "An Example Platform. Update"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "204"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/api/platforms/:id"
+      method: PUT
+      params:
+        - name: id
+          value: "3"
+          type: path
+      body:
+        type: json
+        data: |-
+          {
+            "id": 3,
+            "name": "Platform 1.1",
+            "description": "An Example Platform. Update"
+          }
+    response:
+      status: 204
+      statusText: No Content
+      headers:
+        - name: vary
+          value: Origin
+        - name: date
+          value: Tue, 28 Apr 2026 00:38:11 GMT
+      body:
+        type: text
+        data: ""
+
+docs: |-
+  # Update Platform
+
+  Update Platform PUT call. See Example for body definition.
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 204 | Successfully Updated | 
+  | 400 | Name Missing |
+  | 400 | Body id doesn't match path value|
+  | 400 | Body can't be parsed | 
+  | 404 | Record not found | 
+  | 500 | Error | 
