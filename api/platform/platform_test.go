@@ -21,6 +21,7 @@ type mockPlatformQuerier struct {
 	getPlatforms   func(ctx context.Context) ([]db.Platform, error)
 	getPlatform    func(ctx context.Context, id int32) (db.Platform, error)
 	deletePlatform func(ctx context.Context, id int32) (int32, error)
+	updatePlatform func(ctx context.Context, id int32) (int32, error)
 }
 
 func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg db.CreatePlatformParams) error {
@@ -51,8 +52,11 @@ func (m *mockPlatformQuerier) GetPlatforms(ctx context.Context) ([]db.Platform, 
 	return nil, m.err
 }
 
-func (m *mockPlatformQuerier) UpdatePlatform(ctx context.Context, arg db.UpdatePlatformParams) error {
-	return m.err
+func (m *mockPlatformQuerier) UpdatePlatform(ctx context.Context, arg db.UpdatePlatformParams) (int32, error) {
+	if m.updatePlatform != nil {
+		return m.updatePlatform(ctx, arg.ID)
+	}
+	return -1, m.err
 }
 
 func TestCreatePlatform(t *testing.T) {
@@ -307,6 +311,87 @@ func TestDeletePlatform(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			h.DeletePlatform(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+		})
+	}
+}
+
+func TestUpdatePlatform(t *testing.T) {
+	tests := []struct {
+		name           string
+		requestBody    any
+		dbErr          error
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			requestBody: db.Platform{
+				ID:          1,
+				Name:        "Updated Platform",
+				Description: pgtype.Text{String: "Updated Description", Valid: true},
+			},
+			dbErr:          nil,
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name: "Missing Name",
+			requestBody: db.Platform{
+				ID:   1,
+				Name: "",
+			},
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid JSON",
+			requestBody:    "not a json",
+			dbErr:          nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Platform Not Found",
+			requestBody: db.Platform{
+				ID:   999,
+				Name: "Non-existent",
+			},
+			dbErr:          pgx.ErrNoRows,
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "DB Error",
+			requestBody: db.Platform{
+				ID:   1,
+				Name: "Test Platform",
+			},
+			dbErr:          errors.New("db error"),
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mDB := &mockPlatformQuerier{
+				err: tt.dbErr,
+				updatePlatform: func(ctx context.Context, id int32) (int32, error) {
+					return id, tt.dbErr
+				},
+			}
+			h := NewPlatformHandler(mDB)
+
+			var body []byte
+			if s, ok := tt.requestBody.(string); ok {
+				body = []byte(s)
+			} else {
+				body, _ = json.Marshal(tt.requestBody)
+			}
+
+			req := httptest.NewRequest(http.MethodPut, "/api/platforms", bytes.NewBuffer(body))
+			rr := httptest.NewRecorder()
+
+			h.UpdatePlatform(rr, req)
 
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
