@@ -1,10 +1,12 @@
 package platformHandler
 
+import "products/internal/db/platform"
+
 type PlatformHandler struct {
-	queries PlatformQuerier
+	queries platform.Querier
 }
 
-func NewPlatformHandler(q PlatformQuerier) *PlatformHandler {
+func NewPlatformHandler(q platform.Querier) *PlatformHandler {
 	return &PlatformHandler{
 		queries: q,
 	}
