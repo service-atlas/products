@@ -5,7 +5,7 @@ SELECT id, platform_id, name, description, created_at, updated_at FROM products 
 SELECT id, platform_id, name, description, created_at, updated_at FROM products WHERE id = @id;
 
 -- name: CreateProduct :exec
-INSERT INTO products (platform_id, name, description, created_at, updated_at) VALUES (@platform_id, @name, @description, @created_at, @updated_at);
+INSERT INTO products (platform_id, name, description, created_at, updated_at) VALUES (@platform_id, @name, @description, @timestamp, @timestamp);
 
 -- name: UpdateProduct :exec
 UPDATE products SET name = @name, description = @description, updated_at = @updated_at WHERE id = @id RETURNING id;
