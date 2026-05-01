@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"products/internal/db"
+	db "products/internal/db/platform"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"

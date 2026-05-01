@@ -1,14 +1,21 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "queries/"
-    schema: "schema.sql"  # still required but can be a dummy/empty file
-#    database:
-#      uri: "postgresql://postgres:postgres@localhost:5432/products"
+    queries: "queries/platforms.sql"
+    schema: "schema.sql"
     gen:
       go:
-        package: "db"
-        out: "internal/db"
+        out: "internal/db/platform"
+        sql_package: "pgx/v5"
+        output_models_file_name: "models.go"
+        emit_interface: true
+
+  - engine: "postgresql"
+    queries: "queries/products.sql"
+    schema: "schema.sql"
+    gen:
+      go:
+        out: "internal/db/product"
         sql_package: "pgx/v5"
         output_models_file_name: "models.go"
         emit_interface: true

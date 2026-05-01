@@ -7,6 +7,7 @@ import (
 	systemHandler "products/api/system"
 	"products/internal"
 	"products/internal/db"
+	platformDb "products/internal/db/platform"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -17,7 +18,7 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	slog.Debug("Setting up router")
 	router := chi.NewRouter()
 
-	queries := db.New(dbConn)
+	store := db.New(dbConn)
 
 	router.Use(internal.StructuredLogger(slog.Default()))
 	router.Use(middleware.Recoverer)
@@ -31,7 +32,7 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	}))
 
 	registerSystemCallHandler(router)
-	registerPlatformCallHandler(queries, router)
+	registerPlatformCallHandler(store.Platform, router)
 	slog.Debug("Router setup complete")
 	return router
 }
@@ -41,7 +42,7 @@ func registerSystemCallHandler(r *chi.Mux) {
 	r.Get("/api/time", h.GetTime)
 }
 
-func registerPlatformCallHandler(q db.Querier, r *chi.Mux) {
+func registerPlatformCallHandler(q platformDb.Querier, r *chi.Mux) {
 	handler := platformHandler.NewPlatformHandler(q)
 	r.Route("/api/platforms", func(u chi.Router) {
 		u.Post("/", handler.CreatePlatform)
