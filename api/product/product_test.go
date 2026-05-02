@@ -84,6 +84,22 @@ func TestCreateProduct(t *testing.T) {
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "Missing Name",
+			requestBody: product.CreateProductParams{
+				PlatformID: 1,
+			},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Missing PlatformID",
+			requestBody: product.CreateProductParams{
+				Name: "Test Product",
+			},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
 	}
 
 	for _, tt := range tests {
