@@ -20,7 +20,7 @@ func TestStructuredLogger(t *testing.T) {
 	// Create a test HTTP handler that returns a specific status code
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("test response"))
+		_, _ = w.Write([]byte("test response"))
 	})
 
 	// Wrap our test handler with the StructuredLogger middleware
@@ -153,7 +153,7 @@ func TestStructuredLoggerWithDefaultStatus(t *testing.T) {
 
 	// Create a test HTTP handler that doesn't explicitly set a status code
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("default status test"))
+		_, _ = w.Write([]byte("default status test"))
 	})
 
 	// Wrap our test handler with the StructuredLogger middleware

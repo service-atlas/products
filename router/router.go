@@ -4,10 +4,12 @@ import (
 	"log/slog"
 	"net/http"
 	platformHandler "products/api/platform"
+	productHandler "products/api/product"
 	systemHandler "products/api/system"
 	"products/internal"
 	"products/internal/db"
 	platformDb "products/internal/db/platform"
+	productDb "products/internal/db/product"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -33,6 +35,7 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 
 	registerSystemCallHandler(router)
 	registerPlatformCallHandler(store.Platform, router)
+	registerProductCallHandler(store.Product, router)
 	slog.Debug("Router setup complete")
 	return router
 }
@@ -50,5 +53,12 @@ func registerPlatformCallHandler(q platformDb.Querier, r *chi.Mux) {
 		u.Get("/{id}", handler.GetPlatform)
 		u.Delete("/{id}", handler.DeletePlatform)
 		u.Put("/{id}", handler.UpdatePlatform)
+	})
+}
+
+func registerProductCallHandler(q productDb.Querier, r *chi.Mux) {
+	handler := productHandler.NewProductHandler(q)
+	r.Route("/api/products", func(u chi.Router) {
+		u.Post("/", handler.CreateProduct)
 	})
 }

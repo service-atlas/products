@@ -12,15 +12,14 @@ import (
 )
 
 const createProduct = `-- name: CreateProduct :exec
-INSERT INTO products (platform_id, name, description, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)
+INSERT INTO products (platform_id, name, description, created_at, updated_at) VALUES ($1, $2, $3, $4, $4)
 `
 
 type CreateProductParams struct {
 	PlatformID  int32
 	Name        string
 	Description pgtype.Text
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	Timestamp   pgtype.Timestamptz
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) error {
@@ -28,8 +27,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) er
 		arg.PlatformID,
 		arg.Name,
 		arg.Description,
-		arg.CreatedAt,
-		arg.UpdatedAt,
+		arg.Timestamp,
 	)
 	return err
 }
