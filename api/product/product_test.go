@@ -112,7 +112,11 @@ func TestCreateProduct(t *testing.T) {
 			if s, ok := tt.requestBody.(string); ok {
 				body = []byte(s)
 			} else {
-				body, _ = json.Marshal(tt.requestBody)
+				var err error
+				body, err = json.Marshal(tt.requestBody)
+				if err != nil {
+					t.Fatalf("json.Marshal requestBody failed: %v", err)
+				}
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewBuffer(body))
