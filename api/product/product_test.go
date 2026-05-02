@@ -48,7 +48,7 @@ func TestCreateProduct(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			requestBody: product.CreateProductParams{
+			requestBody: CreateProductRequest{
 				PlatformID: 1,
 				Name:       "Test Product",
 			},
@@ -73,7 +73,7 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "DB Failure",
-			requestBody: product.CreateProductParams{
+			requestBody: CreateProductRequest{
 				PlatformID: 1,
 				Name:       "Fail Product",
 			},
@@ -86,7 +86,7 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "Missing Name",
-			requestBody: product.CreateProductParams{
+			requestBody: CreateProductRequest{
 				PlatformID: 1,
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
@@ -94,7 +94,7 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "Missing PlatformID",
-			requestBody: product.CreateProductParams{
+			requestBody: CreateProductRequest{
 				Name: "Test Product",
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
