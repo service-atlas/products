@@ -3,12 +3,14 @@ package productHandler
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"products/internal/db/product"
 	"testing"
+	"time"
 )
 
 type mockProductQuerier struct {
@@ -178,6 +180,34 @@ func TestDeleteProduct(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Timeout context set to ~5s",
+			id:   "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.deleteProductFunc = func(ctx context.Context, id int32) error {
+					deadline, ok := ctx.Deadline()
+					if !ok {
+						return errors.New("deadline not set")
+					}
+					diff := time.Until(deadline)
+					if diff < 4900*time.Millisecond || diff > 5100*time.Millisecond {
+						return errors.New("deadline not approximately 5s")
+					}
+					return nil
+				}
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name: "Idempotent non-existent delete",
+			id:   "999",
+			mockSetup: func(m *mockProductQuerier) {
+				m.deleteProductFunc = func(ctx context.Context, id int32) error {
+					return sql.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNoContent,
 		},
 	}
 
