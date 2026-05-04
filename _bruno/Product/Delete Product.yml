@@ -1,0 +1,52 @@
+info:
+  name: Delete Product
+  type: http
+  seq: 2
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/api/products/:id"
+  params:
+    - name: id
+      value: "1"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/api/products/:id"
+      method: DELETE
+      params:
+        - name: id
+          value: "1"
+          type: path
+    response:
+      status: 204
+      statusText: No Content
+      headers:
+        - name: vary
+          value: Origin
+        - name: date
+          value: Mon, 04 May 2026 01:23:27 GMT
+      body:
+        type: text
+        data: ""
+
+docs: |-
+  # Delete Product
+
+  Deletes a product. See sample response
+
+  ## Possible Responses 
+  | Status Code | Notes |
+  | -- | --|
+  | 204 | Success | 
+  | 400 | Invalid Id |
+  | 500 | Error | 
