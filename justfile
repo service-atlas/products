@@ -58,3 +58,7 @@ main:
   git switch main
   git fetch
   git pull
+
+# Lint code
+lint:
+  golangci-lint run
