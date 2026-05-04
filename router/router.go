@@ -60,5 +60,6 @@ func registerProductCallHandler(q productDb.Querier, r *chi.Mux) {
 	handler := productHandler.NewProductHandler(q)
 	r.Route("/api/products", func(u chi.Router) {
 		u.Post("/", handler.CreateProduct)
+		u.Delete("/{id}", handler.DeleteProduct)
 	})
 }

@@ -130,3 +130,72 @@ func TestCreateProduct(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteProduct(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		mockSetup      func(m *mockProductQuerier)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			id:   "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.deleteProductFunc = func(ctx context.Context, id int32) error {
+					if id != 1 {
+						return errors.New("unexpected id")
+					}
+					return nil
+				}
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "Invalid ID (Not numeric)",
+			id:             "abc",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid ID (Zero)",
+			id:             "0",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid ID (Negative)",
+			id:             "-1",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "DB Failure",
+			id:   "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.deleteProductFunc = func(ctx context.Context, id int32) error {
+					return errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockProductQuerier{}
+			tt.mockSetup(mock)
+			h := NewProductHandler(mock)
+
+			req := httptest.NewRequest(http.MethodDelete, "/api/products/"+tt.id, nil)
+			req.SetPathValue("id", tt.id)
+			rr := httptest.NewRecorder()
+
+			h.DeleteProduct(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+		})
+	}
+}
