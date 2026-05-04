@@ -3,7 +3,6 @@ package productHandler
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -11,6 +10,8 @@ import (
 	"products/internal/db/product"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type mockProductQuerier struct {
@@ -204,7 +205,7 @@ func TestDeleteProduct(t *testing.T) {
 			id:   "999",
 			mockSetup: func(m *mockProductQuerier) {
 				m.deleteProductFunc = func(ctx context.Context, id int32) error {
-					return sql.ErrNoRows
+					return pgx.ErrNoRows
 				}
 			},
 			expectedStatus: http.StatusNoContent,
