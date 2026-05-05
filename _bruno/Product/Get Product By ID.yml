@@ -1,0 +1,59 @@
+info:
+  name: Get Product By ID
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/products/:id"
+  params:
+    - name: id
+      value: "1"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Success
+    request:
+      url: "{{baseUrl}}/api/products/:id"
+      method: GET
+      params:
+        - name: id
+          value: "1"
+          type: path
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: content-type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "ID": 1,
+            "PlatformID": 1,
+            "Name": "Example Product",
+            "Description": "An example product description",
+            "CreatedAt": "2026-05-04T19:17:00Z",
+            "UpdatedAt": "2026-05-04T19:17:00Z"
+          }
+
+docs: |-
+  # Get Product By ID
+
+  Fetches a single product by its unique ID.
+
+  ## Possible Responses 
+  | Status Code | Notes |
+  | -- | --|
+  | 200 | Successfully fetched | 
+  | 400 | Invalid product ID format |
+  | 404 | Product not found |
+  | 500 | Database error | 
