@@ -1,0 +1,43 @@
+info:
+  name: Update Product
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/products/1"
+  body:
+    type: json
+    data: |-
+      {
+        "platform_id": 3,
+        "name": "Updated Product",
+        "description": "Updated Description"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  # Update Product
+
+  Updates an existing product by ID.
+
+  ## Path Parameters
+  - `id`: The ID of the product to update.
+
+  ## Body Parameters
+  - `platform_id`: The ID of the platform (required).
+  - `name`: The name of the product (required).
+  - `description`: The description of the product (optional).
+
+  ## Possible Responses 
+  | Status Code | Notes |
+  | -- | --|
+  | 200 | Successfully Updated | 
+  | 400 | Invalid ID or missing required fields |
+  | 500 | Database error | 
