@@ -1,0 +1,62 @@
+info:
+  name: Create Product
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/products"
+  body:
+    type: json
+    data: |-
+      {
+        "platform_id": 3,
+        "name": "Product 1",
+        "description": "Test Product"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/api/products"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+            "platform_id": 3,
+            "name": "Product 1",
+            "description": "Test Product"
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: vary
+          value: Origin
+        - name: date
+          value: Mon, 04 May 2026 01:20:16 GMT
+        - name: content-length
+          value: "0"
+      body:
+        type: text
+        data: ""
+
+docs: |-
+  # Create Product
+
+  Creates a new product
+
+  ## Possible Responses 
+  | Status Code | Notes |
+  | -- | --|
+  | 201 | Successfully Created | 
+  | 400 | Name Missing or platform missing |
+  | 500 | Error | 

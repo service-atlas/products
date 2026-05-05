@@ -9,6 +9,9 @@ import (
 	"net/http/httptest"
 	"products/internal/db/product"
 	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type mockProductQuerier struct {
@@ -123,6 +126,103 @@ func TestCreateProduct(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			h.CreateProduct(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+		})
+	}
+}
+
+func TestDeleteProduct(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		mockSetup      func(m *mockProductQuerier)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			id:   "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.deleteProductFunc = func(ctx context.Context, id int32) error {
+					if id != 1 {
+						return errors.New("unexpected id")
+					}
+					return nil
+				}
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "Invalid ID (Not numeric)",
+			id:             "abc",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid ID (Zero)",
+			id:             "0",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid ID (Negative)",
+			id:             "-1",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "DB Failure",
+			id:   "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.deleteProductFunc = func(ctx context.Context, id int32) error {
+					return errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Timeout context set to ~5s",
+			id:   "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.deleteProductFunc = func(ctx context.Context, id int32) error {
+					deadline, ok := ctx.Deadline()
+					if !ok {
+						return errors.New("deadline not set")
+					}
+					diff := time.Until(deadline)
+					if diff < 4900*time.Millisecond || diff > 5100*time.Millisecond {
+						return errors.New("deadline not approximately 5s")
+					}
+					return nil
+				}
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name: "Idempotent non-existent delete",
+			id:   "999",
+			mockSetup: func(m *mockProductQuerier) {
+				m.deleteProductFunc = func(ctx context.Context, id int32) error {
+					return pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockProductQuerier{}
+			tt.mockSetup(mock)
+			h := NewProductHandler(mock)
+
+			req := httptest.NewRequest(http.MethodDelete, "/api/products/"+tt.id, nil)
+			req.SetPathValue("id", tt.id)
+			rr := httptest.NewRecorder()
+
+			h.DeleteProduct(rr, req)
 
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
