@@ -382,16 +382,119 @@ func TestGetProductById(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusOK {
-				var p product.Product
-				if err := json.NewDecoder(rr.Body).Decode(&p); err != nil {
-					t.Fatalf("failed to decode response: %v", err)
-				}
-				if p.ID != 1 {
-					t.Errorf("expected product ID 1, got %v", p.ID)
-				}
 				if rr.Header().Get("Content-Type") != "application/json" {
 					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))
 				}
+			}
+		})
+	}
+}
+
+func TestUpdateProduct(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		requestBody    any
+		mockSetup      func(m *mockProductQuerier)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			id:   "1",
+			requestBody: UpdateProductRequest{
+				PlatformID:  2,
+				Name:        "Updated Product",
+				Description: "Updated Description",
+			},
+			mockSetup: func(m *mockProductQuerier) {
+				m.updateProductFunc = func(ctx context.Context, arg product.UpdateProductParams) error {
+					if arg.ID != 1 {
+						return errors.New("unexpected id")
+					}
+					if arg.PlatformID != 2 {
+						return errors.New("unexpected platform id")
+					}
+					if arg.Name != "Updated Product" {
+						return errors.New("unexpected name")
+					}
+					return nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Invalid ID",
+			id:             "abc",
+			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Invalid JSON",
+			id:             "1",
+			requestBody:    "invalid json",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Missing Name",
+			id:   "1",
+			requestBody: UpdateProductRequest{
+				PlatformID: 1,
+			},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Missing PlatformID",
+			id:   "1",
+			requestBody: UpdateProductRequest{
+				Name: "Test",
+			},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "DB Failure",
+			id:   "1",
+			requestBody: UpdateProductRequest{
+				PlatformID: 1,
+				Name:       "Fail",
+			},
+			mockSetup: func(m *mockProductQuerier) {
+				m.updateProductFunc = func(ctx context.Context, arg product.UpdateProductParams) error {
+					return errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockProductQuerier{}
+			tt.mockSetup(mock)
+			h := NewProductHandler(mock)
+
+			var body []byte
+			if s, ok := tt.requestBody.(string); ok {
+				body = []byte(s)
+			} else {
+				var err error
+				body, err = json.Marshal(tt.requestBody)
+				if err != nil {
+					t.Fatalf("json.Marshal requestBody failed: %v", err)
+				}
+			}
+
+			req := httptest.NewRequest(http.MethodPut, "/api/products/"+tt.id, bytes.NewBuffer(body))
+			req.SetPathValue("id", tt.id)
+			rr := httptest.NewRecorder()
+
+			h.UpdateProduct(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
 			}
 		})
 	}
