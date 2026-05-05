@@ -230,3 +230,169 @@ func TestDeleteProduct(t *testing.T) {
 		})
 	}
 }
+
+func TestGetProductsByPlatform(t *testing.T) {
+	tests := []struct {
+		name           string
+		platformID     string
+		mockSetup      func(m *mockProductQuerier)
+		expectedStatus int
+		expectedCount  int
+	}{
+		{
+			name:       "Success",
+			platformID: "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]product.Product, error) {
+					if platformID != 1 {
+						return nil, errors.New("unexpected platform id")
+					}
+					return []product.Product{
+						{ID: 1, PlatformID: 1, Name: "Product 1"},
+						{ID: 2, PlatformID: 1, Name: "Product 2"},
+					}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  2,
+		},
+		{
+			name:       "Empty list (Nil guard)",
+			platformID: "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]product.Product, error) {
+					return nil, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  0,
+		},
+		{
+			name:           "Invalid Platform ID",
+			platformID:     "abc",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "DB Failure",
+			platformID: "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]product.Product, error) {
+					return nil, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockProductQuerier{}
+			tt.mockSetup(mock)
+			h := NewProductHandler(mock)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/platforms/"+tt.platformID+"/products", nil)
+			req.SetPathValue("platform_id", tt.platformID)
+			rr := httptest.NewRecorder()
+
+			h.GetProductsByPlatform(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusOK {
+				var products []product.Product
+				if err := json.NewDecoder(rr.Body).Decode(&products); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if len(products) != tt.expectedCount {
+					t.Errorf("expected %v products, got %v", tt.expectedCount, len(products))
+				}
+				if rr.Header().Get("Content-Type") != "application/json" {
+					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))
+				}
+			}
+		})
+	}
+}
+
+func TestGetProductById(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		mockSetup      func(m *mockProductQuerier)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			id:   "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int32) (product.Product, error) {
+					if id != 1 {
+						return product.Product{}, errors.New("unexpected id")
+					}
+					return product.Product{ID: 1, Name: "Test Product"}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Not Found",
+			id:   "999",
+			mockSetup: func(m *mockProductQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int32) (product.Product, error) {
+					return product.Product{}, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "Invalid ID",
+			id:             "abc",
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "DB Failure",
+			id:   "1",
+			mockSetup: func(m *mockProductQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int32) (product.Product, error) {
+					return product.Product{}, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockProductQuerier{}
+			tt.mockSetup(mock)
+			h := NewProductHandler(mock)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/products/"+tt.id, nil)
+			req.SetPathValue("id", tt.id)
+			rr := httptest.NewRecorder()
+
+			h.GetProductById(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusOK {
+				var p product.Product
+				if err := json.NewDecoder(rr.Body).Decode(&p); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if p.ID != 1 {
+					t.Errorf("expected product ID 1, got %v", p.ID)
+				}
+				if rr.Header().Get("Content-Type") != "application/json" {
+					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))
+				}
+			}
+		})
+	}
+}
