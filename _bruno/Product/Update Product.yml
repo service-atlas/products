@@ -5,7 +5,11 @@ info:
 
 http:
   method: PUT
-  url: "{{baseUrl}}/api/products/1"
+  url: "{{baseUrl}}/api/products/:id"
+  params:
+    - name: id
+      value: "2"
+      type: path
   body:
     type: json
     data: |-
@@ -21,6 +25,37 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/api/products/:id"
+      method: PUT
+      params:
+        - name: id
+          value: "2"
+          type: path
+      body:
+        type: json
+        data: |-
+          {
+            "platform_id": 3,
+            "name": "Updated Product",
+            "description": "Updated Description"
+          }
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: vary
+          value: Origin
+        - name: date
+          value: Tue, 05 May 2026 23:48:10 GMT
+        - name: content-length
+          value: "0"
+      body:
+        type: text
+        data: ""
 
 docs: |-
   # Update Product
