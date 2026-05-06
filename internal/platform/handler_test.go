@@ -103,7 +103,7 @@ func TestCreatePlatform(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{err: tt.dbErr}
-			h := NewPlatformHandler(mDB)
+			h := &platformHandler{queries: mDB}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
@@ -162,7 +162,7 @@ func TestGetPlatforms(t *testing.T) {
 					return tt.platforms, tt.dbErr
 				},
 			}
-			h := NewPlatformHandler(mDB)
+			h := &platformHandler{queries: mDB}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms", nil)
 			rr := httptest.NewRecorder()
@@ -254,7 +254,7 @@ func TestGetPlatform(t *testing.T) {
 					return tt.dbPlatform, tt.dbErr
 				},
 			}
-			h := NewPlatformHandler(mDB)
+			h := &platformHandler{queries: mDB}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -272,7 +272,7 @@ func TestGetPlatform(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to unmarshal response: %v", err)
 				}
-				if got.ID != tt.dbID || got.Name != tt.dbName {
+				if got.ID != tt.dbPlatform.ID || got.Name != tt.dbPlatform.Name {
 					t.Errorf("expected platform %+v, got %+v", tt.dbPlatform, got)
 				}
 			}
@@ -342,7 +342,7 @@ func TestDeletePlatform(t *testing.T) {
 					return -1, tt.dbErr
 				},
 			}
-			h := NewPlatformHandler(mDB)
+			h := &platformHandler{queries: mDB}
 
 			req := httptest.NewRequest(http.MethodDelete, "/api/platforms/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -491,7 +491,7 @@ func TestUpdatePlatform(t *testing.T) {
 					return arg.ID, tt.dbErr
 				},
 			}
-			h := NewPlatformHandler(mDB)
+			h := &platformHandler{queries: mDB}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
