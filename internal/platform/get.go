@@ -1,4 +1,4 @@
-package platformHandler
+package platform
 
 import (
 	"context"
@@ -6,13 +6,12 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
-	db "products/internal/db/platform"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 )
 
-func (h *PlatformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
+func (h *platformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	platforms, err := h.queries.GetPlatforms(contextWithTimeOut)
@@ -21,7 +20,7 @@ func (h *PlatformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if platforms == nil {
-		platforms = []db.Platform{}
+		platforms = []Platform{}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(platforms)
@@ -32,7 +31,7 @@ func (h *PlatformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *PlatformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
+func (h *platformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		http.Error(w, "Invalid platform ID", http.StatusBadRequest)

@@ -1,4 +1,4 @@
-package platformHandler
+package platform
 
 import (
 	"context"
@@ -6,15 +6,14 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
-	db "products/internal/db/platform"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (h *PlatformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
-	var req db.Platform
+func (h *platformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
+	var req Platform
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -36,7 +35,7 @@ func (h *PlatformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	_, err := h.queries.UpdatePlatform(contextWithTimeOut, db.UpdatePlatformParams{
+	_, err := h.queries.UpdatePlatform(contextWithTimeOut, UpdatePlatformParams{
 		ID:          req.ID,
 		Name:        req.Name,
 		Description: req.Description,

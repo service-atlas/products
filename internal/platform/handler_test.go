@@ -1,4 +1,4 @@
-package platformHandler
+package platform
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"products/internal/db/platform"
 	"strconv"
 	"testing"
 
@@ -17,14 +16,14 @@ import (
 
 type mockPlatformQuerier struct {
 	err            error
-	createPlatform func(ctx context.Context, arg platform.CreatePlatformParams) error
-	getPlatforms   func(ctx context.Context) ([]platform.Platform, error)
-	getPlatform    func(ctx context.Context, id int32) (platform.Platform, error)
+	createPlatform func(ctx context.Context, arg CreatePlatformParams) error
+	getPlatforms   func(ctx context.Context) ([]Platform, error)
+	getPlatform    func(ctx context.Context, id int32) (Platform, error)
 	deletePlatform func(ctx context.Context, id int32) (int32, error)
-	updatePlatform func(ctx context.Context, arg platform.UpdatePlatformParams) (int32, error)
+	updatePlatform func(ctx context.Context, arg UpdatePlatformParams) (int32, error)
 }
 
-func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg platform.CreatePlatformParams) error {
+func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg CreatePlatformParams) error {
 	if m.createPlatform != nil {
 		return m.createPlatform(ctx, arg)
 	}
@@ -38,21 +37,21 @@ func (m *mockPlatformQuerier) DeletePlatform(ctx context.Context, id int32) (int
 	return -1, m.err
 }
 
-func (m *mockPlatformQuerier) GetPlatform(ctx context.Context, id int32) (platform.Platform, error) {
+func (m *mockPlatformQuerier) GetPlatform(ctx context.Context, id int32) (Platform, error) {
 	if m.getPlatform != nil {
 		return m.getPlatform(ctx, id)
 	}
-	return platform.Platform{}, m.err
+	return Platform{}, m.err
 }
 
-func (m *mockPlatformQuerier) GetPlatforms(ctx context.Context) ([]platform.Platform, error) {
+func (m *mockPlatformQuerier) GetPlatforms(ctx context.Context) ([]Platform, error) {
 	if m.getPlatforms != nil {
 		return m.getPlatforms(ctx)
 	}
 	return nil, m.err
 }
 
-func (m *mockPlatformQuerier) UpdatePlatform(ctx context.Context, arg platform.UpdatePlatformParams) (int32, error) {
+func (m *mockPlatformQuerier) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int32, error) {
 	if m.updatePlatform != nil {
 		return m.updatePlatform(ctx, arg)
 	}
@@ -129,12 +128,12 @@ func TestGetPlatforms(t *testing.T) {
 	tests := []struct {
 		name           string
 		dbErr          error
-		platforms      []platform.Platform
+		platforms      []Platform
 		expectedStatus int
 	}{
 		{
 			name: "Success",
-			platforms: []platform.Platform{
+			platforms: []Platform{
 				{ID: 1, Name: "Platform 1", Description: pgtype.Text{String: "Desc 1", Valid: true}},
 				{ID: 2, Name: "Platform 2", Description: pgtype.Text{String: "Desc 2", Valid: true}},
 			},
@@ -143,7 +142,7 @@ func TestGetPlatforms(t *testing.T) {
 		},
 		{
 			name:           "Empty Success",
-			platforms:      []platform.Platform{},
+			platforms:      []Platform{},
 			dbErr:          nil,
 			expectedStatus: http.StatusOK,
 		},
@@ -159,7 +158,7 @@ func TestGetPlatforms(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{
 				err: tt.dbErr,
-				getPlatforms: func(ctx context.Context) ([]platform.Platform, error) {
+				getPlatforms: func(ctx context.Context) ([]Platform, error) {
 					return tt.platforms, tt.dbErr
 				},
 			}
@@ -175,7 +174,7 @@ func TestGetPlatforms(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusOK {
-				var got []platform.Platform
+				var got []Platform
 				err := json.Unmarshal(rr.Body.Bytes(), &got)
 				if err != nil {
 					t.Fatalf("failed to unmarshal response: %v", err)
@@ -192,56 +191,56 @@ func TestGetPlatform(t *testing.T) {
 	tests := []struct {
 		name           string
 		id             string
-		dbPlatform     platform.Platform
+		dbPlatform     Platform
 		dbErr          error
 		expectedStatus int
 	}{
 		{
 			name:           "Success",
 			id:             "1",
-			dbPlatform:     platform.Platform{ID: 1, Name: "Platform 1"},
+			dbPlatform:     Platform{ID: 1, Name: "Platform 1"},
 			dbErr:          nil,
 			expectedStatus: http.StatusOK,
 		},
 		{
 			name:           "Invalid ID",
 			id:             "abc",
-			dbPlatform:     platform.Platform{},
+			dbPlatform:     Platform{},
 			dbErr:          nil,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Invalid ID (Zero)",
 			id:             "0",
-			dbPlatform:     platform.Platform{},
+			dbPlatform:     Platform{},
 			dbErr:          nil,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Invalid ID (Negative)",
 			id:             "-1",
-			dbPlatform:     platform.Platform{},
+			dbPlatform:     Platform{},
 			dbErr:          nil,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Invalid ID (Overflow)",
 			id:             "2147483648",
-			dbPlatform:     platform.Platform{},
+			dbPlatform:     Platform{},
 			dbErr:          nil,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Not Found",
 			id:             "999",
-			dbPlatform:     platform.Platform{},
+			dbPlatform:     Platform{},
 			dbErr:          pgx.ErrNoRows,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "DB Error",
 			id:             "1",
-			dbPlatform:     platform.Platform{},
+			dbPlatform:     Platform{},
 			dbErr:          errors.New("db error"),
 			expectedStatus: http.StatusInternalServerError,
 		},
@@ -251,7 +250,7 @@ func TestGetPlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{
 				err: tt.dbErr,
-				getPlatform: func(ctx context.Context, id int32) (platform.Platform, error) {
+				getPlatform: func(ctx context.Context, id int32) (Platform, error) {
 					return tt.dbPlatform, tt.dbErr
 				},
 			}
@@ -268,12 +267,12 @@ func TestGetPlatform(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusOK {
-				var got platform.Platform
+				var got Platform
 				err := json.Unmarshal(rr.Body.Bytes(), &got)
 				if err != nil {
 					t.Fatalf("failed to unmarshal response: %v", err)
 				}
-				if got.ID != tt.dbPlatform.ID || got.Name != tt.dbPlatform.Name {
+				if got.ID != tt.dbID || got.Name != tt.dbName {
 					t.Errorf("expected platform %+v, got %+v", tt.dbPlatform, got)
 				}
 			}
@@ -369,7 +368,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "Success",
 			pathID: "1",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:          1,
 				Name:        "Updated Platform",
 				Description: pgtype.Text{String: "Updated Description", Valid: true},
@@ -380,7 +379,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "Invalid Path ID",
 			pathID: "abc",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:   1,
 				Name: "Updated Platform",
 			},
@@ -390,7 +389,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "Invalid Path ID (Zero)",
 			pathID: "0",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:   0,
 				Name: "Updated Platform",
 			},
@@ -400,7 +399,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "Invalid Path ID (Negative)",
 			pathID: "-1",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:   -1,
 				Name: "Updated Platform",
 			},
@@ -410,7 +409,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "Invalid Path ID (Overflow)",
 			pathID: "2147483648",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:   1,
 				Name: "Updated Platform",
 			},
@@ -420,7 +419,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "ID Mismatch",
 			pathID: "2",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:   1,
 				Name: "Updated Platform",
 			},
@@ -430,7 +429,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "Missing Name",
 			pathID: "1",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:   1,
 				Name: "",
 			},
@@ -447,7 +446,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "Platform Not Found",
 			pathID: "999",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:   999,
 				Name: "Non-existent",
 			},
@@ -457,7 +456,7 @@ func TestUpdatePlatform(t *testing.T) {
 		{
 			name:   "DB Error",
 			pathID: "1",
-			requestBody: platform.Platform{
+			requestBody: Platform{
 				ID:   1,
 				Name: "Test Platform",
 			},
@@ -470,9 +469,9 @@ func TestUpdatePlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{
 				err: tt.dbErr,
-				updatePlatform: func(ctx context.Context, arg platform.UpdatePlatformParams) (int32, error) {
+				updatePlatform: func(ctx context.Context, arg UpdatePlatformParams) (int32, error) {
 					if tt.name == "Success" {
-						expectedBody := tt.requestBody.(platform.Platform)
+						expectedBody := tt.requestBody.(Platform)
 						if arg.ID != expectedBody.ID {
 							t.Errorf("expected ID %d, got %d", expectedBody.ID, arg.ID)
 						}

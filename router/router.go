@@ -3,13 +3,11 @@ package router
 import (
 	"log/slog"
 	"net/http"
-	platformHandler "products/api/platform"
-	productHandler "products/api/product"
 	systemHandler "products/api/system"
 	"products/internal"
 	"products/internal/db"
-	platformDb "products/internal/db/platform"
-	productDb "products/internal/db/product"
+	"products/internal/platform"
+	"products/internal/product"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -19,8 +17,6 @@ import (
 func SetupRouter(dbConn db.DBTX) http.Handler {
 	slog.Debug("Setting up router")
 	router := chi.NewRouter()
-
-	store := db.New(dbConn)
 
 	router.Use(internal.StructuredLogger(slog.Default()))
 	router.Use(middleware.Recoverer)
@@ -34,8 +30,8 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	}))
 
 	registerSystemCallHandler(router)
-	registerPlatformCallHandler(store.Platform, router)
-	registerProductCallHandler(store.Product, router)
+	registerPlatformCallHandler(platform.NewPlatformHandler(dbConn), router)
+	registerProductCallHandler(product.NewProductHandler(dbConn), router)
 	slog.Debug("Router setup complete")
 	return router
 }
@@ -45,8 +41,7 @@ func registerSystemCallHandler(r *chi.Mux) {
 	r.Get("/api/time", h.GetTime)
 }
 
-func registerPlatformCallHandler(q platformDb.Querier, r *chi.Mux) {
-	handler := platformHandler.NewPlatformHandler(q)
+func registerPlatformCallHandler(handler platform.Handler, r *chi.Mux) {
 	r.Route("/api/platforms", func(u chi.Router) {
 		u.Post("/", handler.CreatePlatform)
 		u.Get("/", handler.GetPlatforms)
@@ -56,8 +51,7 @@ func registerPlatformCallHandler(q platformDb.Querier, r *chi.Mux) {
 	})
 }
 
-func registerProductCallHandler(q productDb.Querier, r *chi.Mux) {
-	handler := productHandler.NewProductHandler(q)
+func registerProductCallHandler(handler product.Handler, r *chi.Mux) {
 	r.Route("/api/products", func(u chi.Router) {
 		u.Post("/", handler.CreateProduct)
 		u.Get("/{id}", handler.GetProductById)

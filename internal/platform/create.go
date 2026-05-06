@@ -1,10 +1,9 @@
-package platformHandler
+package platform
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
-	db "products/internal/db/platform"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -15,7 +14,7 @@ type CreatePlatformRequest struct {
 	Description string `json:"description"`
 }
 
-func (h *PlatformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request) {
+func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request) {
 	var req CreatePlatformRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -28,7 +27,7 @@ func (h *PlatformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request)
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	if err := h.queries.CreatePlatform(contextWithTimeOut, db.CreatePlatformParams{
+	if err := h.queries.CreatePlatform(contextWithTimeOut, CreatePlatformParams{
 		Name: req.Name,
 		Description: pgtype.Text{
 			Valid:  req.Description != "",

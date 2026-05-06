@@ -1,21 +1,23 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "queries/platforms.sql"
+    queries: "internal/platform/platforms.sql"
     schema: "schema.sql"
     gen:
       go:
-        out: "internal/db/platform"
+        out: "internal/platform"
         sql_package: "pgx/v5"
-        output_models_file_name: "models.go"
-        emit_interface: true
+        output_models_file_name: "models.gen.go"
+        output_db_file_name: "db.gen.go"
+        output_files_suffix: ".gen.go"
 
   - engine: "postgresql"
-    queries: "queries/products.sql"
+    queries: "internal/product/products.sql"
     schema: "schema.sql"
     gen:
       go:
-        out: "internal/db/product"
+        out: "internal/product"
         sql_package: "pgx/v5"
-        output_models_file_name: "models.go"
-        emit_interface: true
+        output_models_file_name: "models.gen.go"
+        output_db_file_name: "db.gen.go"
+        output_files_suffix: ".gen.go"

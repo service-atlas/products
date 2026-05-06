@@ -1,4 +1,4 @@
-package productHandler
+package product
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
-	"products/internal/db/product"
 	"strings"
 	"time"
 
@@ -20,7 +19,7 @@ type UpdateProductRequest struct {
 	Description string `json:"description"`
 }
 
-func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+func (h *productHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
@@ -39,7 +38,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := product.UpdateProductParams{
+	params := UpdateProductParams{
 		ID:         id,
 		PlatformID: req.PlatformID,
 		Name:       req.Name,

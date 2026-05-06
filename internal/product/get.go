@@ -1,4 +1,4 @@
-package productHandler
+package product
 
 import (
 	"context"
@@ -6,14 +6,13 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
-	db "products/internal/db/product"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 )
 
 // GetProductsByPlatform fetches products by platform ID.
-func (h *ProductHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Request) {
+func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Request) {
 	platformID, ok := internal.GetIntFromRequestPath("platform_id", r)
 	if !ok {
 		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
@@ -30,7 +29,7 @@ func (h *ProductHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Re
 	}
 
 	if products == nil {
-		products = []db.Product{}
+		products = []Product{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -41,7 +40,7 @@ func (h *ProductHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Re
 }
 
 // GetProductById fetches a single product by ID.
-func (h *ProductHandler) GetProductById(w http.ResponseWriter, r *http.Request) {
+func (h *productHandler) GetProductById(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)

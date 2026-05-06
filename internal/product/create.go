@@ -1,10 +1,9 @@
-package productHandler
+package product
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"products/internal/db/product"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -16,7 +15,7 @@ type CreateProductRequest struct {
 	Description string `json:"description"`
 }
 
-func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
+func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var req CreateProductRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -27,7 +26,7 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := product.CreateProductParams{
+	params := CreateProductParams{
 		Name:       req.Name,
 		PlatformID: req.PlatformID,
 		Description: pgtype.Text{
