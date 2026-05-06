@@ -5,7 +5,7 @@ import (
 )
 
 type productHandler struct {
-	queries *Queries
+	queries Querier
 }
 
 func NewProductHandler(db DBTX) Handler {

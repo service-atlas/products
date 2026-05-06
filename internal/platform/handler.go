@@ -5,7 +5,7 @@ import (
 )
 
 type platformHandler struct {
-	queries *Queries
+	queries Querier
 }
 
 func NewPlatformHandler(db DBTX) Handler {

@@ -10,6 +10,8 @@ sql:
         output_models_file_name: "models.gen.go"
         output_db_file_name: "db.gen.go"
         output_files_suffix: ".gen.go"
+        output_querier_file_name: "querier.gen.go"
+        emit_interface: true
 
   - engine: "postgresql"
     queries: "internal/product/products.sql"
@@ -21,3 +23,5 @@ sql:
         output_models_file_name: "models.gen.go"
         output_db_file_name: "db.gen.go"
         output_files_suffix: ".gen.go"
+        output_querier_file_name: "querier.gen.go"
+        emit_interface: true
