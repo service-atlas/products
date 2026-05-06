@@ -3,11 +3,14 @@ package productHandler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"products/internal"
 	"products/internal/db/product"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -30,6 +33,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.Name = strings.TrimSpace(req.Name)
 	if req.Name == "" || req.PlatformID == 0 {
 		http.Error(w, "Name and platform ID are required", http.StatusBadRequest)
 		return
@@ -52,7 +56,11 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	if err := h.queries.UpdateProduct(ctx, params); err != nil {
+	if _, err := h.queries.UpdateProduct(ctx, params); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Product not found", http.StatusNotFound)
+			return
+		}
 		http.Error(w, "Failed to update product", http.StatusInternalServerError)
 		return
 	}

@@ -32,13 +32,14 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) er
 	return err
 }
 
-const deleteProduct = `-- name: DeleteProduct :exec
+const deleteProduct = `-- name: DeleteProduct :one
 DELETE FROM products WHERE id = $1 RETURNING id
 `
 
-func (q *Queries) DeleteProduct(ctx context.Context, id int32) error {
-	_, err := q.db.Exec(ctx, deleteProduct, id)
-	return err
+func (q *Queries) DeleteProduct(ctx context.Context, id int32) (int32, error) {
+	row := q.db.QueryRow(ctx, deleteProduct, id)
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getProductById = `-- name: GetProductById :one
@@ -90,7 +91,7 @@ func (q *Queries) GetProductsByPlatform(ctx context.Context, platformID int32) (
 	return items, nil
 }
 
-const updateProduct = `-- name: UpdateProduct :exec
+const updateProduct = `-- name: UpdateProduct :one
 UPDATE products SET platform_id = $1, name = $2, description = $3, updated_at = $4 WHERE id = $5 RETURNING id
 `
 
@@ -102,13 +103,15 @@ type UpdateProductParams struct {
 	ID          int32
 }
 
-func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) error {
-	_, err := q.db.Exec(ctx, updateProduct,
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (int32, error) {
+	row := q.db.QueryRow(ctx, updateProduct,
 		arg.PlatformID,
 		arg.Name,
 		arg.Description,
 		arg.UpdatedAt,
 		arg.ID,
 	)
-	return err
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }

@@ -18,8 +18,11 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	err := h.queries.DeleteProduct(contextWithTimeOut, id)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+	if _, err := h.queries.DeleteProduct(contextWithTimeOut, id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Product not found", http.StatusNotFound)
+			return
+		}
 		http.Error(w, "Failed to delete product", http.StatusInternalServerError)
 		return
 	}
