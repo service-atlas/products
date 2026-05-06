@@ -455,6 +455,52 @@ func TestUpdateProduct(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
+			name:           "Zero ID",
+			id:             "0",
+			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Negative ID",
+			id:             "-1",
+			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Whitespace Name",
+			id:   "1",
+			requestBody: UpdateProductRequest{
+				PlatformID: 1,
+				Name:       "   ",
+			},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Timeout verification",
+			id:   "1",
+			requestBody: UpdateProductRequest{
+				PlatformID: 1,
+				Name:       "Test",
+			},
+			mockSetup: func(m *mockProductQuerier) {
+				m.updateProductFunc = func(ctx context.Context, arg product.UpdateProductParams) (int32, error) {
+					deadline, ok := ctx.Deadline()
+					if !ok {
+						return 0, errors.New("deadline not set")
+					}
+					remaining := time.Until(deadline)
+					if remaining > 5*time.Second || remaining < 4*time.Second {
+						return 0, errors.New("deadline not approximately 5s")
+					}
+					return 1, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
 			name: "DB Failure",
 			id:   "1",
 			requestBody: UpdateProductRequest{
