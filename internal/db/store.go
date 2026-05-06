@@ -10,8 +10,8 @@ import (
 )
 
 type Store struct {
-	Platform *platform.Queries
-	Product  *product.Queries
+	Platform platform.Querier
+	Product  product.Querier
 }
 
 func New(db DBTX) *Store {

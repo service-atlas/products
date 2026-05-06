@@ -62,6 +62,7 @@ func registerProductCallHandler(q productDb.Querier, r *chi.Mux) {
 		u.Post("/", handler.CreateProduct)
 		u.Get("/{id}", handler.GetProductById)
 		u.Delete("/{id}", handler.DeleteProduct)
+		u.Put("/{id}", handler.UpdateProduct)
 	})
 	r.Get("/api/platforms/{platform_id}/products", handler.GetProductsByPlatform)
 }
