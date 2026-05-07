@@ -38,20 +38,20 @@ examples:
         data: |-
           [
             {
-              "ID": 1,
-              "PlatformID": 1,
-              "Name": "Product 1",
-              "Description": "Description 1",
-              "CreatedAt": "2026-05-04T19:17:00Z",
-              "UpdatedAt": "2026-05-04T19:17:00Z"
+              "id": 1,
+              "platform_id": 1,
+              "name": "Product 1",
+              "description": "Description 1",
+              "created_at": "2026-05-04T19:17:00Z",
+              "updated_at": "2026-05-04T19:17:00Z"
             },
             {
-              "ID": 2,
-              "PlatformID": 1,
-              "Name": "Product 2",
-              "Description": "Description 2",
-              "CreatedAt": "2026-05-04T19:17:00Z",
-              "UpdatedAt": "2026-05-04T19:17:00Z"
+              "id": 2,
+              "platform_id": 1,
+              "name": "Product 2",
+              "description": "Description 2",
+              "created_at": "2026-05-04T19:17:00Z",
+              "updated_at": "2026-05-04T19:17:00Z"
             }
           ]
 

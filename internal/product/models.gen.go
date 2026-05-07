@@ -9,34 +9,34 @@ import (
 )
 
 type Flow struct {
-	ID          int32
-	ProductID   int32
-	Name        string
-	Description pgtype.Text
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	ID          int32              `json:"id"`
+	ProductID   int32              `json:"product_id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type FlowStep struct {
-	ID      int32
-	FlowID  int32
-	Current pgtype.UUID
-	Next    pgtype.UUID
+	ID      int32       `json:"id"`
+	FlowID  int32       `json:"flow_id"`
+	Current pgtype.UUID `json:"current"`
+	Next    pgtype.UUID `json:"next"`
 }
 
 type Platform struct {
-	ID          int32
-	Name        string
-	Description pgtype.Text
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	ID          int32              `json:"id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Product struct {
-	ID          int32
-	PlatformID  int32
-	Name        string
-	Description pgtype.Text
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	ID          int32              `json:"id"`
+	PlatformID  int32              `json:"platform_id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

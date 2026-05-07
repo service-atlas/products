@@ -16,10 +16,10 @@ INSERT INTO products (platform_id, name, description, created_at, updated_at) VA
 `
 
 type CreateProductParams struct {
-	PlatformID  int32
-	Name        string
-	Description pgtype.Text
-	Timestamp   pgtype.Timestamptz
+	PlatformID  int32              `json:"platform_id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	Timestamp   pgtype.Timestamptz `json:"timestamp"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) error {
@@ -96,11 +96,11 @@ UPDATE products SET platform_id = $1, name = $2, description = $3, updated_at = 
 `
 
 type UpdateProductParams struct {
-	PlatformID  int32
-	Name        string
-	Description pgtype.Text
-	UpdatedAt   pgtype.Timestamptz
-	ID          int32
+	PlatformID  int32              `json:"platform_id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID          int32              `json:"id"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (int32, error) {

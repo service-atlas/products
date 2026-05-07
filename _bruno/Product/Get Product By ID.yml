@@ -37,12 +37,12 @@ examples:
         type: json
         data: |-
           {
-            "ID": 1,
-            "PlatformID": 1,
-            "Name": "Example Product",
-            "Description": "An example product description",
-            "CreatedAt": "2026-05-04T19:17:00Z",
-            "UpdatedAt": "2026-05-04T19:17:00Z"
+            "id": 1,
+            "platform_id": 1,
+            "name": "Example Product",
+            "description": "An example product description",
+            "created_at": "2026-05-04T19:17:00Z",
+            "updated_at": "2026-05-04T19:17:00Z"
           }
 
 docs: |-
