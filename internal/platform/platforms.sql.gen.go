@@ -90,7 +90,7 @@ UPDATE platforms SET name = $1, description = $2, updated_at = $3 WHERE id = $4 
 type UpdatePlatformParams struct {
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
-	Updatedat   pgtype.Timestamptz `json:"updatedat"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	ID          int32              `json:"id"`
 }
 
@@ -98,7 +98,7 @@ func (q *Queries) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) 
 	row := q.db.QueryRow(ctx, updatePlatform,
 		arg.Name,
 		arg.Description,
-		arg.Updatedat,
+		arg.UpdatedAt,
 		arg.ID,
 	)
 	var id int32

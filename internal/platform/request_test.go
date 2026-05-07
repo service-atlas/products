@@ -69,10 +69,10 @@ func TestUpdatePlatformRequest_ToParams(t *testing.T) {
 	if params.Description.String != req.Description {
 		t.Errorf("expected description %q, got %q", req.Description, params.Description.String)
 	}
-	if !params.Updatedat.Valid {
+	if !params.UpdatedAt.Valid {
 		t.Error("expected updatedat to be valid")
 	}
-	diff := time.Since(params.Updatedat.Time)
+	diff := time.Since(params.UpdatedAt.Time)
 	if diff < 0 {
 		diff = -diff
 	}

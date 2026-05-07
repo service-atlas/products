@@ -9,7 +9,7 @@ SELECT id, name, description, created_at, updated_at FROM platforms WHERE id = @
 INSERT INTO platforms (name, description, created_at, updated_at) VALUES (@name, @description, @timeStamp, @timeStamp);
 
 -- name: UpdatePlatform :one
-UPDATE platforms SET name = @name, description = @description, updated_at = @updatedAt WHERE id = @id RETURNING id;
+UPDATE platforms SET name = @name, description = @description, updated_at = @updated_at WHERE id = @id RETURNING id;
 
 -- name: DeletePlatform :one
 DELETE FROM platforms WHERE id = @id RETURNING id;
