@@ -22,14 +22,6 @@ func NewProductHandler(db DBTX) Handler {
 	}
 }
 
-type Handler interface {
-	CreateProduct(w http.ResponseWriter, r *http.Request)
-	GetProductsByPlatform(w http.ResponseWriter, r *http.Request)
-	GetProductById(w http.ResponseWriter, r *http.Request)
-	UpdateProduct(w http.ResponseWriter, r *http.Request)
-	DeleteProduct(w http.ResponseWriter, r *http.Request)
-}
-
 type createProductRequest struct {
 	Name        string `json:"name"`
 	PlatformID  int32  `json:"platform_id"`
