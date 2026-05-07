@@ -95,7 +95,9 @@ func (h *platformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 			http.Error(w, "Platform not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger := internal.LoggerFromContext(r.Context())
+		logger.Error("Failed to delete platform", "error", err, "platform_id", id)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 

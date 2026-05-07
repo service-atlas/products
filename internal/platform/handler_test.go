@@ -286,6 +286,7 @@ func TestDeletePlatform(t *testing.T) {
 		id             string
 		dbErr          error
 		expectedStatus int
+		expectedBody   string
 	}{
 		{
 			name:           "Success",
@@ -304,6 +305,14 @@ func TestDeletePlatform(t *testing.T) {
 			id:             "1",
 			dbErr:          errors.New("db error"),
 			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Internal server error\n",
+		},
+		{
+			name:           "DB Error (pgx.ErrNoRows)",
+			id:             "1",
+			dbErr:          pgx.ErrNoRows,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "Platform not found\n",
 		},
 		{
 			name:           "Invalid ID (Zero)",
@@ -352,6 +361,12 @@ func TestDeletePlatform(t *testing.T) {
 
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedBody != "" {
+				if rr.Body.String() != tt.expectedBody {
+					t.Errorf("expected body %q, got %q", tt.expectedBody, rr.Body.String())
+				}
 			}
 		})
 	}
