@@ -94,3 +94,27 @@ func TestUpdatePlatformRequest_ToParams_EmptyDescription(t *testing.T) {
 		t.Error("expected description to be invalid")
 	}
 }
+
+func TestUpdatePlatformRequest_ToParams_IDPrecedence(t *testing.T) {
+	req := updatePlatformRequest{
+		ID:          100, // ID from body
+		Name:        "Precedence Test",
+		Description: "Testing ID precedence",
+	}
+	pathID := int32(200) // ID from path/argument
+
+	params := req.ToParams(pathID)
+
+	// Verify that the method argument ID is preferred over the struct field ID
+	if params.ID != pathID {
+		t.Errorf("expected id %d (path ID), got %d", pathID, params.ID)
+	}
+
+	// Verify that Name and Description are preserved
+	if params.Name != req.Name {
+		t.Errorf("expected name %q, got %q", req.Name, params.Name)
+	}
+	if params.Description.String != req.Description {
+		t.Errorf("expected description %q, got %q", req.Description, params.Description.String)
+	}
+}
