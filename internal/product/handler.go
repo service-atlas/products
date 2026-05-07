@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func NewProductHandler(db DBTX) Handler {
@@ -20,18 +19,6 @@ func NewProductHandler(db DBTX) Handler {
 	return &productHandler{
 		queries: queries,
 	}
-}
-
-type createProductRequest struct {
-	Name        string `json:"name"`
-	PlatformID  int32  `json:"platform_id"`
-	Description string `json:"description"`
-}
-
-type updateProductRequest struct {
-	PlatformID  int32  `json:"platform_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
 }
 
 type productHandler struct {
@@ -49,22 +36,10 @@ func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := CreateProductParams{
-		Name:       req.Name,
-		PlatformID: req.PlatformID,
-		Description: pgtype.Text{
-			Valid:  req.Description != "",
-			String: req.Description,
-		},
-		Timestamp: pgtype.Timestamptz{
-			Valid: true,
-			Time:  time.Now().UTC(),
-		},
-	}
-
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	if err := h.queries.CreateProduct(contextWithTimeOut, params); err != nil {
+
+	if err := h.queries.CreateProduct(contextWithTimeOut, req.ToParams()); err != nil {
 		http.Error(w, "Failed to create product", http.StatusInternalServerError)
 		return
 	}
@@ -110,24 +85,10 @@ func (h *productHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := UpdateProductParams{
-		ID:         id,
-		PlatformID: req.PlatformID,
-		Name:       req.Name,
-		Description: pgtype.Text{
-			Valid:  req.Description != "",
-			String: req.Description,
-		},
-		UpdatedAt: pgtype.Timestamptz{
-			Valid: true,
-			Time:  time.Now().UTC(),
-		},
-	}
-
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	if _, err := h.queries.UpdateProduct(ctx, params); err != nil {
+	if _, err := h.queries.UpdateProduct(ctx, req.ToParams(id)); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Product not found", http.StatusNotFound)
 			return

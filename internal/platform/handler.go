@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func NewPlatformHandler(db DBTX) Handler {
@@ -27,10 +26,6 @@ type Handler interface {
 	GetPlatform(w http.ResponseWriter, r *http.Request)
 	UpdatePlatform(w http.ResponseWriter, r *http.Request)
 	DeletePlatform(w http.ResponseWriter, r *http.Request)
-}
-type createPlatformRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
 }
 
 type platformHandler struct {
@@ -50,17 +45,7 @@ func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request)
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	if err := h.queries.CreatePlatform(contextWithTimeOut, CreatePlatformParams{
-		Name: req.Name,
-		Description: pgtype.Text{
-			Valid:  req.Description != "",
-			String: req.Description,
-		},
-		Timestamp: pgtype.Timestamptz{
-			Valid: true,
-			Time:  time.Now().UTC(),
-		},
-	}); err != nil {
+	if err := h.queries.CreatePlatform(contextWithTimeOut, req.ToParams()); err != nil {
 		http.Error(w, "Failed to create platform", http.StatusInternalServerError)
 		return
 	}
@@ -69,7 +54,7 @@ func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *platformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
-	var req Platform
+	var req updatePlatformRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -91,15 +76,7 @@ func (h *platformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	_, err := h.queries.UpdatePlatform(contextWithTimeOut, UpdatePlatformParams{
-		ID:          req.ID,
-		Name:        req.Name,
-		Description: req.Description,
-		Updatedat: pgtype.Timestamptz{
-			Valid: true,
-			Time:  time.Now().UTC(),
-		},
-	})
+	_, err := h.queries.UpdatePlatform(contextWithTimeOut, req.ToParams(id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Platform not found", http.StatusNotFound)
