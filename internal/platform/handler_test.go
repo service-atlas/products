@@ -67,7 +67,7 @@ func TestCreatePlatform(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			requestBody: CreatePlatformRequest{
+			requestBody: createPlatformRequest{
 				Name:        "Test Platform",
 				Description: "Test Description",
 			},
@@ -76,7 +76,7 @@ func TestCreatePlatform(t *testing.T) {
 		},
 		{
 			name: "Missing Name",
-			requestBody: CreatePlatformRequest{
+			requestBody: createPlatformRequest{
 				Name:        "",
 				Description: "Test Description",
 			},
@@ -91,7 +91,7 @@ func TestCreatePlatform(t *testing.T) {
 		},
 		{
 			name: "DB Error",
-			requestBody: CreatePlatformRequest{
+			requestBody: createPlatformRequest{
 				Name:        "Test Platform",
 				Description: "Test Description",
 			},
