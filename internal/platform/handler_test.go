@@ -496,10 +496,10 @@ func TestUpdatePlatform(t *testing.T) {
 						if arg.Description.String != expectedBody.Description.String {
 							t.Errorf("expected Description %s, got %s", expectedBody.Description.String, arg.Description.String)
 						}
-						if !arg.Updatedat.Valid {
+						if !arg.UpdatedAt.Valid {
 							t.Error("expected UpdatedAt to be valid")
 						}
-						if arg.Updatedat.Time.IsZero() {
+						if arg.UpdatedAt.Time.IsZero() {
 							t.Error("expected UpdatedAt to be non-zero")
 						}
 					}

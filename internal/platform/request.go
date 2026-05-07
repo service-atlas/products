@@ -39,7 +39,7 @@ func (r *updatePlatformRequest) ToParams(id int32) UpdatePlatformParams {
 			Valid:  r.Description != "",
 			String: r.Description,
 		},
-		Updatedat: pgtype.Timestamptz{
+		UpdatedAt: pgtype.Timestamptz{
 			Valid: true,
 			Time:  time.Now().UTC(),
 		},

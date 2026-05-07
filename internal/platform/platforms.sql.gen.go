@@ -16,9 +16,9 @@ INSERT INTO platforms (name, description, created_at, updated_at) VALUES ($1, $2
 `
 
 type CreatePlatformParams struct {
-	Name        string
-	Description pgtype.Text
-	Timestamp   pgtype.Timestamptz
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	Timestamp   pgtype.Timestamptz `json:"timestamp"`
 }
 
 func (q *Queries) CreatePlatform(ctx context.Context, arg CreatePlatformParams) error {
@@ -88,17 +88,17 @@ UPDATE platforms SET name = $1, description = $2, updated_at = $3 WHERE id = $4 
 `
 
 type UpdatePlatformParams struct {
-	Name        string
-	Description pgtype.Text
-	Updatedat   pgtype.Timestamptz
-	ID          int32
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID          int32              `json:"id"`
 }
 
 func (q *Queries) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int32, error) {
 	row := q.db.QueryRow(ctx, updatePlatform,
 		arg.Name,
 		arg.Description,
-		arg.Updatedat,
+		arg.UpdatedAt,
 		arg.ID,
 	)
 	var id int32
