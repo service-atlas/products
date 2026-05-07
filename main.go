@@ -14,7 +14,6 @@ import (
 	"time"
 
 	internalConfig "products/internal/config"
-	"products/internal/db"
 	"products/router"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -28,10 +27,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	if dbPool, ok := dbConn.(*pgxpool.Pool); ok {
-		defer dbPool.Close()
-	}
+	defer dbConn.Close()
 
 	r := router.SetupRouter(dbConn)
 	addr := internalConfig.GetConfigValue("ADDRESS")
@@ -57,7 +53,7 @@ func main() {
 
 }
 
-func getDbConn() (db.DBTX, error) {
+func getDbConn() (*pgxpool.Pool, error) {
 	connStr, err := getConnStr()
 	if err != nil {
 		return nil, err

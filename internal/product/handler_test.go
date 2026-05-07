@@ -1,4 +1,4 @@
-package productHandler
+package product
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"products/internal/db/product"
 	"testing"
 	"time"
 
@@ -15,14 +14,14 @@ import (
 )
 
 type mockProductQuerier struct {
-	createProductFunc         func(ctx context.Context, arg product.CreateProductParams) error
+	createProductFunc         func(ctx context.Context, arg CreateProductParams) error
 	deleteProductFunc         func(ctx context.Context, id int32) (int32, error)
-	getProductByIdFunc        func(ctx context.Context, id int32) (product.Product, error)
-	getProductsByPlatformFunc func(ctx context.Context, platformID int32) ([]product.Product, error)
-	updateProductFunc         func(ctx context.Context, arg product.UpdateProductParams) (int32, error)
+	getProductByIdFunc        func(ctx context.Context, id int32) (Product, error)
+	getProductsByPlatformFunc func(ctx context.Context, platformID int32) ([]Product, error)
+	updateProductFunc         func(ctx context.Context, arg UpdateProductParams) (int32, error)
 }
 
-func (m *mockProductQuerier) CreateProduct(ctx context.Context, arg product.CreateProductParams) error {
+func (m *mockProductQuerier) CreateProduct(ctx context.Context, arg CreateProductParams) error {
 	return m.createProductFunc(ctx, arg)
 }
 
@@ -30,15 +29,15 @@ func (m *mockProductQuerier) DeleteProduct(ctx context.Context, id int32) (int32
 	return m.deleteProductFunc(ctx, id)
 }
 
-func (m *mockProductQuerier) GetProductById(ctx context.Context, id int32) (product.Product, error) {
+func (m *mockProductQuerier) GetProductById(ctx context.Context, id int32) (Product, error) {
 	return m.getProductByIdFunc(ctx, id)
 }
 
-func (m *mockProductQuerier) GetProductsByPlatform(ctx context.Context, platformID int32) ([]product.Product, error) {
+func (m *mockProductQuerier) GetProductsByPlatform(ctx context.Context, platformID int32) ([]Product, error) {
 	return m.getProductsByPlatformFunc(ctx, platformID)
 }
 
-func (m *mockProductQuerier) UpdateProduct(ctx context.Context, arg product.UpdateProductParams) (int32, error) {
+func (m *mockProductQuerier) UpdateProduct(ctx context.Context, arg UpdateProductParams) (int32, error) {
 	return m.updateProductFunc(ctx, arg)
 }
 
@@ -51,12 +50,12 @@ func TestCreateProduct(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			requestBody: CreateProductRequest{
+			requestBody: createProductRequest{
 				PlatformID: 1,
 				Name:       "Test Product",
 			},
 			mockSetup: func(m *mockProductQuerier) {
-				m.createProductFunc = func(ctx context.Context, arg product.CreateProductParams) error {
+				m.createProductFunc = func(ctx context.Context, arg CreateProductParams) error {
 					if arg.Name != "Test Product" {
 						return errors.New("unexpected name")
 					}
@@ -76,12 +75,12 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "DB Failure",
-			requestBody: CreateProductRequest{
+			requestBody: createProductRequest{
 				PlatformID: 1,
 				Name:       "Fail Product",
 			},
 			mockSetup: func(m *mockProductQuerier) {
-				m.createProductFunc = func(ctx context.Context, arg product.CreateProductParams) error {
+				m.createProductFunc = func(ctx context.Context, arg CreateProductParams) error {
 					return errors.New("db error")
 				}
 			},
@@ -89,7 +88,7 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "Missing Name",
-			requestBody: CreateProductRequest{
+			requestBody: createProductRequest{
 				PlatformID: 1,
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
@@ -97,8 +96,17 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "Missing PlatformID",
-			requestBody: CreateProductRequest{
+			requestBody: createProductRequest{
 				Name: "Test Product",
+			},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Whitespace Name",
+			requestBody: createProductRequest{
+				PlatformID: 1,
+				Name:       "   ",
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
 			expectedStatus: http.StatusBadRequest,
@@ -109,7 +117,7 @@ func TestCreateProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductQuerier{}
 			tt.mockSetup(mock)
-			h := NewProductHandler(mock)
+			h := &productHandler{queries: mock}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
@@ -216,7 +224,7 @@ func TestDeleteProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductQuerier{}
 			tt.mockSetup(mock)
-			h := NewProductHandler(mock)
+			h := &productHandler{queries: mock}
 
 			req := httptest.NewRequest(http.MethodDelete, "/api/products/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -243,11 +251,11 @@ func TestGetProductsByPlatform(t *testing.T) {
 			name:       "Success",
 			platformID: "1",
 			mockSetup: func(m *mockProductQuerier) {
-				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]product.Product, error) {
+				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]Product, error) {
 					if platformID != 1 {
 						return nil, errors.New("unexpected platform id")
 					}
-					return []product.Product{
+					return []Product{
 						{ID: 1, PlatformID: 1, Name: "Product 1"},
 						{ID: 2, PlatformID: 1, Name: "Product 2"},
 					}, nil
@@ -260,7 +268,7 @@ func TestGetProductsByPlatform(t *testing.T) {
 			name:       "Empty list (Nil guard)",
 			platformID: "1",
 			mockSetup: func(m *mockProductQuerier) {
-				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]product.Product, error) {
+				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]Product, error) {
 					return nil, nil
 				}
 			},
@@ -277,7 +285,7 @@ func TestGetProductsByPlatform(t *testing.T) {
 			name:       "DB Failure",
 			platformID: "1",
 			mockSetup: func(m *mockProductQuerier) {
-				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]product.Product, error) {
+				m.getProductsByPlatformFunc = func(ctx context.Context, platformID int32) ([]Product, error) {
 					return nil, errors.New("db error")
 				}
 			},
@@ -289,7 +297,7 @@ func TestGetProductsByPlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductQuerier{}
 			tt.mockSetup(mock)
-			h := NewProductHandler(mock)
+			h := &productHandler{queries: mock}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms/"+tt.platformID+"/products", nil)
 			req.SetPathValue("platform_id", tt.platformID)
@@ -302,7 +310,7 @@ func TestGetProductsByPlatform(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusOK {
-				var products []product.Product
+				var products []Product
 				if err := json.NewDecoder(rr.Body).Decode(&products); err != nil {
 					t.Fatalf("failed to decode response: %v", err)
 				}
@@ -328,11 +336,11 @@ func TestGetProductById(t *testing.T) {
 			name: "Success",
 			id:   "1",
 			mockSetup: func(m *mockProductQuerier) {
-				m.getProductByIdFunc = func(ctx context.Context, id int32) (product.Product, error) {
+				m.getProductByIdFunc = func(ctx context.Context, id int32) (Product, error) {
 					if id != 1 {
-						return product.Product{}, errors.New("unexpected id")
+						return Product{}, errors.New("unexpected id")
 					}
-					return product.Product{ID: 1, Name: "Test Product"}, nil
+					return Product{ID: 1, Name: "Test Product"}, nil
 				}
 			},
 			expectedStatus: http.StatusOK,
@@ -341,8 +349,8 @@ func TestGetProductById(t *testing.T) {
 			name: "Not Found",
 			id:   "999",
 			mockSetup: func(m *mockProductQuerier) {
-				m.getProductByIdFunc = func(ctx context.Context, id int32) (product.Product, error) {
-					return product.Product{}, pgx.ErrNoRows
+				m.getProductByIdFunc = func(ctx context.Context, id int32) (Product, error) {
+					return Product{}, pgx.ErrNoRows
 				}
 			},
 			expectedStatus: http.StatusNotFound,
@@ -357,8 +365,8 @@ func TestGetProductById(t *testing.T) {
 			name: "DB Failure",
 			id:   "1",
 			mockSetup: func(m *mockProductQuerier) {
-				m.getProductByIdFunc = func(ctx context.Context, id int32) (product.Product, error) {
-					return product.Product{}, errors.New("db error")
+				m.getProductByIdFunc = func(ctx context.Context, id int32) (Product, error) {
+					return Product{}, errors.New("db error")
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -369,7 +377,7 @@ func TestGetProductById(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductQuerier{}
 			tt.mockSetup(mock)
-			h := NewProductHandler(mock)
+			h := &productHandler{queries: mock}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/products/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -401,13 +409,13 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Success",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID:  2,
 				Name:        "Updated Product",
 				Description: "Updated Description",
 			},
 			mockSetup: func(m *mockProductQuerier) {
-				m.updateProductFunc = func(ctx context.Context, arg product.UpdateProductParams) (int32, error) {
+				m.updateProductFunc = func(ctx context.Context, arg UpdateProductParams) (int32, error) {
 					if arg.ID != 1 {
 						return 0, errors.New("unexpected id")
 					}
@@ -425,7 +433,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name:           "Invalid ID",
 			id:             "abc",
-			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			requestBody:    updateProductRequest{PlatformID: 1, Name: "Test"},
 			mockSetup:      func(m *mockProductQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -439,7 +447,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Missing Name",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
@@ -448,7 +456,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Missing PlatformID",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				Name: "Test",
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
@@ -457,21 +465,21 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name:           "Zero ID",
 			id:             "0",
-			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			requestBody:    updateProductRequest{PlatformID: 1, Name: "Test"},
 			mockSetup:      func(m *mockProductQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Negative ID",
 			id:             "-1",
-			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			requestBody:    updateProductRequest{PlatformID: 1, Name: "Test"},
 			mockSetup:      func(m *mockProductQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name: "Whitespace Name",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 				Name:       "   ",
 			},
@@ -481,12 +489,12 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Timeout verification",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 				Name:       "Test",
 			},
 			mockSetup: func(m *mockProductQuerier) {
-				m.updateProductFunc = func(ctx context.Context, arg product.UpdateProductParams) (int32, error) {
+				m.updateProductFunc = func(ctx context.Context, arg UpdateProductParams) (int32, error) {
 					deadline, ok := ctx.Deadline()
 					if !ok {
 						return 0, errors.New("deadline not set")
@@ -503,12 +511,12 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "DB Failure",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 				Name:       "Fail",
 			},
 			mockSetup: func(m *mockProductQuerier) {
-				m.updateProductFunc = func(ctx context.Context, arg product.UpdateProductParams) (int32, error) {
+				m.updateProductFunc = func(ctx context.Context, arg UpdateProductParams) (int32, error) {
 					return 0, errors.New("db error")
 				}
 			},
@@ -517,12 +525,12 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Not Found",
 			id:   "999",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 				Name:       "Not Found",
 			},
 			mockSetup: func(m *mockProductQuerier) {
-				m.updateProductFunc = func(ctx context.Context, arg product.UpdateProductParams) (int32, error) {
+				m.updateProductFunc = func(ctx context.Context, arg UpdateProductParams) (int32, error) {
 					return 0, pgx.ErrNoRows
 				}
 			},
@@ -534,7 +542,7 @@ func TestUpdateProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductQuerier{}
 			tt.mockSetup(mock)
-			h := NewProductHandler(mock)
+			h := &productHandler{queries: mock}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {

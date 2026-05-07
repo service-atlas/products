@@ -1,0 +1,151 @@
+package platform
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"products/internal"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+)
+
+func NewPlatformHandler(db DBTX) Handler {
+	queries := &Queries{
+		db: db,
+	}
+	return &platformHandler{
+		queries: queries,
+	}
+}
+
+type platformHandler struct {
+	queries Querier
+}
+
+func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request) {
+	var req createPlatformRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
+	}
+	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	if err := h.queries.CreatePlatform(contextWithTimeOut, req.ToParams()); err != nil {
+		http.Error(w, "Failed to create platform", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *platformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
+	var req updatePlatformRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
+	}
+
+	if req.ID != id {
+		http.Error(w, "Platform ID does not match path", http.StatusBadRequest)
+		return
+	}
+	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	_, err := h.queries.UpdatePlatform(contextWithTimeOut, req.ToParams(id))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Platform not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to update platform", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *platformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
+		return
+	}
+	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	_, err := h.queries.DeletePlatform(contextWithTimeOut, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Platform not found", http.StatusNotFound)
+			return
+		}
+		logger := internal.LoggerFromContext(r.Context())
+		logger.Error("Failed to delete platform", "error", err, "platform_id", id)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *platformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
+	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	platforms, err := h.queries.GetPlatforms(contextWithTimeOut)
+	if err != nil {
+		http.Error(w, "Failed to fetch platforms", http.StatusInternalServerError)
+		return
+	}
+	if platforms == nil {
+		platforms = []Platform{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(platforms)
+	if err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func (h *platformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		http.Error(w, "Invalid platform ID", http.StatusBadRequest)
+		return
+	}
+	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	platform, err := h.queries.GetPlatform(contextWithTimeOut, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Platform not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to fetch platform", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(platform)
+	if err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
