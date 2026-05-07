@@ -31,6 +31,8 @@ func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+
+	req.Name = strings.TrimSpace(req.Name)
 	if req.Name == "" || req.PlatformID == 0 {
 		http.Error(w, "Name and platform ID are required", http.StatusBadRequest)
 		return

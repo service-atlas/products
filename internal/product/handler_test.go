@@ -102,6 +102,15 @@ func TestCreateProduct(t *testing.T) {
 			mockSetup:      func(m *mockProductQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
+		{
+			name: "Whitespace Name",
+			requestBody: createProductRequest{
+				PlatformID: 1,
+				Name:       "   ",
+			},
+			mockSetup:      func(m *mockProductQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
 	}
 
 	for _, tt := range tests {
