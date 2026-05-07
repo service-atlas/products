@@ -50,7 +50,7 @@ func TestCreateProduct(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			requestBody: CreateProductRequest{
+			requestBody: createProductRequest{
 				PlatformID: 1,
 				Name:       "Test Product",
 			},
@@ -75,7 +75,7 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "DB Failure",
-			requestBody: CreateProductRequest{
+			requestBody: createProductRequest{
 				PlatformID: 1,
 				Name:       "Fail Product",
 			},
@@ -88,7 +88,7 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "Missing Name",
-			requestBody: CreateProductRequest{
+			requestBody: createProductRequest{
 				PlatformID: 1,
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
@@ -96,7 +96,7 @@ func TestCreateProduct(t *testing.T) {
 		},
 		{
 			name: "Missing PlatformID",
-			requestBody: CreateProductRequest{
+			requestBody: createProductRequest{
 				Name: "Test Product",
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
@@ -400,7 +400,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Success",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID:  2,
 				Name:        "Updated Product",
 				Description: "Updated Description",
@@ -424,7 +424,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name:           "Invalid ID",
 			id:             "abc",
-			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			requestBody:    updateProductRequest{PlatformID: 1, Name: "Test"},
 			mockSetup:      func(m *mockProductQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -438,7 +438,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Missing Name",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
@@ -447,7 +447,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Missing PlatformID",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				Name: "Test",
 			},
 			mockSetup:      func(m *mockProductQuerier) {},
@@ -456,21 +456,21 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name:           "Zero ID",
 			id:             "0",
-			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			requestBody:    updateProductRequest{PlatformID: 1, Name: "Test"},
 			mockSetup:      func(m *mockProductQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Negative ID",
 			id:             "-1",
-			requestBody:    UpdateProductRequest{PlatformID: 1, Name: "Test"},
+			requestBody:    updateProductRequest{PlatformID: 1, Name: "Test"},
 			mockSetup:      func(m *mockProductQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name: "Whitespace Name",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 				Name:       "   ",
 			},
@@ -480,7 +480,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Timeout verification",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 				Name:       "Test",
 			},
@@ -502,7 +502,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "DB Failure",
 			id:   "1",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 				Name:       "Fail",
 			},
@@ -516,7 +516,7 @@ func TestUpdateProduct(t *testing.T) {
 		{
 			name: "Not Found",
 			id:   "999",
-			requestBody: UpdateProductRequest{
+			requestBody: updateProductRequest{
 				PlatformID: 1,
 				Name:       "Not Found",
 			},
