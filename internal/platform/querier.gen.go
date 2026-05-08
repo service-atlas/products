@@ -10,10 +10,10 @@ import (
 
 type Querier interface {
 	CreatePlatform(ctx context.Context, arg CreatePlatformParams) error
-	DeletePlatform(ctx context.Context, id int32) (int32, error)
-	GetPlatform(ctx context.Context, id int32) (Platform, error)
+	DeletePlatform(ctx context.Context, id int) (int, error)
+	GetPlatform(ctx context.Context, id int) (Platform, error)
 	GetPlatforms(ctx context.Context) ([]Platform, error)
-	UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int32, error)
+	UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int, error)
 }
 
 var _ Querier = (*Queries)(nil)

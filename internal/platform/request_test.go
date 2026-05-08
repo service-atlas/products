@@ -53,7 +53,7 @@ func TestUpdatePlatformRequest_ToParams(t *testing.T) {
 		Name:        "Updated Platform",
 		Description: "Updated Description",
 	}
-	id := int32(1)
+	id := 1
 
 	params := req.ToParams(id)
 
@@ -101,7 +101,7 @@ func TestUpdatePlatformRequest_ToParams_IDPrecedence(t *testing.T) {
 		Name:        "Precedence Test",
 		Description: "Testing ID precedence",
 	}
-	pathID := int32(200) // ID from path/argument
+	pathID := 200 // ID from path/argument
 
 	params := req.ToParams(pathID)
 
