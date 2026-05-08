@@ -9,8 +9,8 @@ import (
 )
 
 type Flow struct {
-	ID          int32              `json:"id"`
-	ProductID   int32              `json:"product_id"`
+	ID          int                `json:"id"`
+	ProductID   int                `json:"product_id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
@@ -18,14 +18,14 @@ type Flow struct {
 }
 
 type FlowStep struct {
-	ID      int32       `json:"id"`
-	FlowID  int32       `json:"flow_id"`
+	ID      int         `json:"id"`
+	FlowID  int         `json:"flow_id"`
 	Current pgtype.UUID `json:"current"`
 	Next    pgtype.UUID `json:"next"`
 }
 
 type Platform struct {
-	ID          int32              `json:"id"`
+	ID          int                `json:"id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
@@ -33,8 +33,8 @@ type Platform struct {
 }
 
 type Product struct {
-	ID          int32              `json:"id"`
-	PlatformID  int32              `json:"platform_id"`
+	ID          int                `json:"id"`
+	PlatformID  int                `json:"platform_id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`

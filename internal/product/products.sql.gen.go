@@ -16,7 +16,7 @@ INSERT INTO products (platform_id, name, description, created_at, updated_at) VA
 `
 
 type CreateProductParams struct {
-	PlatformID  int32              `json:"platform_id"`
+	PlatformID  int                `json:"platform_id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	Timestamp   pgtype.Timestamptz `json:"timestamp"`
@@ -36,7 +36,7 @@ const deleteProduct = `-- name: DeleteProduct :one
 DELETE FROM products WHERE id = $1 RETURNING id
 `
 
-func (q *Queries) DeleteProduct(ctx context.Context, id int32) (int32, error) {
+func (q *Queries) DeleteProduct(ctx context.Context, id int) (int, error) {
 	row := q.db.QueryRow(ctx, deleteProduct, id)
 	err := row.Scan(&id)
 	return id, err
@@ -46,7 +46,7 @@ const getProductById = `-- name: GetProductById :one
 SELECT id, platform_id, name, description, created_at, updated_at FROM products WHERE id = $1
 `
 
-func (q *Queries) GetProductById(ctx context.Context, id int32) (Product, error) {
+func (q *Queries) GetProductById(ctx context.Context, id int) (Product, error) {
 	row := q.db.QueryRow(ctx, getProductById, id)
 	var i Product
 	err := row.Scan(
@@ -64,7 +64,7 @@ const getProductsByPlatform = `-- name: GetProductsByPlatform :many
 SELECT id, platform_id, name, description, created_at, updated_at FROM products WHERE platform_id = $1
 `
 
-func (q *Queries) GetProductsByPlatform(ctx context.Context, platformID int32) ([]Product, error) {
+func (q *Queries) GetProductsByPlatform(ctx context.Context, platformID int) ([]Product, error) {
 	rows, err := q.db.Query(ctx, getProductsByPlatform, platformID)
 	if err != nil {
 		return nil, err
@@ -96,14 +96,14 @@ UPDATE products SET platform_id = $1, name = $2, description = $3, updated_at = 
 `
 
 type UpdateProductParams struct {
-	PlatformID  int32              `json:"platform_id"`
+	PlatformID  int                `json:"platform_id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	ID          int32              `json:"id"`
+	ID          int                `json:"id"`
 }
 
-func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (int32, error) {
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (int, error) {
 	row := q.db.QueryRow(ctx, updateProduct,
 		arg.PlatformID,
 		arg.Name,
@@ -111,7 +111,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (i
 		arg.UpdatedAt,
 		arg.ID,
 	)
-	var id int32
+	var id int
 	err := row.Scan(&id)
 	return id, err
 }

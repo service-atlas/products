@@ -8,7 +8,7 @@ import (
 
 type createProductRequest struct {
 	Name        string `json:"name"`
-	PlatformID  int32  `json:"platform_id"`
+	PlatformID  int    `json:"platform_id"`
 	Description string `json:"description"`
 }
 
@@ -28,12 +28,12 @@ func (r *createProductRequest) ToParams() CreateProductParams {
 }
 
 type updateProductRequest struct {
-	PlatformID  int32  `json:"platform_id"`
+	PlatformID  int    `json:"platform_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
-func (r *updateProductRequest) ToParams(id int32) UpdateProductParams {
+func (r *updateProductRequest) ToParams(id int) UpdateProductParams {
 	return UpdateProductParams{
 		ID:         id,
 		PlatformID: r.PlatformID,

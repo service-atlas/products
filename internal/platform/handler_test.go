@@ -18,9 +18,9 @@ type mockPlatformQuerier struct {
 	err            error
 	createPlatform func(ctx context.Context, arg CreatePlatformParams) error
 	getPlatforms   func(ctx context.Context) ([]Platform, error)
-	getPlatform    func(ctx context.Context, id int32) (Platform, error)
-	deletePlatform func(ctx context.Context, id int32) (int32, error)
-	updatePlatform func(ctx context.Context, arg UpdatePlatformParams) (int32, error)
+	getPlatform    func(ctx context.Context, id int) (Platform, error)
+	deletePlatform func(ctx context.Context, id int) (int, error)
+	updatePlatform func(ctx context.Context, arg UpdatePlatformParams) (int, error)
 }
 
 func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg CreatePlatformParams) error {
@@ -30,14 +30,14 @@ func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg CreatePlat
 	return m.err
 }
 
-func (m *mockPlatformQuerier) DeletePlatform(ctx context.Context, id int32) (int32, error) {
+func (m *mockPlatformQuerier) DeletePlatform(ctx context.Context, id int) (int, error) {
 	if m.deletePlatform != nil {
 		return m.deletePlatform(ctx, id)
 	}
 	return -1, m.err
 }
 
-func (m *mockPlatformQuerier) GetPlatform(ctx context.Context, id int32) (Platform, error) {
+func (m *mockPlatformQuerier) GetPlatform(ctx context.Context, id int) (Platform, error) {
 	if m.getPlatform != nil {
 		return m.getPlatform(ctx, id)
 	}
@@ -51,7 +51,7 @@ func (m *mockPlatformQuerier) GetPlatforms(ctx context.Context) ([]Platform, err
 	return nil, m.err
 }
 
-func (m *mockPlatformQuerier) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int32, error) {
+func (m *mockPlatformQuerier) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int, error) {
 	if m.updatePlatform != nil {
 		return m.updatePlatform(ctx, arg)
 	}
@@ -224,13 +224,6 @@ func TestGetPlatform(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:           "Invalid ID (Overflow)",
-			id:             "2147483648",
-			dbPlatform:     Platform{},
-			dbErr:          nil,
-			expectedStatus: http.StatusBadRequest,
-		},
-		{
 			name:           "Not Found",
 			id:             "999",
 			dbPlatform:     Platform{},
@@ -250,7 +243,7 @@ func TestGetPlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{
 				err: tt.dbErr,
-				getPlatform: func(ctx context.Context, id int32) (Platform, error) {
+				getPlatform: func(ctx context.Context, id int) (Platform, error) {
 					return tt.dbPlatform, tt.dbErr
 				},
 			}
@@ -327,12 +320,6 @@ func TestDeletePlatform(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:           "Invalid ID (Overflow)",
-			id:             "2147483648",
-			dbErr:          nil,
-			expectedStatus: http.StatusBadRequest,
-		},
-		{
 			name:           "Not Found",
 			id:             "999",
 			dbErr:          pgx.ErrNoRows,
@@ -344,9 +331,9 @@ func TestDeletePlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{
 				err: tt.dbErr,
-				deletePlatform: func(ctx context.Context, id int32) (int32, error) {
+				deletePlatform: func(ctx context.Context, id int) (int, error) {
 					if i, e := strconv.Atoi(tt.id); e == nil {
-						return int32(i), tt.dbErr
+						return int(i), tt.dbErr
 					}
 					return -1, tt.dbErr
 				},
@@ -484,7 +471,7 @@ func TestUpdatePlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mDB := &mockPlatformQuerier{
 				err: tt.dbErr,
-				updatePlatform: func(ctx context.Context, arg UpdatePlatformParams) (int32, error) {
+				updatePlatform: func(ctx context.Context, arg UpdatePlatformParams) (int, error) {
 					if tt.name == "Success" {
 						expectedBody := tt.requestBody.(Platform)
 						if arg.ID != expectedBody.ID {

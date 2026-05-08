@@ -30,7 +30,7 @@ const deletePlatform = `-- name: DeletePlatform :one
 DELETE FROM platforms WHERE id = $1 RETURNING id
 `
 
-func (q *Queries) DeletePlatform(ctx context.Context, id int32) (int32, error) {
+func (q *Queries) DeletePlatform(ctx context.Context, id int) (int, error) {
 	row := q.db.QueryRow(ctx, deletePlatform, id)
 	err := row.Scan(&id)
 	return id, err
@@ -40,7 +40,7 @@ const getPlatform = `-- name: GetPlatform :one
 SELECT id, name, description, created_at, updated_at FROM platforms WHERE id = $1
 `
 
-func (q *Queries) GetPlatform(ctx context.Context, id int32) (Platform, error) {
+func (q *Queries) GetPlatform(ctx context.Context, id int) (Platform, error) {
 	row := q.db.QueryRow(ctx, getPlatform, id)
 	var i Platform
 	err := row.Scan(
@@ -91,17 +91,17 @@ type UpdatePlatformParams struct {
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	ID          int32              `json:"id"`
+	ID          int                `json:"id"`
 }
 
-func (q *Queries) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int32, error) {
+func (q *Queries) UpdatePlatform(ctx context.Context, arg UpdatePlatformParams) (int, error) {
 	row := q.db.QueryRow(ctx, updatePlatform,
 		arg.Name,
 		arg.Description,
 		arg.UpdatedAt,
 		arg.ID,
 	)
-	var id int32
+	var id int
 	err := row.Scan(&id)
 	return id, err
 }

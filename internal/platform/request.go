@@ -26,12 +26,12 @@ func (r *createPlatformRequest) ToParams() CreatePlatformParams {
 }
 
 type updatePlatformRequest struct {
-	ID          int32  `json:"id"`
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
-func (r *updatePlatformRequest) ToParams(id int32) UpdatePlatformParams {
+func (r *updatePlatformRequest) ToParams(id int) UpdatePlatformParams {
 	return UpdatePlatformParams{
 		ID:   id,
 		Name: r.Name,

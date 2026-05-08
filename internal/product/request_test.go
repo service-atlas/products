@@ -58,7 +58,7 @@ func TestUpdateProductRequest_ToParams(t *testing.T) {
 		Name:        "Updated Product",
 		Description: "Updated Description",
 	}
-	id := int32(10)
+	id := 10
 
 	params := req.ToParams(id)
 
