@@ -61,7 +61,7 @@ func TestGetIntFromRequestPath(t *testing.T) {
 		name    string
 		varName string
 		pathVal string
-		want    int32
+		want    int
 		wantOk  bool
 	}{
 		{
@@ -96,13 +96,6 @@ func TestGetIntFromRequestPath(t *testing.T) {
 			name:    "Empty ID",
 			varName: "id",
 			pathVal: "",
-			want:    0,
-			wantOk:  false,
-		},
-		{
-			name:    "Overflow ID",
-			varName: "id",
-			pathVal: "2147483648",
 			want:    0,
 			wantOk:  false,
 		},

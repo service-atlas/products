@@ -26,14 +26,14 @@ func GetDateFromRequestPath(varName string, req *http.Request) (time.Time, bool)
 	return date, err == nil
 }
 
-func GetIntFromRequestPath(varName string, req *http.Request) (int32, bool) {
+func GetIntFromRequestPath(varName string, req *http.Request) (int, bool) {
 	val := req.PathValue(varName)
 	if val == "" {
 		return 0, false
 	}
-	id, err := strconv.ParseInt(val, 10, 32)
+	id, err := strconv.Atoi(val)
 	if err != nil || id <= 0 {
 		return 0, false
 	}
-	return int32(id), true
+	return id, true
 }
