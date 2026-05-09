@@ -37,8 +37,9 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 }
 
 func registerSystemCallHandler(r *chi.Mux) {
-	h := systemHandler.SystemCallHandler{}
+	h := systemHandler.NewSystemCallHandler()
 	r.Get("/api/time", h.GetTime)
+	r.Get("/api/version", h.GetVersion)
 }
 
 func registerPlatformCallHandler(handler platform.Handler, r *chi.Mux) {
