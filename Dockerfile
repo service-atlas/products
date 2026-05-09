@@ -15,9 +15,9 @@ COPY . .
 # Run tests
 RUN go test ./...
 
-
+ARG Version=dev
 # Build the Go binary (static binary for scratch image)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X 'products/internal/system.Version=${Version}'" -o server .
 
 # Final, minimal image
 FROM scratch
