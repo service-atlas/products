@@ -3,11 +3,11 @@ package router
 import (
 	"log/slog"
 	"net/http"
-	systemHandler "products/api/system"
 	"products/internal"
 	"products/internal/db"
 	"products/internal/platform"
 	"products/internal/product"
+	"products/internal/system"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
