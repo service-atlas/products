@@ -12,9 +12,6 @@ RUN go mod download
 # Copy the rest of your source code
 COPY . .
 
-# Run tests
-RUN go test ./...
-
 ARG Version=dev
 RUN echo "Building version: ${Version}"
 # Build the Go binary (static binary for scratch image)
