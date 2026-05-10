@@ -1,4 +1,4 @@
-package systemHandler
+package system
 
 import (
 	"net/http"
@@ -25,5 +25,32 @@ func TestSystemGetTime(t *testing.T) {
 	}
 	if !time.Now().After(r_time) {
 		t.Errorf("GetTime time is not before current time, return val: %s", rw.Body.String())
+	}
+}
+
+func TestSystemGetVersion(t *testing.T) {
+	req, err := http.NewRequest("GET", "/version", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rw := httptest.NewRecorder()
+
+	h := SystemCallHandler{}
+	h.GetVersion(rw, req)
+
+	if rw.Code != http.StatusOK {
+		t.Errorf("GetVersion errored with %d", rw.Code)
+	}
+
+	expected := `{"version":"dev"}`
+	if rw.Body.String() != expected {
+		t.Errorf("GetVersion returned unexpected body: got %q want %q", rw.Body.String(), expected)
+	}
+}
+
+func TestNewSystemCallHandler(t *testing.T) {
+	h := NewSystemCallHandler()
+	if h == nil {
+		t.Fatal("NewSystemCallHandler returned nil")
 	}
 }
