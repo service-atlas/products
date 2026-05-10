@@ -1,4 +1,4 @@
-package systemHandler
+package system
 
 import (
 	"encoding/json"
