@@ -42,7 +42,7 @@ func TestSystemGetVersion(t *testing.T) {
 		t.Errorf("GetVersion errored with %d", rw.Code)
 	}
 
-	expected := `{"version":"dev"}` + "\n"
+	expected := `{"version":"dev"}`
 	if rw.Body.String() != expected {
 		t.Errorf("GetVersion returned unexpected body: got %q want %q", rw.Body.String(), expected)
 	}
