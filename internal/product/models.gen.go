@@ -8,30 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Flow struct {
-	ID          int                `json:"id"`
-	ProductID   int                `json:"product_id"`
-	Name        string             `json:"name"`
-	Description pgtype.Text        `json:"description"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-}
-
-type FlowStep struct {
-	ID      int         `json:"id"`
-	FlowID  int         `json:"flow_id"`
-	Current pgtype.UUID `json:"current"`
-	Next    pgtype.UUID `json:"next"`
-}
-
-type Platform struct {
-	ID          int                `json:"id"`
-	Name        string             `json:"name"`
-	Description pgtype.Text        `json:"description"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-}
-
 type Product struct {
 	ID          int                `json:"id"`
 	PlatformID  int                `json:"platform_id"`
