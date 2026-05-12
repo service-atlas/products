@@ -62,3 +62,7 @@ main:
 # Lint code
 lint:
   golangci-lint run
+
+# Go vet
+vet:
+  go vet ./...
