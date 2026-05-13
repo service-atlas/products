@@ -46,6 +46,22 @@ func TestHandleHttpError(t *testing.T) {
 			expectedTitle:  "You do not have enough credit.",
 			expectedType:   "https://example.com/probs/out-of-credit",
 		},
+		{
+			name:           "Zero Status Code Defaults to 500",
+			err:            ErrorEnvelope{Detail: "Something went wrong"},
+			statusCode:     0,
+			expectedStatus: http.StatusInternalServerError,
+			expectedTitle:  "Internal Server Error",
+			expectedType:   "about:blank",
+		},
+		{
+			name:           "Negative Status Code Defaults to 500",
+			err:            ErrorEnvelope{Detail: "Something went wrong"},
+			statusCode:     -1,
+			expectedStatus: http.StatusInternalServerError,
+			expectedTitle:  "Internal Server Error",
+			expectedType:   "about:blank",
+		},
 	}
 
 	for _, tt := range tests {
