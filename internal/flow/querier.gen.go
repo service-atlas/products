@@ -9,14 +9,14 @@ import (
 )
 
 type Querier interface {
-	CreateFlow(ctx context.Context, arg CreateFlowParams) error
-	CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) error
-	DeleteFlow(ctx context.Context, id int) error
-	DeleteFlowStep(ctx context.Context, id int) error
-	GetFlow(ctx context.Context, id int) (GetFlowRow, error)
+	CreateFlow(ctx context.Context, arg CreateFlowParams) (int64, error)
+	CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) (int64, error)
+	DeleteFlow(ctx context.Context, id int) (int64, error)
+	DeleteFlowStep(ctx context.Context, id int) (int64, error)
+	GetFlow(ctx context.Context, id int) (Flow, error)
 	GetFlowSteps(ctx context.Context, flowID int) ([]FlowStep, error)
 	GetFlowsByProduct(ctx context.Context, productID int) ([]GetFlowsByProductRow, error)
-	UpdateFlow(ctx context.Context, arg UpdateFlowParams) error
+	UpdateFlow(ctx context.Context, arg UpdateFlowParams) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createFlow = `-- name: CreateFlow :exec
+const createFlow = `-- name: CreateFlow :execrows
 INSERT INTO flows(product_id, name, description, created_at, updated_at)
 VALUES($1, $2, $3, $4, $4)
 `
@@ -23,18 +23,21 @@ type CreateFlowParams struct {
 	TimeStamp   pgtype.Timestamptz `json:"time_stamp"`
 }
 
-func (q *Queries) CreateFlow(ctx context.Context, arg CreateFlowParams) error {
-	_, err := q.db.Exec(ctx, createFlow,
+func (q *Queries) CreateFlow(ctx context.Context, arg CreateFlowParams) (int64, error) {
+	result, err := q.db.Exec(ctx, createFlow,
 		arg.ProductID,
 		arg.Name,
 		arg.Description,
 		arg.TimeStamp,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const createFlowStep = `-- name: CreateFlowStep :exec
-INSERT INTO flow_steps(flow_id, current, next) VALUES($1, $2, $3) RETURNING id
+const createFlowStep = `-- name: CreateFlowStep :execrows
+INSERT INTO flow_steps(flow_id, current, next) VALUES($1, $2, $3)
 `
 
 type CreateFlowStepParams struct {
@@ -43,46 +46,48 @@ type CreateFlowStepParams struct {
 	Next    pgtype.UUID `json:"next"`
 }
 
-func (q *Queries) CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) error {
-	_, err := q.db.Exec(ctx, createFlowStep, arg.FlowID, arg.Current, arg.Next)
-	return err
+func (q *Queries) CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) (int64, error) {
+	result, err := q.db.Exec(ctx, createFlowStep, arg.FlowID, arg.Current, arg.Next)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const deleteFlow = `-- name: DeleteFlow :exec
-DELETE FROM flows WHERE id = $1 RETURNING id
+const deleteFlow = `-- name: DeleteFlow :execrows
+DELETE FROM flows WHERE id = $1
 `
 
-func (q *Queries) DeleteFlow(ctx context.Context, id int) error {
-	_, err := q.db.Exec(ctx, deleteFlow, id)
-	return err
+func (q *Queries) DeleteFlow(ctx context.Context, id int) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteFlow, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const deleteFlowStep = `-- name: DeleteFlowStep :exec
-DELETE FROM flow_steps WHERE id = $1 RETURNING id
+const deleteFlowStep = `-- name: DeleteFlowStep :execrows
+DELETE FROM flow_steps WHERE id = $1
 `
 
-func (q *Queries) DeleteFlowStep(ctx context.Context, id int) error {
-	_, err := q.db.Exec(ctx, deleteFlowStep, id)
-	return err
+func (q *Queries) DeleteFlowStep(ctx context.Context, id int) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteFlowStep, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getFlow = `-- name: GetFlow :one
-SELECT id, name, description, created_at, updated_at FROM flows WHERE id = $1
+SELECT id, product_id, name, description, created_at, updated_at FROM flows WHERE id = $1
 `
 
-type GetFlowRow struct {
-	ID          int                `json:"id"`
-	Name        string             `json:"name"`
-	Description pgtype.Text        `json:"description"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetFlow(ctx context.Context, id int) (GetFlowRow, error) {
+func (q *Queries) GetFlow(ctx context.Context, id int) (Flow, error) {
 	row := q.db.QueryRow(ctx, getFlow, id)
-	var i GetFlowRow
+	var i Flow
 	err := row.Scan(
 		&i.ID,
+		&i.ProductID,
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
@@ -158,8 +163,8 @@ func (q *Queries) GetFlowsByProduct(ctx context.Context, productID int) ([]GetFl
 	return items, nil
 }
 
-const updateFlow = `-- name: UpdateFlow :exec
-UPDATE flows SET name = $1, description = $2, updated_at = $3 WHERE id = $4 RETURNING id
+const updateFlow = `-- name: UpdateFlow :execrows
+UPDATE flows SET name = $1, description = $2, updated_at = $3 WHERE id = $4
 `
 
 type UpdateFlowParams struct {
@@ -169,12 +174,15 @@ type UpdateFlowParams struct {
 	ID          int                `json:"id"`
 }
 
-func (q *Queries) UpdateFlow(ctx context.Context, arg UpdateFlowParams) error {
-	_, err := q.db.Exec(ctx, updateFlow,
+func (q *Queries) UpdateFlow(ctx context.Context, arg UpdateFlowParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateFlow,
 		arg.Name,
 		arg.Description,
 		arg.UpdatedAt,
 		arg.ID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

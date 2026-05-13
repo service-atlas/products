@@ -8,6 +8,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Flow struct {
+	ID          int                `json:"id"`
+	ProductID   int                `json:"product_id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type FlowStep struct {
 	ID      int         `json:"id"`
 	FlowID  int         `json:"flow_id"`
