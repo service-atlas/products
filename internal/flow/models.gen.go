@@ -2,17 +2,24 @@
 // versions:
 //   sqlc v1.30.0
 
-package product
+package flow
 
 import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Product struct {
+type Flow struct {
 	ID          int                `json:"id"`
-	PlatformID  int                `json:"platform_id"`
+	ProductID   int                `json:"product_id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type FlowStep struct {
+	ID      int         `json:"id"`
+	FlowID  int         `json:"flow_id"`
+	Current pgtype.UUID `json:"current"`
+	Next    pgtype.UUID `json:"next"`
 }
