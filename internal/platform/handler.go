@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -115,13 +116,15 @@ func (h *platformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	if platforms == nil {
 		platforms = []Platform{}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(platforms)
+	var buf bytes.Buffer
+	err = json.NewEncoder(&buf).Encode(platforms)
 	if err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(buf.Bytes())
 }
 
 func (h *platformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
@@ -142,10 +145,13 @@ func (h *platformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(platform)
+	var buf bytes.Buffer
+	err = json.NewEncoder(&buf).Encode(platform)
 	if err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(buf.Bytes())
 }

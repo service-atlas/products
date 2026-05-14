@@ -1,6 +1,7 @@
 package product
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -123,11 +124,14 @@ func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Re
 		products = []Product{}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(products); err != nil {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(products); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(buf.Bytes())
 }
 
 // GetProductById fetches a single product by ID.
@@ -151,9 +155,12 @@ func (h *productHandler) GetProductById(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(product); err != nil {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(product); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(buf.Bytes())
 }
