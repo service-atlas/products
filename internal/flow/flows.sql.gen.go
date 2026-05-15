@@ -11,9 +11,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createFlow = `-- name: CreateFlow :execrows
+const createFlow = `-- name: CreateFlow :one
 INSERT INTO flows(product_id, name, description, created_at, updated_at)
 VALUES($1, $2, $3, $4, $4)
+RETURNING id, product_id, name, description, created_at, updated_at
 `
 
 type CreateFlowParams struct {
@@ -23,17 +24,23 @@ type CreateFlowParams struct {
 	TimeStamp   pgtype.Timestamptz `json:"time_stamp"`
 }
 
-func (q *Queries) CreateFlow(ctx context.Context, arg CreateFlowParams) (int64, error) {
-	result, err := q.db.Exec(ctx, createFlow,
+func (q *Queries) CreateFlow(ctx context.Context, arg CreateFlowParams) (Flow, error) {
+	row := q.db.QueryRow(ctx, createFlow,
 		arg.ProductID,
 		arg.Name,
 		arg.Description,
 		arg.TimeStamp,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+	var i Flow
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const createFlowStep = `-- name: CreateFlowStep :execrows
