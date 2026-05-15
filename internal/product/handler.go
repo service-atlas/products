@@ -131,10 +131,10 @@ func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Re
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(buf.Bytes())
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to write response"}, http.StatusInternalServerError)
+	}
 }
-
-// GetProductById fetches a single product by ID.
 func (h *productHandler) GetProductById(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
@@ -162,5 +162,7 @@ func (h *productHandler) GetProductById(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(buf.Bytes())
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to write response"}, http.StatusInternalServerError)
+	}
 }
