@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"products/internal"
 	"strconv"
 	"testing"
 
@@ -298,14 +299,14 @@ func TestDeletePlatform(t *testing.T) {
 			id:             "1",
 			dbErr:          errors.New("db error"),
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   "Internal server error\n",
+			expectedBody:   "Internal server error",
 		},
 		{
 			name:           "DB Error (pgx.ErrNoRows)",
 			id:             "1",
 			dbErr:          pgx.ErrNoRows,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   "Platform not found\n",
+			expectedBody:   "Platform not found",
 		},
 		{
 			name:           "Invalid ID (Zero)",
@@ -351,7 +352,15 @@ func TestDeletePlatform(t *testing.T) {
 			}
 
 			if tt.expectedBody != "" {
-				if rr.Body.String() != tt.expectedBody {
+				if rr.Code >= 400 {
+					var envelope internal.ErrorEnvelope
+					if err := json.NewDecoder(rr.Body).Decode(&envelope); err != nil {
+						t.Fatalf("failed to decode error response: %v", err)
+					}
+					if envelope.Detail != tt.expectedBody {
+						t.Errorf("expected detail %q, got %q", tt.expectedBody, envelope.Detail)
+					}
+				} else if rr.Body.String() != tt.expectedBody {
 					t.Errorf("expected body %q, got %q", tt.expectedBody, rr.Body.String())
 				}
 			}
