@@ -8,14 +8,13 @@ import (
 
 type createFlowRequest struct {
 	Name        string `json:"name"`
-	ProductID   int    `json:"product_id"`
 	Description string `json:"description"`
 }
 
-func (r *createFlowRequest) ToParams() CreateFlowParams {
+func (r *createFlowRequest) ToParams(productID int) CreateFlowParams {
 	return CreateFlowParams{
 		Name:      r.Name,
-		ProductID: r.ProductID,
+		ProductID: productID,
 		Description: pgtype.Text{
 			Valid:  r.Description != "",
 			String: r.Description,

@@ -24,6 +24,11 @@ type flowHandler struct {
 }
 
 func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
+		return
+	}
 	req := &createFlowRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
@@ -35,7 +40,7 @@ func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	flow, err := h.queries.CreateFlow(contextWithTimeOut, req.ToParams())
+	flow, err := h.queries.CreateFlow(contextWithTimeOut, req.ToParams(id))
 	if err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create flow"}, http.StatusInternalServerError)
 		return

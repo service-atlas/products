@@ -58,15 +58,16 @@ func TestCreateFlow(t *testing.T) {
 	tests := []struct {
 		name           string
 		requestBody    any
+		pathID         string
 		mockSetup      func(m *mockFlowQuerier)
 		expectedStatus int
 	}{
 		{
 			name: "Success",
 			requestBody: createFlowRequest{
-				Name:      "Test Flow",
-				ProductID: 1,
+				Name: "Test Flow",
 			},
+			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
 				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
 					if arg.Name != "Test Flow" {
@@ -83,23 +84,23 @@ func TestCreateFlow(t *testing.T) {
 		{
 			name:           "Invalid JSON",
 			requestBody:    "invalid json",
+			pathID:         "1",
 			mockSetup:      func(m *mockFlowQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name: "Missing Name",
-			requestBody: createFlowRequest{
-				ProductID: 1,
-			},
+			name:           "Missing Name",
+			requestBody:    createFlowRequest{},
+			pathID:         "1",
 			mockSetup:      func(m *mockFlowQuerier) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name: "Database Failure",
 			requestBody: createFlowRequest{
-				Name:      "Fail Flow",
-				ProductID: 1,
+				Name: "Fail Flow",
 			},
+			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
 				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
 					return Flow{}, errors.New("db error")
@@ -110,9 +111,9 @@ func TestCreateFlow(t *testing.T) {
 		{
 			name: "Context Timeout Verification",
 			requestBody: createFlowRequest{
-				Name:      "Timeout Flow",
-				ProductID: 1,
+				Name: "Timeout Flow",
 			},
+			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
 				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
 					deadline, ok := ctx.Deadline()
@@ -127,6 +128,15 @@ func TestCreateFlow(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusCreated,
+		},
+		{
+			name: "Invalid Product ID",
+			requestBody: createFlowRequest{
+				Name: "Invalid ID Flow",
+			},
+			pathID:         "invalid",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -150,6 +160,7 @@ func TestCreateFlow(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/flows", bytes.NewBuffer(body))
+			req.SetPathValue("id", tt.pathID)
 			rr := httptest.NewRecorder()
 
 			h.CreateFlow(rr, req)
