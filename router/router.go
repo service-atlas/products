@@ -68,7 +68,3 @@ func registerSystemCallHandler(r *chi.Mux) {
 	r.Get("/api/time", h.GetTime)
 	r.Get("/api/version", h.GetVersion)
 }
-
-func registerPlatformCallHandler(platformHandler platform.Handler, r *chi.Mux) {
-
-}
