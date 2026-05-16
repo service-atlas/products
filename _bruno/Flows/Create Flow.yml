@@ -1,0 +1,73 @@
+info:
+  name: Create Flow
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/products/:id/flows"
+  params:
+    - name: id
+      value: "2"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Flow 1",
+        "description": "flow 1 desc"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    description: sample successful call to create a product flow
+    request:
+      url: "{{baseUrl}}/api/products/:id/flows"
+      method: POST
+      params:
+        - name: id
+          value: "2"
+          type: path
+      body:
+        type: json
+        data: |-
+          {
+            "name": "Flow 1",
+            "description": "flow 1 desc"
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: content-type
+          value: application/json
+        - name: vary
+          value: Origin, Accept-Encoding
+        - name: date
+          value: Sat, 16 May 2026 00:11:09 GMT
+        - name: content-length
+          value: "134"
+      body:
+        type: json
+        data: |-
+          {
+            "id": 1,
+            "product_id": 2,
+            "name": "Flow 1",
+            "description": "flow 1 desc",
+            "created_at": "2026-05-15T19:11:09.35732-05:00",
+            "updated_at": "2026-05-15T19:11:09.35732-05:00"
+          }
