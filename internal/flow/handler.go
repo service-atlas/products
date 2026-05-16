@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"products/internal"
+	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func NewHandler(db DBTX) Handler {
@@ -34,7 +38,7 @@ func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
 		return
 	}
-	if req.Name == "" {
+	if strings.TrimSpace(req.Name) == "" {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Name is required"}, http.StatusBadRequest)
 		return
 	}
@@ -42,6 +46,10 @@ func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	flow, err := h.queries.CreateFlow(contextWithTimeOut, req.ToParams(id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
+			return
+		}
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create flow"}, http.StatusInternalServerError)
 		return
 	}

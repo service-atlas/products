@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type mockFlowQuerier struct {
@@ -137,6 +139,19 @@ func TestCreateFlow(t *testing.T) {
 			pathID:         "invalid",
 			mockSetup:      func(m *mockFlowQuerier) {},
 			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Product Not Found",
+			requestBody: createFlowRequest{
+				Name: "Missing Product Flow",
+			},
+			pathID: "999",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
+					return Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
 		},
 	}
 
