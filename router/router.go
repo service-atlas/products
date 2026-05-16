@@ -39,7 +39,7 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 		u.Post("/", platformHandler.CreatePlatform)
 		u.Get("/", platformHandler.GetPlatforms)
 		u.Route("/{id}", func(u chi.Router) {
-			u.Get("/}", platformHandler.GetPlatform)
+			u.Get("/", platformHandler.GetPlatform)
 			u.Delete("/", platformHandler.DeletePlatform)
 			u.Put("/", platformHandler.UpdatePlatform)
 			u.Get("/products", productHandler.GetProductsByPlatform)
