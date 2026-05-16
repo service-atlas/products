@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"products/internal"
 	"products/internal/db"
+	"products/internal/flow"
 	"products/internal/platform"
 	"products/internal/product"
 	"products/internal/system"
@@ -30,8 +31,31 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	}))
 
 	registerSystemCallHandler(router)
-	registerPlatformCallHandler(platform.NewPlatformHandler(dbConn), router)
-	registerProductCallHandler(product.NewProductHandler(dbConn), router)
+	platformHandler := platform.NewPlatformHandler(dbConn)
+	productHandler := product.NewProductHandler(dbConn)
+	flowHandler := flow.NewHandler(dbConn)
+
+	router.Route("/api/platforms", func(u chi.Router) {
+		u.Post("/", platformHandler.CreatePlatform)
+		u.Get("/", platformHandler.GetPlatforms)
+		u.Route("/{id}", func(u chi.Router) {
+			u.Get("/", platformHandler.GetPlatform)
+			u.Delete("/", platformHandler.DeletePlatform)
+			u.Put("/", platformHandler.UpdatePlatform)
+			u.Get("/products", productHandler.GetProductsByPlatform)
+		})
+
+	})
+	router.Route("/api/products", func(u chi.Router) {
+		u.Post("/", productHandler.CreateProduct)
+		u.Route("/{id}", func(u chi.Router) {
+			u.Get("/", productHandler.GetProductById)
+			u.Delete("/", productHandler.DeleteProduct)
+			u.Put("/", productHandler.UpdateProduct)
+			u.Post("/flows", flowHandler.CreateFlow)
+		})
+
+	})
 	slog.Debug("Router setup complete")
 	return router
 }
@@ -42,22 +66,6 @@ func registerSystemCallHandler(r *chi.Mux) {
 	r.Get("/api/version", h.GetVersion)
 }
 
-func registerPlatformCallHandler(handler platform.Handler, r *chi.Mux) {
-	r.Route("/api/platforms", func(u chi.Router) {
-		u.Post("/", handler.CreatePlatform)
-		u.Get("/", handler.GetPlatforms)
-		u.Get("/{id}", handler.GetPlatform)
-		u.Delete("/{id}", handler.DeletePlatform)
-		u.Put("/{id}", handler.UpdatePlatform)
-	})
-}
+func registerPlatformCallHandler(platformHandler platform.Handler, r *chi.Mux) {
 
-func registerProductCallHandler(handler product.Handler, r *chi.Mux) {
-	r.Route("/api/products", func(u chi.Router) {
-		u.Post("/", handler.CreateProduct)
-		u.Get("/{id}", handler.GetProductById)
-		u.Delete("/{id}", handler.DeleteProduct)
-		u.Put("/{id}", handler.UpdateProduct)
-	})
-	r.Get("/api/platforms/{platform_id}/products", handler.GetProductsByPlatform)
 }

@@ -1,6 +1,7 @@
--- name: CreateFlow :execrows
+-- name: CreateFlow :one
 INSERT INTO flows(product_id, name, description, created_at, updated_at)
-VALUES(@product_id, @name, @description, @time_stamp, @time_stamp);
+VALUES(@product_id, @name, @description, @time_stamp, @time_stamp)
+RETURNING *;
 
 -- name: GetFlowsByProduct :many
 SELECT id, name, description, created_at, updated_at FROM flows WHERE product_id = @product_id;
