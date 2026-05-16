@@ -71,3 +71,16 @@ examples:
             "created_at": "2026-05-15T19:11:09.35732-05:00",
             "updated_at": "2026-05-15T19:11:09.35732-05:00"
           }
+
+docs: |-
+  # Create Flow
+
+  Creates a new flow for a specific product. The product ID is passed as a path parameter.
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 201 | Created |
+  | 400 | Invalid product ID or request body |
+  | 404 | Product not found |
+  | 500 | Internal server error |
