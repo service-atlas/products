@@ -174,7 +174,7 @@ func TestCreateFlow(t *testing.T) {
 				}
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/flows", bytes.NewBuffer(body))
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/flows", bytes.NewBuffer(body))
 			req.SetPathValue("id", tt.pathID)
 			rr := httptest.NewRecorder()
 
@@ -191,6 +191,88 @@ func TestCreateFlow(t *testing.T) {
 				}
 				if flow.ID == 0 {
 					t.Error("expected flow ID to be set")
+				}
+				if rr.Header().Get("Content-Type") != "application/json" {
+					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))
+				}
+			}
+		})
+	}
+}
+
+func TestGetFlowById(t *testing.T) {
+	tests := []struct {
+		name           string
+		pathID         string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+	}{
+		{
+			name:   "Success",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (Flow, error) {
+					if id != 1 {
+						return Flow{}, errors.New("unexpected id")
+					}
+					return Flow{ID: 1, Name: "Test Flow", ProductID: 10}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Invalid ID",
+			pathID:         "abc",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "Flow Not Found",
+			pathID: "99",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (Flow, error) {
+					return Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:   "Database Error",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (Flow, error) {
+					return Flow{}, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			h := &flowHandler{queries: mock}
+
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/flows/1", nil)
+			req.SetPathValue("id", tt.pathID)
+			rr := httptest.NewRecorder()
+
+			h.GetFlowById(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusOK {
+				var flow Flow
+				if err := json.NewDecoder(rr.Body).Decode(&flow); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if flow.ID != 1 {
+					t.Errorf("expected flow ID 1, got %v", flow.ID)
 				}
 				if rr.Header().Get("Content-Type") != "application/json" {
 					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))

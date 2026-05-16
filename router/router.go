@@ -56,6 +56,9 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 		})
 
 	})
+	router.Route("/api/flows", func(u chi.Router) {
+		u.Get("/{id}", flowHandler.GetFlowById)
+	})
 	slog.Debug("Router setup complete")
 	return router
 }
