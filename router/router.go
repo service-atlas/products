@@ -56,6 +56,9 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 		})
 
 	})
+	router.Route("/api/flows", func(u chi.Router) {
+		u.Get("/{id}", flowHandler.GetFlowById)
+	})
 	slog.Debug("Router setup complete")
 	return router
 }
@@ -64,8 +67,4 @@ func registerSystemCallHandler(r *chi.Mux) {
 	h := system.NewSystemCallHandler()
 	r.Get("/api/time", h.GetTime)
 	r.Get("/api/version", h.GetVersion)
-}
-
-func registerPlatformCallHandler(platformHandler platform.Handler, r *chi.Mux) {
-
 }
