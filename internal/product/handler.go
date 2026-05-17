@@ -1,7 +1,6 @@
 package product
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -124,16 +123,7 @@ func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Re
 		products = []Product{}
 	}
 
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(products); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(buf.Bytes()); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to write response"}, http.StatusInternalServerError)
-	}
+	internal.WriteJSONResponse(w, r, http.StatusOK, products)
 }
 func (h *productHandler) GetProductById(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
@@ -155,14 +145,5 @@ func (h *productHandler) GetProductById(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(product); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(buf.Bytes()); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to write response"}, http.StatusInternalServerError)
-	}
+	internal.WriteJSONResponse(w, r, http.StatusOK, product)
 }
