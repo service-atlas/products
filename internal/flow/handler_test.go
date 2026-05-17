@@ -281,3 +281,88 @@ func TestGetFlowById(t *testing.T) {
 		})
 	}
 }
+
+func TestGetFlowsByProduct(t *testing.T) {
+	tests := []struct {
+		name           string
+		pathID         string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+	}{
+		{
+			name:   "Success",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
+					if productID != 1 {
+						return nil, errors.New("unexpected product id")
+					}
+					return []GetFlowsByProductRow{
+						{ID: 1, Name: "Flow 1"},
+						{ID: 2, Name: "Flow 2"},
+					}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Invalid Product ID",
+			pathID:         "invalid",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "No Flows Found",
+			pathID: "2",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
+					return nil, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:   "Database Error",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
+					return nil, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			h := &flowHandler{queries: mock}
+
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/products/1/flows", nil)
+			req.SetPathValue("id", tt.pathID)
+			rr := httptest.NewRecorder()
+
+			h.GetFlowsByProduct(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusOK {
+				var flows []GetFlowsByProductRow
+				if err := json.NewDecoder(rr.Body).Decode(&flows); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if len(flows) != 2 {
+					t.Errorf("expected 2 flows, got %v", len(flows))
+				}
+				if rr.Header().Get("Content-Type") != "application/json" {
+					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))
+				}
+			}
+		})
+	}
+}

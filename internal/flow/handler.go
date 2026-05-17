@@ -1,11 +1,9 @@
 package flow
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 	"products/internal"
 	"strings"
@@ -54,19 +52,7 @@ func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var buf bytes.Buffer
-	err = json.NewEncoder(&buf).Encode(flow)
-	if err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write(buf.Bytes())
-	if err != nil {
-		slog.Error("Failed to write response", "request", r.URL.Path, "error", err)
-	}
+	internal.WriteJSONResponse(w, r, http.StatusCreated, flow)
 }
 
 func (h *flowHandler) GetFlowById(w http.ResponseWriter, r *http.Request) {
@@ -86,16 +72,25 @@ func (h *flowHandler) GetFlowById(w http.ResponseWriter, r *http.Request) {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flow", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
-	var buf bytes.Buffer
-	err = json.NewEncoder(&buf).Encode(flow)
-	if err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
+	internal.WriteJSONResponse(w, r, http.StatusOK, flow)
+}
+
+func (h *flowHandler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(buf.Bytes())
+	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("fetching flows timed out"))
+	defer cancel()
+	flows, err := h.queries.GetFlowsByProduct(contextWithTimeOut, id)
 	if err != nil {
-		slog.Error("Failed to write response", "request", r.URL.Path, "error", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "No flows found for product"}, http.StatusNotFound)
+			return
+		}
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flows"}, http.StatusInternalServerError)
+		return
 	}
+	internal.WriteJSONResponse(w, r, http.StatusOK, flows)
 }
