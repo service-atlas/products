@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: flows.sql
 
-package flow
+package db
 
 import (
 	"context"

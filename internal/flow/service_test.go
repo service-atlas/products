@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"products/internal"
+	"products/internal/flow/db"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -16,7 +17,7 @@ func TestService_CreateFlow(t *testing.T) {
 		productID     int
 		mockSetup     func(m *mockFlowQuerier)
 		expectedError string
-		expectedFlow  Flow
+		expectedFlow  db.Flow
 	}{
 		{
 			name: "Success",
@@ -25,11 +26,11 @@ func TestService_CreateFlow(t *testing.T) {
 			},
 			productID: 1,
 			mockSetup: func(m *mockFlowQuerier) {
-				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
-					return Flow{ID: 1, Name: arg.Name, ProductID: arg.ProductID}, nil
+				m.createFlowFunc = func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
+					return db.Flow{ID: 1, Name: arg.Name, ProductID: arg.ProductID}, nil
 				}
 			},
-			expectedFlow: Flow{ID: 1, Name: "Test Flow", ProductID: 1},
+			expectedFlow: db.Flow{ID: 1, Name: "Test Flow", ProductID: 1},
 		},
 		{
 			name: "Product Not Found",
@@ -38,8 +39,8 @@ func TestService_CreateFlow(t *testing.T) {
 			},
 			productID: 999,
 			mockSetup: func(m *mockFlowQuerier) {
-				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
-					return Flow{}, pgx.ErrNoRows
+				m.createFlowFunc = func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
 				}
 			},
 			expectedError: internal.NewNotFoundError(999, "Product").Error(),
@@ -51,8 +52,8 @@ func TestService_CreateFlow(t *testing.T) {
 			},
 			productID: 1,
 			mockSetup: func(m *mockFlowQuerier) {
-				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
-					return Flow{}, errors.New("db error")
+				m.createFlowFunc = func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
+					return db.Flow{}, errors.New("db error")
 				}
 			},
 			expectedError: "failed to create flow: db error",
@@ -95,24 +96,24 @@ func TestService_GetFlowById(t *testing.T) {
 		id            int
 		mockSetup     func(m *mockFlowQuerier)
 		expectedError string
-		expectedFlow  Flow
+		expectedFlow  db.Flow
 	}{
 		{
 			name: "Success",
 			id:   1,
 			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (Flow, error) {
-					return Flow{ID: 1, Name: "Test Flow"}, nil
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1, Name: "Test Flow"}, nil
 				}
 			},
-			expectedFlow: Flow{ID: 1, Name: "Test Flow"},
+			expectedFlow: db.Flow{ID: 1, Name: "Test Flow"},
 		},
 		{
 			name: "Not Found",
 			id:   404,
 			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (Flow, error) {
-					return Flow{}, pgx.ErrNoRows
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
 				}
 			},
 			expectedError: internal.NewNotFoundError(404, "Flow").Error(),
@@ -155,7 +156,7 @@ func TestService_GetFlowsByProduct(t *testing.T) {
 		productID     int
 		mockSetup     func(m *mockFlowQuerier)
 		expectedError string
-		expectedFlows []Flow
+		expectedFlows []db.Flow
 	}{
 		{
 			name:      "Success",
@@ -164,11 +165,11 @@ func TestService_GetFlowsByProduct(t *testing.T) {
 				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
 					return 1, nil
 				}
-				m.getFlowsByProductFunc = func(ctx context.Context, id int) ([]Flow, error) {
-					return []Flow{{ID: 1, Name: "Flow 1"}}, nil
+				m.getFlowsByProductFunc = func(ctx context.Context, id int) ([]db.Flow, error) {
+					return []db.Flow{{ID: 1, Name: "Flow 1"}}, nil
 				}
 			},
-			expectedFlows: []Flow{{ID: 1, Name: "Flow 1"}},
+			expectedFlows: []db.Flow{{ID: 1, Name: "Flow 1"}},
 		},
 		{
 			name:      "Product Not Found",

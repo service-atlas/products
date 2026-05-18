@@ -6,12 +6,13 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
+	"products/internal/flow/db"
 	"strings"
 	"time"
 )
 
-func NewHandler(db DBTX) Handler {
-	queries := &Queries{
+func NewHandler(db db.DBTX) Handler {
+	queries := &db.Queries{
 		db: db,
 	}
 	service := &service{
@@ -23,9 +24,9 @@ func NewHandler(db DBTX) Handler {
 }
 
 type flowService interface {
-	CreateFlow(ctx context.Context, req createFlowRequest, id int) (Flow, error)
-	GetFlowById(ctx context.Context, id int) (Flow, error)
-	GetFlowsByProduct(ctx context.Context, id int) ([]Flow, error)
+	CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error)
+	GetFlowById(ctx context.Context, id int) (db.Flow, error)
+	GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error)
 }
 
 type flowHandler struct {
