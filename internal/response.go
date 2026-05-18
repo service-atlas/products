@@ -3,9 +3,30 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 )
+
+type NotFoundError struct {
+	id       int
+	itemType string
+}
+
+func (e NotFoundError) Error() string {
+	return e.itemType + " not found with ID: " + strconv.Itoa(e.id)
+}
+
+func (e NotFoundError) Is(target error) bool {
+	var notFoundError NotFoundError
+	ok := errors.As(target, &notFoundError)
+	return ok
+}
+
+func NewNotFoundError(id int, itemType string) NotFoundError {
+	return NotFoundError{id: id, itemType: itemType}
+}
 
 // WriteJSONResponse encodes the data to JSON and writes it to the response writer.
 // It uses a buffer to ensure that encoding is successful before writing the header.

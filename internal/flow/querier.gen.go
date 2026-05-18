@@ -15,7 +15,8 @@ type Querier interface {
 	DeleteFlowStep(ctx context.Context, id int) (int64, error)
 	GetFlow(ctx context.Context, id int) (Flow, error)
 	GetFlowSteps(ctx context.Context, flowID int) ([]FlowStep, error)
-	GetFlowsByProduct(ctx context.Context, productID int) ([]GetFlowsByProductRow, error)
+	GetFlowsByProduct(ctx context.Context, productID int) ([]Flow, error)
+	GetProductById(ctx context.Context, id int) (int, error)
 	UpdateFlow(ctx context.Context, arg UpdateFlowParams) (int64, error)
 }
 
