@@ -11,10 +11,8 @@ import (
 	"time"
 )
 
-func NewHandler(db db.DBTX) Handler {
-	queries := &db.Queries{
-		db: db,
-	}
+func NewHandler(dbConn db.DBTX) Handler {
+	queries := db.New(dbConn)
 	service := &service{
 		queries: queries,
 	}
