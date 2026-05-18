@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
+	"strings"
 	"time"
 )
 
@@ -13,7 +14,7 @@ func NewHandler(db DBTX) Handler {
 	queries := &Queries{
 		db: db,
 	}
-	service := service{
+	service := &service{
 		queries: queries,
 	}
 	return &flowHandler{
@@ -21,8 +22,14 @@ func NewHandler(db DBTX) Handler {
 	}
 }
 
+type flowService interface {
+	CreateFlow(ctx context.Context, req createFlowRequest, id int) (Flow, error)
+	GetFlowById(ctx context.Context, id int) (Flow, error)
+	GetFlowsByProduct(ctx context.Context, id int) ([]Flow, error)
+}
+
 type flowHandler struct {
-	flowService service
+	flowService flowService
 }
 
 func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +47,10 @@ func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	flow, err := h.flowService.CreateFlow(contextWithTimeOut, *req, id)
 	if err != nil {
+		if strings.Contains(err.Error(), "cannot be empty") {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusBadRequest)
+			return
+		}
 		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return

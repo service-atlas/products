@@ -20,7 +20,8 @@ type mockFlowQuerier struct {
 	deleteFlowStepFunc    func(ctx context.Context, id int) (int64, error)
 	getFlowFunc           func(ctx context.Context, id int) (Flow, error)
 	getFlowStepsFunc      func(ctx context.Context, flowID int) ([]FlowStep, error)
-	getFlowsByProductFunc func(ctx context.Context, productID int) ([]GetFlowsByProductRow, error)
+	getFlowsByProductFunc func(ctx context.Context, productID int) ([]Flow, error)
+	getProductByIdFunc    func(ctx context.Context, id int) (int, error)
 	updateFlowFunc        func(ctx context.Context, arg UpdateFlowParams) (int64, error)
 }
 
@@ -48,8 +49,12 @@ func (m *mockFlowQuerier) GetFlowSteps(ctx context.Context, flowID int) ([]FlowS
 	return m.getFlowStepsFunc(ctx, flowID)
 }
 
-func (m *mockFlowQuerier) GetFlowsByProduct(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
+func (m *mockFlowQuerier) GetFlowsByProduct(ctx context.Context, productID int) ([]Flow, error) {
 	return m.getFlowsByProductFunc(ctx, productID)
+}
+
+func (m *mockFlowQuerier) GetProductById(ctx context.Context, id int) (int, error) {
+	return m.getProductByIdFunc(ctx, id)
 }
 
 func (m *mockFlowQuerier) UpdateFlow(ctx context.Context, arg UpdateFlowParams) (int64, error) {
@@ -161,7 +166,7 @@ func TestCreateFlow(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{queries: mock}
+			h := &flowHandler{flowService: &service{queries: mock}}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
@@ -254,7 +259,7 @@ func TestGetFlowById(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{queries: mock}
+			h := &flowHandler{flowService: &service{queries: mock}}
 
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/flows/1", nil)
 			req.SetPathValue("id", tt.pathID)
@@ -293,11 +298,14 @@ func TestGetFlowsByProduct(t *testing.T) {
 			name:   "Success",
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 1, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]Flow, error) {
 					if productID != 1 {
 						return nil, errors.New("unexpected product id")
 					}
-					return []GetFlowsByProductRow{
+					return []Flow{
 						{ID: 1, Name: "Flow 1"},
 						{ID: 2, Name: "Flow 2"},
 					}, nil
@@ -315,8 +323,8 @@ func TestGetFlowsByProduct(t *testing.T) {
 			name:   "No Flows Found",
 			pathID: "2",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
-					return nil, pgx.ErrNoRows
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 0, pgx.ErrNoRows
 				}
 			},
 			expectedStatus: http.StatusNotFound,
@@ -325,7 +333,10 @@ func TestGetFlowsByProduct(t *testing.T) {
 			name:   "Database Error",
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 1, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]Flow, error) {
 					return nil, errors.New("db error")
 				}
 			},
@@ -339,7 +350,7 @@ func TestGetFlowsByProduct(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{queries: mock}
+			h := &flowHandler{flowService: &service{queries: mock}}
 
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/products/1/flows", nil)
 			req.SetPathValue("id", tt.pathID)
@@ -352,7 +363,7 @@ func TestGetFlowsByProduct(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusOK {
-				var flows []GetFlowsByProductRow
+				var flows []Flow
 				if err := json.NewDecoder(rr.Body).Decode(&flows); err != nil {
 					t.Fatalf("failed to decode response: %v", err)
 				}
