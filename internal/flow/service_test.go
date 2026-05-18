@@ -32,15 +32,6 @@ func TestService_CreateFlow(t *testing.T) {
 			expectedFlow: Flow{ID: 1, Name: "Test Flow", ProductID: 1},
 		},
 		{
-			name: "Empty Name",
-			req: createFlowRequest{
-				Name: "   ",
-			},
-			productID:     1,
-			mockSetup:     func(m *mockFlowQuerier) {},
-			expectedError: "flow name cannot be empty",
-		},
-		{
 			name: "Product Not Found",
 			req: createFlowRequest{
 				Name: "Test Flow",

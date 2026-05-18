@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"products/internal"
-	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -15,9 +14,6 @@ type service struct {
 }
 
 func (s *service) CreateFlow(ctx context.Context, req createFlowRequest, id int) (Flow, error) {
-	if strings.TrimSpace(req.Name) == "" {
-		return Flow{}, errors.New("flow name cannot be empty")
-	}
 
 	flow, err := s.queries.CreateFlow(ctx, req.ToParams(id))
 	if err != nil {

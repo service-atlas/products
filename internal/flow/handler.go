@@ -38,19 +38,20 @@ func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
 		return
 	}
+
 	req := &createFlowRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
+		return
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Flow name cannot be empty"}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("flow creation timed out"))
 	defer cancel()
 	flow, err := h.flowService.CreateFlow(contextWithTimeOut, *req, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "cannot be empty") {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusBadRequest)
-			return
-		}
 		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return
