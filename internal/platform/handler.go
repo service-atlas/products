@@ -29,6 +29,7 @@ func NewPlatformHandler(dbConn db.DBTX) Handler {
 
 type platformHandler struct {
 	queries db.Querier
+	service platformService
 }
 
 func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request) {
@@ -44,12 +45,13 @@ func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request)
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	if err := h.queries.CreatePlatform(contextWithTimeOut, req.ToParams()); err != nil {
+	platform, err := h.service.CreatePlatform(contextWithTimeOut, req)
+	if err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create platform"}, http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	internal.WriteJSONResponse(w, r, http.StatusCreated, platform)
 }
 
 func (h *platformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
