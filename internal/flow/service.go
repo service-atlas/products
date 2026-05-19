@@ -52,5 +52,8 @@ func (s *service) GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, err
 		}
 		return nil, fmt.Errorf("failed to fetch flows: %w", err)
 	}
+	if flows == nil {
+		flows = []db.Flow{}
+	}
 	return flows, nil
 }

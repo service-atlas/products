@@ -195,6 +195,19 @@ func TestService_GetFlowsByProduct(t *testing.T) {
 			expectedFlows: []db.Flow{},
 		},
 		{
+			name:      "No Flows Found (Nil guard)",
+			productID: 1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 1, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, id int) ([]db.Flow, error) {
+					return nil, nil
+				}
+			},
+			expectedFlows: []db.Flow{},
+		},
+		{
 			name:      "Database Error on GetProductById",
 			productID: 1,
 			mockSetup: func(m *mockFlowQuerier) {
