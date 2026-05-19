@@ -53,6 +53,7 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 			u.Delete("/", productHandler.DeleteProduct)
 			u.Put("/", productHandler.UpdateProduct)
 			u.Post("/flows", flowHandler.CreateFlow)
+			u.Get("/flows", flowHandler.GetFlowsByProduct)
 		})
 
 	})

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"products/internal/flow/db"
 	"testing"
 	"time"
 
@@ -14,21 +15,22 @@ import (
 )
 
 type mockFlowQuerier struct {
-	createFlowFunc        func(ctx context.Context, arg CreateFlowParams) (Flow, error)
-	createFlowStepFunc    func(ctx context.Context, arg CreateFlowStepParams) (int64, error)
+	createFlowFunc        func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error)
+	createFlowStepFunc    func(ctx context.Context, arg db.CreateFlowStepParams) (int64, error)
 	deleteFlowFunc        func(ctx context.Context, id int) (int64, error)
 	deleteFlowStepFunc    func(ctx context.Context, id int) (int64, error)
-	getFlowFunc           func(ctx context.Context, id int) (Flow, error)
-	getFlowStepsFunc      func(ctx context.Context, flowID int) ([]FlowStep, error)
-	getFlowsByProductFunc func(ctx context.Context, productID int) ([]GetFlowsByProductRow, error)
-	updateFlowFunc        func(ctx context.Context, arg UpdateFlowParams) (int64, error)
+	getFlowFunc           func(ctx context.Context, id int) (db.Flow, error)
+	getFlowStepsFunc      func(ctx context.Context, flowID int) ([]db.FlowStep, error)
+	getFlowsByProductFunc func(ctx context.Context, productID int) ([]db.Flow, error)
+	getProductByIdFunc    func(ctx context.Context, id int) (int, error)
+	updateFlowFunc        func(ctx context.Context, arg db.UpdateFlowParams) (int64, error)
 }
 
-func (m *mockFlowQuerier) CreateFlow(ctx context.Context, arg CreateFlowParams) (Flow, error) {
+func (m *mockFlowQuerier) CreateFlow(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
 	return m.createFlowFunc(ctx, arg)
 }
 
-func (m *mockFlowQuerier) CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) (int64, error) {
+func (m *mockFlowQuerier) CreateFlowStep(ctx context.Context, arg db.CreateFlowStepParams) (int64, error) {
 	return m.createFlowStepFunc(ctx, arg)
 }
 
@@ -40,19 +42,23 @@ func (m *mockFlowQuerier) DeleteFlowStep(ctx context.Context, id int) (int64, er
 	return m.deleteFlowStepFunc(ctx, id)
 }
 
-func (m *mockFlowQuerier) GetFlow(ctx context.Context, id int) (Flow, error) {
+func (m *mockFlowQuerier) GetFlow(ctx context.Context, id int) (db.Flow, error) {
 	return m.getFlowFunc(ctx, id)
 }
 
-func (m *mockFlowQuerier) GetFlowSteps(ctx context.Context, flowID int) ([]FlowStep, error) {
+func (m *mockFlowQuerier) GetFlowSteps(ctx context.Context, flowID int) ([]db.FlowStep, error) {
 	return m.getFlowStepsFunc(ctx, flowID)
 }
 
-func (m *mockFlowQuerier) GetFlowsByProduct(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
+func (m *mockFlowQuerier) GetFlowsByProduct(ctx context.Context, productID int) ([]db.Flow, error) {
 	return m.getFlowsByProductFunc(ctx, productID)
 }
 
-func (m *mockFlowQuerier) UpdateFlow(ctx context.Context, arg UpdateFlowParams) (int64, error) {
+func (m *mockFlowQuerier) GetProductById(ctx context.Context, id int) (int, error) {
+	return m.getProductByIdFunc(ctx, id)
+}
+
+func (m *mockFlowQuerier) UpdateFlow(ctx context.Context, arg db.UpdateFlowParams) (int64, error) {
 	return m.updateFlowFunc(ctx, arg)
 }
 
@@ -71,14 +77,14 @@ func TestCreateFlow(t *testing.T) {
 			},
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
+				m.createFlowFunc = func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
 					if arg.Name != "Test Flow" {
-						return Flow{}, errors.New("unexpected name")
+						return db.Flow{}, errors.New("unexpected name")
 					}
 					if arg.ProductID != 1 {
-						return Flow{}, errors.New("unexpected product id")
+						return db.Flow{}, errors.New("unexpected product id")
 					}
-					return Flow{ID: 1, Name: arg.Name, ProductID: arg.ProductID}, nil
+					return db.Flow{ID: 1, Name: arg.Name, ProductID: arg.ProductID}, nil
 				}
 			},
 			expectedStatus: http.StatusCreated,
@@ -104,8 +110,8 @@ func TestCreateFlow(t *testing.T) {
 			},
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
-					return Flow{}, errors.New("db error")
+				m.createFlowFunc = func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
+					return db.Flow{}, errors.New("db error")
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -117,16 +123,16 @@ func TestCreateFlow(t *testing.T) {
 			},
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
+				m.createFlowFunc = func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
 					deadline, ok := ctx.Deadline()
 					if !ok {
-						return Flow{}, errors.New("deadline not set")
+						return db.Flow{}, errors.New("deadline not set")
 					}
 					diff := time.Until(deadline)
 					if diff < 4900*time.Millisecond || diff > 5100*time.Millisecond {
-						return Flow{}, errors.New("deadline not approximately 5s")
+						return db.Flow{}, errors.New("deadline not approximately 5s")
 					}
-					return Flow{ID: 1, Name: arg.Name, ProductID: arg.ProductID}, nil
+					return db.Flow{ID: 1, Name: arg.Name, ProductID: arg.ProductID}, nil
 				}
 			},
 			expectedStatus: http.StatusCreated,
@@ -147,8 +153,8 @@ func TestCreateFlow(t *testing.T) {
 			},
 			pathID: "999",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.createFlowFunc = func(ctx context.Context, arg CreateFlowParams) (Flow, error) {
-					return Flow{}, pgx.ErrNoRows
+				m.createFlowFunc = func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
 				}
 			},
 			expectedStatus: http.StatusNotFound,
@@ -161,7 +167,7 @@ func TestCreateFlow(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{queries: mock}
+			h := &flowHandler{flowService: &service{queries: mock}}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
@@ -185,7 +191,7 @@ func TestCreateFlow(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusCreated {
-				var flow Flow
+				var flow db.Flow
 				if err := json.NewDecoder(rr.Body).Decode(&flow); err != nil {
 					t.Fatalf("failed to decode response: %v", err)
 				}
@@ -211,11 +217,11 @@ func TestGetFlowById(t *testing.T) {
 			name:   "Success",
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (Flow, error) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
 					if id != 1 {
-						return Flow{}, errors.New("unexpected id")
+						return db.Flow{}, errors.New("unexpected id")
 					}
-					return Flow{ID: 1, Name: "Test Flow", ProductID: 10}, nil
+					return db.Flow{ID: 1, Name: "Test Flow", ProductID: 10}, nil
 				}
 			},
 			expectedStatus: http.StatusOK,
@@ -230,8 +236,8 @@ func TestGetFlowById(t *testing.T) {
 			name:   "Flow Not Found",
 			pathID: "99",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (Flow, error) {
-					return Flow{}, pgx.ErrNoRows
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
 				}
 			},
 			expectedStatus: http.StatusNotFound,
@@ -240,8 +246,8 @@ func TestGetFlowById(t *testing.T) {
 			name:   "Database Error",
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (Flow, error) {
-					return Flow{}, errors.New("db error")
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, errors.New("db error")
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -254,7 +260,7 @@ func TestGetFlowById(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{queries: mock}
+			h := &flowHandler{flowService: &service{queries: mock}}
 
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/flows/1", nil)
 			req.SetPathValue("id", tt.pathID)
@@ -267,12 +273,119 @@ func TestGetFlowById(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusOK {
-				var flow Flow
+				var flow db.Flow
 				if err := json.NewDecoder(rr.Body).Decode(&flow); err != nil {
 					t.Fatalf("failed to decode response: %v", err)
 				}
 				if flow.ID != 1 {
 					t.Errorf("expected flow ID 1, got %v", flow.ID)
+				}
+				if rr.Header().Get("Content-Type") != "application/json" {
+					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))
+				}
+			}
+		})
+	}
+}
+
+func TestGetFlowsByProduct(t *testing.T) {
+	tests := []struct {
+		name           string
+		pathID         string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+		expectedCount  int
+	}{
+		{
+			name:   "Success",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 1, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]db.Flow, error) {
+					if productID != 1 {
+						return nil, errors.New("unexpected product id")
+					}
+					return []db.Flow{
+						{ID: 1, Name: "Flow 1"},
+						{ID: 2, Name: "Flow 2"},
+					}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  2,
+		},
+		{
+			name:           "Invalid Product ID",
+			pathID:         "invalid",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "No Flows Found",
+			pathID: "2",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 2, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]db.Flow, error) {
+					return nil, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  0,
+		},
+		{
+			name:   "Product Not Found",
+			pathID: "3",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 0, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:   "Database Error",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 1, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]db.Flow, error) {
+					return nil, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			h := &flowHandler{flowService: &service{queries: mock}}
+
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/products/1/flows", nil)
+			req.SetPathValue("id", tt.pathID)
+			rr := httptest.NewRecorder()
+
+			h.GetFlowsByProduct(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusOK {
+				var flows []db.Flow
+				if err := json.NewDecoder(rr.Body).Decode(&flows); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if len(flows) != tt.expectedCount {
+					t.Errorf("expected %d flows, got %v", tt.expectedCount, len(flows))
 				}
 				if rr.Header().Get("Content-Type") != "application/json" {
 					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))

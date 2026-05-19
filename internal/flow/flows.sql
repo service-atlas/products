@@ -4,7 +4,7 @@ VALUES(@product_id, @name, @description, @time_stamp, @time_stamp)
 RETURNING *;
 
 -- name: GetFlowsByProduct :many
-SELECT id, name, description, created_at, updated_at FROM flows WHERE product_id = @product_id;
+SELECT id, product_id, name, description, created_at, updated_at FROM flows WHERE product_id = @product_id;
 
 -- name: GetFlow :one
 SELECT id, product_id, name, description, created_at, updated_at FROM flows WHERE id = @id;
@@ -23,3 +23,6 @@ INSERT INTO flow_steps(flow_id, current, next) VALUES(@flow_id, @current, @next)
 
 -- name: DeleteFlowStep :execrows
 DELETE FROM flow_steps WHERE id = @id;
+
+-- name: GetProductById :one
+SELECT id FROM products WHERE id = @id;

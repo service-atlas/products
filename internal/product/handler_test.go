@@ -300,7 +300,7 @@ func TestGetProductsByPlatform(t *testing.T) {
 			h := &productHandler{queries: mock}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms/"+tt.platformID+"/products", nil)
-			req.SetPathValue("platform_id", tt.platformID)
+			req.SetPathValue("id", tt.platformID)
 			rr := httptest.NewRecorder()
 
 			h.GetProductsByPlatform(rr, req)

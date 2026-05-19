@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: flows.sql
 
-package flow
+package db
 
 import (
 	"context"
@@ -133,28 +133,21 @@ func (q *Queries) GetFlowSteps(ctx context.Context, flowID int) ([]FlowStep, err
 }
 
 const getFlowsByProduct = `-- name: GetFlowsByProduct :many
-SELECT id, name, description, created_at, updated_at FROM flows WHERE product_id = $1
+SELECT id, product_id, name, description, created_at, updated_at FROM flows WHERE product_id = $1
 `
 
-type GetFlowsByProductRow struct {
-	ID          int                `json:"id"`
-	Name        string             `json:"name"`
-	Description pgtype.Text        `json:"description"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetFlowsByProduct(ctx context.Context, productID int) ([]GetFlowsByProductRow, error) {
+func (q *Queries) GetFlowsByProduct(ctx context.Context, productID int) ([]Flow, error) {
 	rows, err := q.db.Query(ctx, getFlowsByProduct, productID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetFlowsByProductRow
+	var items []Flow
 	for rows.Next() {
-		var i GetFlowsByProductRow
+		var i Flow
 		if err := rows.Scan(
 			&i.ID,
+			&i.ProductID,
 			&i.Name,
 			&i.Description,
 			&i.CreatedAt,
@@ -168,6 +161,16 @@ func (q *Queries) GetFlowsByProduct(ctx context.Context, productID int) ([]GetFl
 		return nil, err
 	}
 	return items, nil
+}
+
+const getProductById = `-- name: GetProductById :one
+SELECT id FROM products WHERE id = $1
+`
+
+func (q *Queries) GetProductById(ctx context.Context, id int) (int, error) {
+	row := q.db.QueryRow(ctx, getProductById, id)
+	err := row.Scan(&id)
+	return id, err
 }
 
 const updateFlow = `-- name: UpdateFlow :execrows

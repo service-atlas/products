@@ -1,30 +1,34 @@
 package flow
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 	"products/internal"
+	"products/internal/flow/db"
 	"strings"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
-func NewHandler(db DBTX) Handler {
-	queries := &Queries{
-		db: db,
+func NewHandler(dbConn db.DBTX) Handler {
+	queries := db.New(dbConn)
+	service := &service{
+		queries: queries,
 	}
 	return &flowHandler{
-		queries: queries,
+		flowService: service,
 	}
 }
 
+type flowService interface {
+	CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error)
+	GetFlowById(ctx context.Context, id int) (db.Flow, error)
+	GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error)
+}
+
 type flowHandler struct {
-	queries Querier
+	flowService flowService
 }
 
 func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
@@ -33,40 +37,28 @@ func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
 		return
 	}
+
 	req := &createFlowRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
 		return
 	}
 	if strings.TrimSpace(req.Name) == "" {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Name is required"}, http.StatusBadRequest)
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Flow name cannot be empty"}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("flow creation timed out"))
 	defer cancel()
-	flow, err := h.queries.CreateFlow(contextWithTimeOut, req.ToParams(id))
+	flow, err := h.flowService.CreateFlow(contextWithTimeOut, *req, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return
 		}
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create flow"}, http.StatusInternalServerError)
 		return
 	}
-
-	var buf bytes.Buffer
-	err = json.NewEncoder(&buf).Encode(flow)
-	if err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write(buf.Bytes())
-	if err != nil {
-		slog.Error("Failed to write response", "request", r.URL.Path, "error", err)
-	}
+	internal.WriteJSONResponse(w, r, http.StatusCreated, flow)
 }
 
 func (h *flowHandler) GetFlowById(w http.ResponseWriter, r *http.Request) {
@@ -77,25 +69,34 @@ func (h *flowHandler) GetFlowById(w http.ResponseWriter, r *http.Request) {
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("fetching flow timed out"))
 	defer cancel()
-	flow, err := h.queries.GetFlow(contextWithTimeOut, id)
+	flow, err := h.flowService.GetFlowById(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Flow not found", Instance: r.URL.Path}, http.StatusNotFound)
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flow", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
-	var buf bytes.Buffer
-	err = json.NewEncoder(&buf).Encode(flow)
-	if err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to encode response"}, http.StatusInternalServerError)
+	internal.WriteJSONResponse(w, r, http.StatusOK, flow)
+}
+
+func (h *flowHandler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(buf.Bytes())
+	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("fetching flows timed out"))
+	defer cancel()
+	flows, err := h.flowService.GetFlowsByProduct(contextWithTimeOut, id)
 	if err != nil {
-		slog.Error("Failed to write response", "request", r.URL.Path, "error", err)
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			return
+		}
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flows"}, http.StatusInternalServerError)
+		return
 	}
+	internal.WriteJSONResponse(w, r, http.StatusOK, flows)
 }

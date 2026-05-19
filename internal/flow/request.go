@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"products/internal/flow/db"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -11,8 +12,8 @@ type createFlowRequest struct {
 	Description string `json:"description"`
 }
 
-func (r *createFlowRequest) ToParams(productID int) CreateFlowParams {
-	return CreateFlowParams{
+func (r *createFlowRequest) ToParams(productID int) db.CreateFlowParams {
+	return db.CreateFlowParams{
 		Name:      r.Name,
 		ProductID: productID,
 		Description: pgtype.Text{
