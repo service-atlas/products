@@ -294,6 +294,7 @@ func TestGetFlowsByProduct(t *testing.T) {
 		pathID         string
 		mockSetup      func(m *mockFlowQuerier)
 		expectedStatus int
+		expectedCount  int
 	}{
 		{
 			name:   "Success",
@@ -313,6 +314,7 @@ func TestGetFlowsByProduct(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
+			expectedCount:  2,
 		},
 		{
 			name:           "Invalid Product ID",
@@ -323,6 +325,20 @@ func TestGetFlowsByProduct(t *testing.T) {
 		{
 			name:   "No Flows Found",
 			pathID: "2",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 2, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, productID int) ([]db.Flow, error) {
+					return nil, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  0,
+		},
+		{
+			name:   "Product Not Found",
+			pathID: "3",
 			mockSetup: func(m *mockFlowQuerier) {
 				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
 					return 0, pgx.ErrNoRows
@@ -368,8 +384,8 @@ func TestGetFlowsByProduct(t *testing.T) {
 				if err := json.NewDecoder(rr.Body).Decode(&flows); err != nil {
 					t.Fatalf("failed to decode response: %v", err)
 				}
-				if len(flows) != 2 {
-					t.Errorf("expected 2 flows, got %v", len(flows))
+				if len(flows) != tt.expectedCount {
+					t.Errorf("expected %d flows, got %v", tt.expectedCount, len(flows))
 				}
 				if rr.Header().Get("Content-Type") != "application/json" {
 					t.Errorf("expected Content-Type application/json, got %v", rr.Header().Get("Content-Type"))
