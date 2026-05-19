@@ -77,6 +77,16 @@ func TestWriteJSONResponse(t *testing.T) {
 				if w.Header().Get("Content-Type") != "application/problem+json" {
 					t.Errorf("expected Content-Type application/problem+json, got %s", w.Header().Get("Content-Type"))
 				}
+
+				var envelope ErrorEnvelope
+				if err := json.NewDecoder(w.Body).Decode(&envelope); err != nil {
+					t.Fatalf("failed to decode error response: %v", err)
+				}
+
+				expectedDetail := "Failed to encode response"
+				if envelope.Detail != expectedDetail {
+					t.Errorf("expected detail %q, got %q", expectedDetail, envelope.Detail)
+				}
 			}
 		})
 	}
