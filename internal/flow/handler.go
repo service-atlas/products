@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+type Handler interface {
+	CreateFlow(w http.ResponseWriter, r *http.Request)
+	GetFlowById(w http.ResponseWriter, r *http.Request)
+	GetFlowsByProduct(w http.ResponseWriter, r *http.Request)
+}
+
 func NewHandler(dbConn db.DBTX) Handler {
 	queries := db.New(dbConn)
 	service := &service{
