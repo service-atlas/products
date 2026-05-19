@@ -104,7 +104,7 @@ func (h *productHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 
 // GetProductsByPlatform fetches products by platform ID.
 func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Request) {
-	platformID, ok := internal.GetIntFromRequestPath("platform_id", r)
+	platformID, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
 		return
