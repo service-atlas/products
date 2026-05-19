@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: platforms.sql
 
-package platform
+package db
 
 import (
 	"context"

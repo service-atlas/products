@@ -6,22 +6,29 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
+	"products/internal/platform/db"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 )
 
-func NewPlatformHandler(db DBTX) Handler {
-	queries := &Queries{
-		db: db,
-	}
+type Handler interface {
+	CreatePlatform(w http.ResponseWriter, r *http.Request)
+	GetPlatforms(w http.ResponseWriter, r *http.Request)
+	GetPlatform(w http.ResponseWriter, r *http.Request)
+	UpdatePlatform(w http.ResponseWriter, r *http.Request)
+	DeletePlatform(w http.ResponseWriter, r *http.Request)
+}
+
+func NewPlatformHandler(dbConn db.DBTX) Handler {
+	queries := db.New(dbConn)
 	return &platformHandler{
 		queries: queries,
 	}
 }
 
 type platformHandler struct {
-	queries Querier
+	queries db.Querier
 }
 
 func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +120,7 @@ func (h *platformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if platforms == nil {
-		platforms = []Platform{}
+		platforms = []db.Platform{}
 	}
 	internal.WriteJSONResponse(w, r, http.StatusOK, platforms)
 }

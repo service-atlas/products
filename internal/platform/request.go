@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"products/internal/platform/db"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -11,8 +12,8 @@ type createPlatformRequest struct {
 	Description string `json:"description"`
 }
 
-func (r *createPlatformRequest) ToParams() CreatePlatformParams {
-	return CreatePlatformParams{
+func (r *createPlatformRequest) ToParams() db.CreatePlatformParams {
+	return db.CreatePlatformParams{
 		Name: r.Name,
 		Description: pgtype.Text{
 			Valid:  r.Description != "",
@@ -31,8 +32,8 @@ type updatePlatformRequest struct {
 	Description string `json:"description"`
 }
 
-func (r *updatePlatformRequest) ToParams(id int) UpdatePlatformParams {
-	return UpdatePlatformParams{
+func (r *updatePlatformRequest) ToParams(id int) db.UpdatePlatformParams {
+	return db.UpdatePlatformParams{
 		ID:   id,
 		Name: r.Name,
 		Description: pgtype.Text{
