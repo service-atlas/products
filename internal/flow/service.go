@@ -47,6 +47,9 @@ func (s *service) GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, err
 	}
 	flows, err := s.queries.GetFlowsByProduct(ctx, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []db.Flow{}, nil
+		}
 		return nil, fmt.Errorf("failed to fetch flows: %w", err)
 	}
 	return flows, nil

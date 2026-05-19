@@ -181,6 +181,42 @@ func TestService_GetFlowsByProduct(t *testing.T) {
 			},
 			expectedError: internal.NewNotFoundError(999, "Product").Error(),
 		},
+		{
+			name:      "No Flows Found",
+			productID: 1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 1, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, id int) ([]db.Flow, error) {
+					return nil, pgx.ErrNoRows
+				}
+			},
+			expectedFlows: []db.Flow{},
+		},
+		{
+			name:      "Database Error on GetProductById",
+			productID: 1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 0, errors.New("db error")
+				}
+			},
+			expectedError: "failed to fetch flows: db error",
+		},
+		{
+			name:      "Database Error on GetFlowsByProduct",
+			productID: 1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getProductByIdFunc = func(ctx context.Context, id int) (int, error) {
+					return 1, nil
+				}
+				m.getFlowsByProductFunc = func(ctx context.Context, id int) ([]db.Flow, error) {
+					return nil, errors.New("db error")
+				}
+			},
+			expectedError: "failed to fetch flows: db error",
+		},
 	}
 
 	for _, tt := range tests {
