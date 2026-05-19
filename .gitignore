@@ -41,3 +41,5 @@ liquibase.properties
 liquibase_libs/
 
 .junie
+
+coverage.out
