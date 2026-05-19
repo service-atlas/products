@@ -6,23 +6,30 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
+	"products/internal/product/db"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 )
 
-func NewProductHandler(db DBTX) Handler {
-	queries := &Queries{
-		db: db,
-	}
+type Handler interface {
+	CreateProduct(w http.ResponseWriter, r *http.Request)
+	GetProductsByPlatform(w http.ResponseWriter, r *http.Request)
+	GetProductById(w http.ResponseWriter, r *http.Request)
+	UpdateProduct(w http.ResponseWriter, r *http.Request)
+	DeleteProduct(w http.ResponseWriter, r *http.Request)
+}
+
+func NewProductHandler(dbConn db.DBTX) Handler {
+	queries := db.New(dbConn)
 	return &productHandler{
 		queries: queries,
 	}
 }
 
 type productHandler struct {
-	queries Querier
+	queries db.Querier
 }
 
 func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +127,7 @@ func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Re
 	}
 
 	if products == nil {
-		products = []Product{}
+		products = []db.Product{}
 	}
 
 	internal.WriteJSONResponse(w, r, http.StatusOK, products)
