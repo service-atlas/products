@@ -8,8 +8,6 @@ import (
 	"products/internal"
 	"products/internal/platform/db"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 type Handler interface {
@@ -23,12 +21,11 @@ type Handler interface {
 func NewPlatformHandler(dbConn db.DBTX) Handler {
 	queries := db.New(dbConn)
 	return &platformHandler{
-		queries: queries,
+		service: postgresService{db: queries},
 	}
 }
 
 type platformHandler struct {
-	queries db.Querier
 	service platformService
 }
 
@@ -77,9 +74,9 @@ func (h *platformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	_, err := h.queries.UpdatePlatform(contextWithTimeOut, req.ToParams(id))
+	_, err := h.service.UpdatePlatform(contextWithTimeOut, req, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}
@@ -98,9 +95,9 @@ func (h *platformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	_, err := h.queries.DeletePlatform(contextWithTimeOut, id)
+	_, err := h.service.DeletePlatform(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}
@@ -116,7 +113,7 @@ func (h *platformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 func (h *platformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	platforms, err := h.queries.GetPlatforms(contextWithTimeOut)
+	platforms, err := h.service.GetPlatforms(contextWithTimeOut)
 	if err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch platforms"}, http.StatusInternalServerError)
 		return
@@ -135,9 +132,9 @@ func (h *platformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	platform, err := h.queries.GetPlatform(contextWithTimeOut, id)
+	platform, err := h.service.GetPlatform(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}

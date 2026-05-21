@@ -9,55 +9,52 @@ import (
 	"net/http/httptest"
 	"products/internal"
 	"products/internal/platform/db"
-	"strconv"
 	"testing"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type mockPlatformQuerier struct {
-	err            error
-	createPlatform func(ctx context.Context, arg db.CreatePlatformParams) error
-	getPlatforms   func(ctx context.Context) ([]db.Platform, error)
+type mockPlatformService struct {
+	createPlatform func(ctx context.Context, req createPlatformRequest) (db.Platform, error)
 	getPlatform    func(ctx context.Context, id int) (db.Platform, error)
+	getPlatforms   func(ctx context.Context) ([]db.Platform, error)
+	updatePlatform func(ctx context.Context, req updatePlatformRequest, id int) (int, error)
 	deletePlatform func(ctx context.Context, id int) (int, error)
-	updatePlatform func(ctx context.Context, arg db.UpdatePlatformParams) (int, error)
 }
 
-func (m *mockPlatformQuerier) CreatePlatform(ctx context.Context, arg db.CreatePlatformParams) error {
+func (m *mockPlatformService) CreatePlatform(ctx context.Context, req createPlatformRequest) (db.Platform, error) {
 	if m.createPlatform != nil {
-		return m.createPlatform(ctx, arg)
+		return m.createPlatform(ctx, req)
 	}
-	return m.err
+	return db.Platform{}, nil
 }
 
-func (m *mockPlatformQuerier) DeletePlatform(ctx context.Context, id int) (int, error) {
-	if m.deletePlatform != nil {
-		return m.deletePlatform(ctx, id)
-	}
-	return -1, m.err
-}
-
-func (m *mockPlatformQuerier) GetPlatform(ctx context.Context, id int) (db.Platform, error) {
+func (m *mockPlatformService) GetPlatform(ctx context.Context, id int) (db.Platform, error) {
 	if m.getPlatform != nil {
 		return m.getPlatform(ctx, id)
 	}
-	return db.Platform{}, m.err
+	return db.Platform{}, nil
 }
 
-func (m *mockPlatformQuerier) GetPlatforms(ctx context.Context) ([]db.Platform, error) {
+func (m *mockPlatformService) GetPlatforms(ctx context.Context) ([]db.Platform, error) {
 	if m.getPlatforms != nil {
 		return m.getPlatforms(ctx)
 	}
-	return nil, m.err
+	return nil, nil
 }
 
-func (m *mockPlatformQuerier) UpdatePlatform(ctx context.Context, arg db.UpdatePlatformParams) (int, error) {
+func (m *mockPlatformService) UpdatePlatform(ctx context.Context, req updatePlatformRequest, id int) (int, error) {
 	if m.updatePlatform != nil {
-		return m.updatePlatform(ctx, arg)
+		return m.updatePlatform(ctx, req, id)
 	}
-	return -1, m.err
+	return 0, nil
+}
+
+func (m *mockPlatformService) DeletePlatform(ctx context.Context, id int) (int, error) {
+	if m.deletePlatform != nil {
+		return m.deletePlatform(ctx, id)
+	}
+	return 0, nil
 }
 
 func TestCreatePlatform(t *testing.T) {
@@ -104,8 +101,12 @@ func TestCreatePlatform(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mDB := &mockPlatformQuerier{err: tt.dbErr}
-			h := &platformHandler{queries: mDB}
+			mSvc := &mockPlatformService{
+				createPlatform: func(ctx context.Context, req createPlatformRequest) (db.Platform, error) {
+					return db.Platform{}, tt.dbErr
+				},
+			}
+			h := &platformHandler{service: mSvc}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
@@ -158,13 +159,12 @@ func TestGetPlatforms(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mDB := &mockPlatformQuerier{
-				err: tt.dbErr,
+			mSvc := &mockPlatformService{
 				getPlatforms: func(ctx context.Context) ([]db.Platform, error) {
 					return tt.platforms, tt.dbErr
 				},
 			}
-			h := &platformHandler{queries: mDB}
+			h := &platformHandler{service: mSvc}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms", nil)
 			rr := httptest.NewRecorder()
@@ -229,7 +229,7 @@ func TestGetPlatform(t *testing.T) {
 			name:           "Not Found",
 			id:             "999",
 			dbPlatform:     db.Platform{},
-			dbErr:          pgx.ErrNoRows,
+			dbErr:          internal.NewNotFoundError(999, "Platform"),
 			expectedStatus: http.StatusNotFound,
 		},
 		{
@@ -243,13 +243,12 @@ func TestGetPlatform(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mDB := &mockPlatformQuerier{
-				err: tt.dbErr,
+			mSvc := &mockPlatformService{
 				getPlatform: func(ctx context.Context, id int) (db.Platform, error) {
 					return tt.dbPlatform, tt.dbErr
 				},
 			}
-			h := &platformHandler{queries: mDB}
+			h := &platformHandler{service: mSvc}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -305,7 +304,7 @@ func TestDeletePlatform(t *testing.T) {
 		{
 			name:           "DB Error (pgx.ErrNoRows)",
 			id:             "1",
-			dbErr:          pgx.ErrNoRows,
+			dbErr:          internal.NewNotFoundError(1, "Platform"),
 			expectedStatus: http.StatusNotFound,
 			expectedBody:   "Platform not found",
 		},
@@ -324,23 +323,19 @@ func TestDeletePlatform(t *testing.T) {
 		{
 			name:           "Not Found",
 			id:             "999",
-			dbErr:          pgx.ErrNoRows,
+			dbErr:          internal.NewNotFoundError(999, "Platform"),
 			expectedStatus: http.StatusNotFound,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mDB := &mockPlatformQuerier{
-				err: tt.dbErr,
+			mSvc := &mockPlatformService{
 				deletePlatform: func(ctx context.Context, id int) (int, error) {
-					if i, e := strconv.Atoi(tt.id); e == nil {
-						return int(i), tt.dbErr
-					}
-					return -1, tt.dbErr
+					return id, tt.dbErr
 				},
 			}
-			h := &platformHandler{queries: mDB}
+			h := &platformHandler{service: mSvc}
 
 			req := httptest.NewRequest(http.MethodDelete, "/api/platforms/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -462,7 +457,7 @@ func TestUpdatePlatform(t *testing.T) {
 				ID:   999,
 				Name: "Non-existent",
 			},
-			dbErr:          pgx.ErrNoRows,
+			dbErr:          internal.NewNotFoundError(999, "Platform"),
 			expectedStatus: http.StatusNotFound,
 		},
 		{
@@ -479,31 +474,24 @@ func TestUpdatePlatform(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mDB := &mockPlatformQuerier{
-				err: tt.dbErr,
-				updatePlatform: func(ctx context.Context, arg db.UpdatePlatformParams) (int, error) {
+			mSvc := &mockPlatformService{
+				updatePlatform: func(ctx context.Context, req updatePlatformRequest, id int) (int, error) {
 					if tt.name == "Success" {
 						expectedBody := tt.requestBody.(db.Platform)
-						if arg.ID != expectedBody.ID {
-							t.Errorf("expected ID %d, got %d", expectedBody.ID, arg.ID)
+						if id != expectedBody.ID {
+							t.Errorf("expected ID %d, got %d", expectedBody.ID, id)
 						}
-						if arg.Name != expectedBody.Name {
-							t.Errorf("expected Name %s, got %s", expectedBody.Name, arg.Name)
+						if req.Name != expectedBody.Name {
+							t.Errorf("expected Name %s, got %s", expectedBody.Name, req.Name)
 						}
-						if arg.Description.String != expectedBody.Description.String {
-							t.Errorf("expected Description %s, got %s", expectedBody.Description.String, arg.Description.String)
-						}
-						if !arg.UpdatedAt.Valid {
-							t.Error("expected UpdatedAt to be valid")
-						}
-						if arg.UpdatedAt.Time.IsZero() {
-							t.Error("expected UpdatedAt to be non-zero")
+						if req.Description != expectedBody.Description.String {
+							t.Errorf("expected Description %s, got %s", expectedBody.Description.String, req.Description)
 						}
 					}
-					return arg.ID, tt.dbErr
+					return id, tt.dbErr
 				},
 			}
-			h := &platformHandler{queries: mDB}
+			h := &platformHandler{service: mSvc}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
