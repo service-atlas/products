@@ -2,14 +2,14 @@
 // versions:
 //   sqlc v1.30.0
 
-package platform
+package db
 
 import (
 	"context"
 )
 
 type Querier interface {
-	CreatePlatform(ctx context.Context, arg CreatePlatformParams) error
+	CreatePlatform(ctx context.Context, arg CreatePlatformParams) (Platform, error)
 	DeletePlatform(ctx context.Context, id int) (int, error)
 	GetPlatform(ctx context.Context, id int) (Platform, error)
 	GetPlatforms(ctx context.Context) ([]Platform, error)

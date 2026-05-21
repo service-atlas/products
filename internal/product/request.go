@@ -1,6 +1,7 @@
 package product
 
 import (
+	"products/internal/product/db"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,8 +13,8 @@ type createProductRequest struct {
 	Description string `json:"description"`
 }
 
-func (r *createProductRequest) ToParams() CreateProductParams {
-	return CreateProductParams{
+func (r *createProductRequest) ToParams() db.CreateProductParams {
+	return db.CreateProductParams{
 		Name:       r.Name,
 		PlatformID: r.PlatformID,
 		Description: pgtype.Text{
@@ -33,8 +34,8 @@ type updateProductRequest struct {
 	Description string `json:"description"`
 }
 
-func (r *updateProductRequest) ToParams(id int) UpdateProductParams {
-	return UpdateProductParams{
+func (r *updateProductRequest) ToParams(id int) db.UpdateProductParams {
+	return db.UpdateProductParams{
 		ID:         id,
 		PlatformID: r.PlatformID,
 		Name:       r.Name,

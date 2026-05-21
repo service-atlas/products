@@ -10,11 +10,17 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type service struct {
+type flowService interface {
+	CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error)
+	GetFlowById(ctx context.Context, id int) (db.Flow, error)
+	GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error)
+}
+
+type postgresService struct {
 	queries db.Querier
 }
 
-func (s *service) CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error) {
+func (s *postgresService) CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error) {
 
 	flow, err := s.queries.CreateFlow(ctx, req.ToParams(id))
 	if err != nil {
@@ -26,7 +32,7 @@ func (s *service) CreateFlow(ctx context.Context, req createFlowRequest, id int)
 	return flow, nil
 }
 
-func (s *service) GetFlowById(ctx context.Context, id int) (db.Flow, error) {
+func (s *postgresService) GetFlowById(ctx context.Context, id int) (db.Flow, error) {
 	flow, err := s.queries.GetFlow(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -37,7 +43,7 @@ func (s *service) GetFlowById(ctx context.Context, id int) (db.Flow, error) {
 	return flow, nil
 }
 
-func (s *service) GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error) {
+func (s *postgresService) GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error) {
 	_, err := s.queries.GetProductById(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

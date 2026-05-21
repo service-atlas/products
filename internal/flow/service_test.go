@@ -66,7 +66,7 @@ func TestService_CreateFlow(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &service{queries: mock}
+			s := &postgresService{queries: mock}
 
 			flow, err := s.CreateFlow(context.Background(), tt.req, tt.productID)
 
@@ -126,7 +126,7 @@ func TestService_GetFlowById(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &service{queries: mock}
+			s := &postgresService{queries: mock}
 
 			flow, err := s.GetFlowById(context.Background(), tt.id)
 
@@ -238,7 +238,7 @@ func TestService_GetFlowsByProduct(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &service{queries: mock}
+			s := &postgresService{queries: mock}
 
 			flows, err := s.GetFlowsByProduct(context.Background(), tt.productID)
 

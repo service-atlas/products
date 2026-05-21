@@ -15,10 +15,11 @@ test-full:
   go test -v ./...
 
 # Run tests with short output and coverage
+[windows]
 test-cover:
-  echo "Running tests with coverage"
-  go test --short -v ./... -covermode=count -coverprofile="coverage.out"
-  go tool cover -func="coverage.out"
+    echo "Running tests with coverage"
+    $packages = go list ./... | Where-Object { $_ -notmatch '/db' }; go test --short -v $packages -covermode=count -coverprofile='coverage.out'
+    go tool cover -func="coverage.out"
 
 # Run all tests with coverage
 test-full-cover:

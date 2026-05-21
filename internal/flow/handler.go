@@ -11,20 +11,20 @@ import (
 	"time"
 )
 
+type Handler interface {
+	CreateFlow(w http.ResponseWriter, r *http.Request)
+	GetFlowById(w http.ResponseWriter, r *http.Request)
+	GetFlowsByProduct(w http.ResponseWriter, r *http.Request)
+}
+
 func NewHandler(dbConn db.DBTX) Handler {
 	queries := db.New(dbConn)
-	service := &service{
+	service := &postgresService{
 		queries: queries,
 	}
 	return &flowHandler{
 		flowService: service,
 	}
-}
-
-type flowService interface {
-	CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error)
-	GetFlowById(ctx context.Context, id int) (db.Flow, error)
-	GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error)
 }
 
 type flowHandler struct {

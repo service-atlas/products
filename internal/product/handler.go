@@ -6,23 +6,28 @@ import (
 	"errors"
 	"net/http"
 	"products/internal"
+	"products/internal/product/db"
 	"strings"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
-func NewProductHandler(db DBTX) Handler {
-	queries := &Queries{
-		db: db,
-	}
+type Handler interface {
+	CreateProduct(w http.ResponseWriter, r *http.Request)
+	GetProductsByPlatform(w http.ResponseWriter, r *http.Request)
+	GetProductById(w http.ResponseWriter, r *http.Request)
+	UpdateProduct(w http.ResponseWriter, r *http.Request)
+	DeleteProduct(w http.ResponseWriter, r *http.Request)
+}
+
+func NewProductHandler(dbConn db.DBTX) Handler {
+	queries := db.New(dbConn)
 	return &productHandler{
-		queries: queries,
+		service: &postgresService{queries: queries},
 	}
 }
 
 type productHandler struct {
-	queries Querier
+	service productService
 }
 
 func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +46,7 @@ func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	if err := h.queries.CreateProduct(contextWithTimeOut, req.ToParams()); err != nil {
+	if err := h.service.CreateProduct(contextWithTimeOut, req); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create product"}, http.StatusInternalServerError)
 		return
 	}
@@ -57,8 +62,8 @@ func (h *productHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	if _, err := h.queries.DeleteProduct(contextWithTimeOut, id); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+	if _, err := h.service.DeleteProduct(contextWithTimeOut, id); err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
 			return
 		}
@@ -90,8 +95,8 @@ func (h *productHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	if _, err := h.queries.UpdateProduct(ctx, req.ToParams(id)); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+	if _, err := h.service.UpdateProduct(ctx, req, id); err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
 			return
 		}
@@ -113,14 +118,14 @@ func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Re
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	products, err := h.queries.GetProductsByPlatform(ctx, platformID)
+	products, err := h.service.GetProductsByPlatform(ctx, platformID)
 	if err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch products"}, http.StatusInternalServerError)
 		return
 	}
 
 	if products == nil {
-		products = []Product{}
+		products = []db.Product{}
 	}
 
 	internal.WriteJSONResponse(w, r, http.StatusOK, products)
@@ -135,9 +140,9 @@ func (h *productHandler) GetProductById(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	product, err := h.queries.GetProductById(ctx, id)
+	product, err := h.service.GetProductById(ctx, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
 			return
 		}

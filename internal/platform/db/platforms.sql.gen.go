@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: platforms.sql
 
-package platform
+package db
 
 import (
 	"context"
@@ -11,8 +11,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createPlatform = `-- name: CreatePlatform :exec
-INSERT INTO platforms (name, description, created_at, updated_at) VALUES ($1, $2, $3, $3)
+const createPlatform = `-- name: CreatePlatform :one
+INSERT INTO platforms (name, description, created_at, updated_at)
+VALUES ($1, $2, $3, $3)
+RETURNING id, name, description, created_at, updated_at
 `
 
 type CreatePlatformParams struct {
@@ -21,9 +23,17 @@ type CreatePlatformParams struct {
 	Timestamp   pgtype.Timestamptz `json:"timestamp"`
 }
 
-func (q *Queries) CreatePlatform(ctx context.Context, arg CreatePlatformParams) error {
-	_, err := q.db.Exec(ctx, createPlatform, arg.Name, arg.Description, arg.Timestamp)
-	return err
+func (q *Queries) CreatePlatform(ctx context.Context, arg CreatePlatformParams) (Platform, error) {
+	row := q.db.QueryRow(ctx, createPlatform, arg.Name, arg.Description, arg.Timestamp)
+	var i Platform
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const deletePlatform = `-- name: DeletePlatform :one
