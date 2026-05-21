@@ -83,6 +83,20 @@ func TestPostgresService_GetProductsByPlatform(t *testing.T) {
 			t.Errorf("expected 1 product, got %d", len(products))
 		}
 	})
+
+	t.Run("DB Error", func(t *testing.T) {
+		dbErr := errors.New("db error")
+		m := &mockQuerier{
+			getProductsByPlatform: func(ctx context.Context, platformID int) ([]db.Product, error) {
+				return nil, dbErr
+			},
+		}
+		s := postgresService{queries: m}
+		_, err := s.GetProductsByPlatform(ctx, 1)
+		if !errors.Is(err, dbErr) {
+			t.Errorf("expected error %v, got %v", dbErr, err)
+		}
+	})
 }
 
 func TestPostgresService_GetProductById(t *testing.T) {
@@ -114,6 +128,20 @@ func TestPostgresService_GetProductById(t *testing.T) {
 		_, err := s.GetProductById(ctx, 1)
 		if !errors.Is(err, internal.NotFoundError{}) {
 			t.Errorf("expected NotFoundError, got %v", err)
+		}
+	})
+
+	t.Run("DB Error", func(t *testing.T) {
+		dbErr := errors.New("db error")
+		m := &mockQuerier{
+			getProductById: func(ctx context.Context, id int) (db.Product, error) {
+				return db.Product{}, dbErr
+			},
+		}
+		s := postgresService{queries: m}
+		_, err := s.GetProductById(ctx, 1)
+		if !errors.Is(err, dbErr) {
+			t.Errorf("expected error %v, got %v", dbErr, err)
 		}
 	})
 }
@@ -150,6 +178,20 @@ func TestPostgresService_UpdateProduct(t *testing.T) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})
+
+	t.Run("DB Error", func(t *testing.T) {
+		dbErr := errors.New("db error")
+		m := &mockQuerier{
+			updateProduct: func(ctx context.Context, arg db.UpdateProductParams) (int, error) {
+				return 0, dbErr
+			},
+		}
+		s := postgresService{queries: m}
+		_, err := s.UpdateProduct(ctx, req, 1)
+		if !errors.Is(err, dbErr) {
+			t.Errorf("expected error %v, got %v", dbErr, err)
+		}
+	})
 }
 
 func TestPostgresService_DeleteProduct(t *testing.T) {
@@ -181,6 +223,20 @@ func TestPostgresService_DeleteProduct(t *testing.T) {
 		_, err := s.DeleteProduct(ctx, 1)
 		if !errors.Is(err, internal.NotFoundError{}) {
 			t.Errorf("expected NotFoundError, got %v", err)
+		}
+	})
+
+	t.Run("DB Error", func(t *testing.T) {
+		dbErr := errors.New("db error")
+		m := &mockQuerier{
+			deleteProduct: func(ctx context.Context, id int) (int, error) {
+				return 0, dbErr
+			},
+		}
+		s := postgresService{queries: m}
+		_, err := s.DeleteProduct(ctx, 1)
+		if !errors.Is(err, dbErr) {
+			t.Errorf("expected error %v, got %v", dbErr, err)
 		}
 	})
 }

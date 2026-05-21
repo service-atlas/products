@@ -154,10 +154,23 @@ func TestPostgresService_UpdatePlatform(t *testing.T) {
 		}
 	})
 
-	t.Run("Not Found", func(t *testing.T) {
+	t.Run("Not Found (0 rows)", func(t *testing.T) {
 		m := &mockQuerier{
 			updatePlatform: func(ctx context.Context, arg db.UpdatePlatformParams) (int, error) {
 				return 0, nil
+			},
+		}
+		s := postgresService{db: m}
+		_, err := s.UpdatePlatform(ctx, req, 1)
+		if !errors.Is(err, internal.NotFoundError{}) {
+			t.Errorf("expected NotFoundError, got %v", err)
+		}
+	})
+
+	t.Run("Not Found (ErrNoRows)", func(t *testing.T) {
+		m := &mockQuerier{
+			updatePlatform: func(ctx context.Context, arg db.UpdatePlatformParams) (int, error) {
+				return 0, pgx.ErrNoRows
 			},
 		}
 		s := postgresService{db: m}
@@ -187,10 +200,23 @@ func TestPostgresService_DeletePlatform(t *testing.T) {
 		}
 	})
 
-	t.Run("Not Found", func(t *testing.T) {
+	t.Run("Not Found (0 rows)", func(t *testing.T) {
 		m := &mockQuerier{
 			deletePlatform: func(ctx context.Context, id int) (int, error) {
 				return 0, nil
+			},
+		}
+		s := postgresService{db: m}
+		_, err := s.DeletePlatform(ctx, 1)
+		if !errors.Is(err, internal.NotFoundError{}) {
+			t.Errorf("expected NotFoundError, got %v", err)
+		}
+	})
+
+	t.Run("Not Found (ErrNoRows)", func(t *testing.T) {
+		m := &mockQuerier{
+			deletePlatform: func(ctx context.Context, id int) (int, error) {
+				return 0, pgx.ErrNoRows
 			},
 		}
 		s := postgresService{db: m}

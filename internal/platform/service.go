@@ -47,6 +47,9 @@ func (p postgresService) GetPlatforms(ctx context.Context) ([]db.Platform, error
 func (p postgresService) UpdatePlatform(ctx context.Context, req updatePlatformRequest, id int) (int, error) {
 	rows, err := p.db.UpdatePlatform(ctx, req.ToParams(id))
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, internal.NewNotFoundError(id, "Platform")
+		}
 		return 0, err
 	}
 	if rows == 0 {
@@ -58,6 +61,9 @@ func (p postgresService) UpdatePlatform(ctx context.Context, req updatePlatformR
 func (p postgresService) DeletePlatform(ctx context.Context, id int) (int, error) {
 	rows, err := p.db.DeletePlatform(ctx, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, internal.NewNotFoundError(id, "Platform")
+		}
 		return 0, err
 	}
 	if rows == 0 {
