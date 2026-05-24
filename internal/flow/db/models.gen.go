@@ -18,8 +18,12 @@ type Flow struct {
 }
 
 type FlowStep struct {
-	ID      int         `json:"id"`
-	FlowID  int         `json:"flow_id"`
-	Current pgtype.UUID `json:"current"`
-	Next    pgtype.UUID `json:"next"`
+	ID        int                `json:"id"`
+	FlowID    int                `json:"flow_id"`
+	Target    pgtype.Text        `json:"target"`
+	Protocol  pgtype.Text        `json:"protocol"`
+	Current   pgtype.UUID        `json:"current"`
+	Next      pgtype.UUID        `json:"next"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }

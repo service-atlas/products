@@ -145,6 +145,12 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: target
+                  type: TEXT
+              - column:
+                  name: protocol
+                  type: VARCHAR(200)
+              - column:
                   name: current
                   type: UUID
                   constraints:
@@ -154,6 +160,18 @@ databaseChangeLog:
                   type: UUID
                   constraints:
                     nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                    default: now()
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                    default: now()
         - addForeignKeyConstraint:
             baseColumnNames: flow_id
             baseTableName: flow_steps

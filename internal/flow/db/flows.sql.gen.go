@@ -44,17 +44,27 @@ func (q *Queries) CreateFlow(ctx context.Context, arg CreateFlowParams) (Flow, e
 }
 
 const createFlowStep = `-- name: CreateFlowStep :execrows
-INSERT INTO flow_steps(flow_id, current, next) VALUES($1, $2, $3)
+INSERT INTO flow_steps(flow_id, current, next, target, protocol, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $6)
 `
 
 type CreateFlowStepParams struct {
-	FlowID  int         `json:"flow_id"`
-	Current pgtype.UUID `json:"current"`
-	Next    pgtype.UUID `json:"next"`
+	FlowID    int                `json:"flow_id"`
+	Current   pgtype.UUID        `json:"current"`
+	Next      pgtype.UUID        `json:"next"`
+	Target    pgtype.Text        `json:"target"`
+	Protocol  pgtype.Text        `json:"protocol"`
+	Timestamp pgtype.Timestamptz `json:"timestamp"`
 }
 
 func (q *Queries) CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) (int64, error) {
-	result, err := q.db.Exec(ctx, createFlowStep, arg.FlowID, arg.Current, arg.Next)
+	result, err := q.db.Exec(ctx, createFlowStep,
+		arg.FlowID,
+		arg.Current,
+		arg.Next,
+		arg.Target,
+		arg.Protocol,
+		arg.Timestamp,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -104,7 +114,7 @@ func (q *Queries) GetFlow(ctx context.Context, id int) (Flow, error) {
 }
 
 const getFlowSteps = `-- name: GetFlowSteps :many
-SELECT id, flow_id, current, next FROM flow_steps WHERE flow_id = $1
+SELECT id, flow_id, target, protocol, current, next, created_at, updated_at FROM flow_steps WHERE flow_id = $1
 `
 
 func (q *Queries) GetFlowSteps(ctx context.Context, flowID int) ([]FlowStep, error) {
@@ -119,8 +129,12 @@ func (q *Queries) GetFlowSteps(ctx context.Context, flowID int) ([]FlowStep, err
 		if err := rows.Scan(
 			&i.ID,
 			&i.FlowID,
+			&i.Target,
+			&i.Protocol,
 			&i.Current,
 			&i.Next,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -188,6 +202,30 @@ func (q *Queries) UpdateFlow(ctx context.Context, arg UpdateFlowParams) (int64, 
 	result, err := q.db.Exec(ctx, updateFlow,
 		arg.Name,
 		arg.Description,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateFlowStep = `-- name: UpdateFlowStep :execrows
+UPDATE flow_steps SET target = $1, protocol = $2, updated_at = $3 WHERE id = $4
+`
+
+type UpdateFlowStepParams struct {
+	Target    pgtype.Text        `json:"target"`
+	Protocol  pgtype.Text        `json:"protocol"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID        int                `json:"id"`
+}
+
+func (q *Queries) UpdateFlowStep(ctx context.Context, arg UpdateFlowStepParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateFlowStep,
+		arg.Target,
+		arg.Protocol,
 		arg.UpdatedAt,
 		arg.ID,
 	)
