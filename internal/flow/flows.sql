@@ -22,7 +22,7 @@ SELECT id, flow_id, current, next, target, protocol, created_at, updated_at FROM
 INSERT INTO flow_steps(flow_id, current, next, target, protocol, created_at, updated_at) VALUES(@flow_id, @current, @next, @target, @protocol, @timestamp, @timestamp);
 
 -- name: UpdateFlowStep :execrows
-UPDATE flow_steps SET current = @current, next = @next, target = @target, protocol = @protocol, updated_at = @updated_at WHERE id = @id;
+UPDATE flow_steps SET target = @target, protocol = @protocol, updated_at = @updated_at WHERE id = @id;
 
 -- name: DeleteFlowStep :execrows
 DELETE FROM flow_steps WHERE id = @id;

@@ -223,12 +223,10 @@ func (q *Queries) UpdateFlow(ctx context.Context, arg UpdateFlowParams) (int64, 
 }
 
 const updateFlowStep = `-- name: UpdateFlowStep :execrows
-UPDATE flow_steps SET current = $1, next = $2, target = $3, protocol = $4, updated_at = $5 WHERE id = $6
+UPDATE flow_steps SET target = $1, protocol = $2, updated_at = $3 WHERE id = $4
 `
 
 type UpdateFlowStepParams struct {
-	Current   pgtype.UUID        `json:"current"`
-	Next      pgtype.UUID        `json:"next"`
 	Target    pgtype.Text        `json:"target"`
 	Protocol  pgtype.Text        `json:"protocol"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
@@ -237,8 +235,6 @@ type UpdateFlowStepParams struct {
 
 func (q *Queries) UpdateFlowStep(ctx context.Context, arg UpdateFlowStepParams) (int64, error) {
 	result, err := q.db.Exec(ctx, updateFlowStep,
-		arg.Current,
-		arg.Next,
 		arg.Target,
 		arg.Protocol,
 		arg.UpdatedAt,
