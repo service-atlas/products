@@ -16,10 +16,3 @@ type Flow struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
-
-type FlowStep struct {
-	ID      int         `json:"id"`
-	FlowID  int         `json:"flow_id"`
-	Current pgtype.UUID `json:"current"`
-	Next    pgtype.UUID `json:"next"`
-}

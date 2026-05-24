@@ -160,6 +160,18 @@ databaseChangeLog:
                   type: UUID
                   constraints:
                     nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                    default: now()
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                    default: now()
         - addForeignKeyConstraint:
             baseColumnNames: flow_id
             baseTableName: flow_steps
