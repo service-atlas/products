@@ -114,36 +114,25 @@ func (q *Queries) GetFlow(ctx context.Context, id int) (Flow, error) {
 }
 
 const getFlowSteps = `-- name: GetFlowSteps :many
-SELECT id, flow_id, current, next, target, protocol, created_at, updated_at FROM flow_steps WHERE flow_id = $1
+SELECT id, flow_id, target, protocol, current, next, created_at, updated_at FROM flow_steps WHERE flow_id = $1
 `
 
-type GetFlowStepsRow struct {
-	ID        int                `json:"id"`
-	FlowID    int                `json:"flow_id"`
-	Current   pgtype.UUID        `json:"current"`
-	Next      pgtype.UUID        `json:"next"`
-	Target    pgtype.Text        `json:"target"`
-	Protocol  pgtype.Text        `json:"protocol"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetFlowSteps(ctx context.Context, flowID int) ([]GetFlowStepsRow, error) {
+func (q *Queries) GetFlowSteps(ctx context.Context, flowID int) ([]FlowStep, error) {
 	rows, err := q.db.Query(ctx, getFlowSteps, flowID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetFlowStepsRow
+	var items []FlowStep
 	for rows.Next() {
-		var i GetFlowStepsRow
+		var i FlowStep
 		if err := rows.Scan(
 			&i.ID,
 			&i.FlowID,
-			&i.Current,
-			&i.Next,
 			&i.Target,
 			&i.Protocol,
+			&i.Current,
+			&i.Next,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

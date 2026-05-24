@@ -24,6 +24,7 @@ type mockFlowQuerier struct {
 	getFlowsByProductFunc func(ctx context.Context, productID int) ([]db.Flow, error)
 	getProductByIdFunc    func(ctx context.Context, id int) (int, error)
 	updateFlowFunc        func(ctx context.Context, arg db.UpdateFlowParams) (int64, error)
+	updateFlowStepFunc    func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error)
 }
 
 func (m *mockFlowQuerier) CreateFlow(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
@@ -60,6 +61,10 @@ func (m *mockFlowQuerier) GetProductById(ctx context.Context, id int) (int, erro
 
 func (m *mockFlowQuerier) UpdateFlow(ctx context.Context, arg db.UpdateFlowParams) (int64, error) {
 	return m.updateFlowFunc(ctx, arg)
+}
+
+func (m *mockFlowQuerier) UpdateFlowStep(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error) {
+	return m.updateFlowStepFunc(ctx, arg)
 }
 
 func TestCreateFlow(t *testing.T) {

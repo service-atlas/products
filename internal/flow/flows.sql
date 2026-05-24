@@ -16,7 +16,7 @@ UPDATE flows SET name = @name, description = @description, updated_at = @updated
 DELETE FROM flows WHERE id = @id;
 
 -- name: GetFlowSteps :many
-SELECT id, flow_id, current, next, target, protocol, created_at, updated_at FROM flow_steps WHERE flow_id = @flow_id;
+SELECT id, flow_id, target, protocol, current, next, created_at, updated_at FROM flow_steps WHERE flow_id = @flow_id;
 
 -- name: CreateFlowStep :execrows
 INSERT INTO flow_steps(flow_id, current, next, target, protocol, created_at, updated_at) VALUES(@flow_id, @current, @next, @target, @protocol, @timestamp, @timestamp);
