@@ -111,6 +111,36 @@ func TestUpdateFlow(t *testing.T) {
 			},
 			expectedStatus: http.StatusNotFound,
 		},
+		{
+			name:           "Invalid Path ID",
+			requestBody:    updateFlowRequest{Name: "Updated Flow"},
+			pathID:         "abc",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Malformed JSON",
+			requestBody:    []byte(`{"name": "missing quote}`),
+			pathID:         "1",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Service Failure",
+			requestBody: updateFlowRequest{
+				Name: "Updated Flow",
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1, Name: "Old Flow"}, nil
+				}
+				m.updateFlowFunc = func(ctx context.Context, arg db.UpdateFlowParams) (int64, error) {
+					return 0, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -126,10 +156,15 @@ func TestUpdateFlow(t *testing.T) {
 			}
 
 			var body []byte
-			if tt.requestBody != nil {
+			switch b := tt.requestBody.(type) {
+			case []byte:
+				body = b
+			case nil:
+				body = nil
+			default:
 				body, _ = json.Marshal(tt.requestBody)
 			}
-			req, _ := http.NewRequest("PUT", "/api/flows/"+tt.pathID, bytes.NewBuffer(body))
+			req := httptest.NewRequestWithContext(t.Context(), "PUT", "/api/flows/"+tt.pathID, bytes.NewBuffer(body))
 
 			req.SetPathValue("id", tt.pathID)
 
