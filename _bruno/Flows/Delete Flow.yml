@@ -1,0 +1,53 @@
+info:
+  name: Delete Flow
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/api/flows/:id"
+  params:
+    - name: id
+      value: "2"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/api/flows/:id"
+      method: DELETE
+      params:
+        - name: id
+          value: "2"
+          type: path
+    response:
+      status: 204
+      statusText: No Content
+      headers:
+        - name: vary
+          value: Origin
+        - name: date
+          value: Mon, 25 May 2026 22:48:41 GMT
+      body:
+        type: text
+        data: ""
+
+docs: |-
+  # Delete Flow
+
+  Deletes a flow by its ID.
+
+  ## Possible Responses 
+  | Status Code | Notes |
+  | -- | --|
+  | 204 | Success | 
+  | 400 | Invalid Id |
+  | 404 | Flow Not Found |
+  | 500 | Error | 
