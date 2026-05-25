@@ -15,6 +15,7 @@ type flowService interface {
 	GetFlowById(ctx context.Context, id int) (db.Flow, error)
 	GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error)
 	UpdateFlow(ctx context.Context, req updateFlowRequest, id int) (db.Flow, error)
+	DeleteFlow(ctx context.Context, id int) error
 }
 
 type postgresService struct {
@@ -80,4 +81,14 @@ func (s *postgresService) UpdateFlow(ctx context.Context, req updateFlowRequest,
 	}
 
 	return s.GetFlowById(ctx, id)
+}
+func (s *postgresService) DeleteFlow(ctx context.Context, id int) error {
+	rowsAffected, err := s.queries.DeleteFlow(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete flow: %w", err)
+	}
+	if rowsAffected == 0 {
+		return internal.NewNotFoundError(id, "Flow")
+	}
+	return nil
 }

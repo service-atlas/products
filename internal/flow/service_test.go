@@ -367,3 +367,67 @@ func TestService_UpdateFlow(t *testing.T) {
 		})
 	}
 }
+
+func TestService_DeleteFlow(t *testing.T) {
+	tests := []struct {
+		name          string
+		id            int
+		mockSetup     func(m *mockFlowQuerier)
+		expectedError string
+	}{
+		{
+			name: "Success",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.deleteFlowFunc = func(ctx context.Context, id int) (int64, error) {
+					return 1, nil
+				}
+			},
+		},
+		{
+			name: "Flow Not Found",
+			id:   999,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.deleteFlowFunc = func(ctx context.Context, id int) (int64, error) {
+					return 0, nil
+				}
+			},
+			expectedError: internal.NewNotFoundError(999, "Flow").Error(),
+		},
+		{
+			name: "Delete Failed",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.deleteFlowFunc = func(ctx context.Context, id int) (int64, error) {
+					return 0, errors.New("db error")
+				}
+			},
+			expectedError: "failed to delete flow: db error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			s := &postgresService{queries: mock}
+
+			err := s.DeleteFlow(context.Background(), tt.id)
+
+			if tt.expectedError != "" {
+				if err == nil {
+					t.Errorf("expected error %q, got nil", tt.expectedError)
+				} else if err.Error() != tt.expectedError {
+					t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}
