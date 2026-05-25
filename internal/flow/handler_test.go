@@ -67,6 +67,82 @@ func (m *mockFlowQuerier) UpdateFlowStep(ctx context.Context, arg db.UpdateFlowS
 	return m.updateFlowStepFunc(ctx, arg)
 }
 
+func TestUpdateFlow(t *testing.T) {
+	tests := []struct {
+		name           string
+		requestBody    any
+		pathID         string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			requestBody: updateFlowRequest{
+				Name: "Updated Flow",
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1, Name: "Old Flow"}, nil
+				}
+				m.updateFlowFunc = func(ctx context.Context, arg db.UpdateFlowParams) (int64, error) {
+					return 1, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "No Fields Provided",
+			requestBody:    updateFlowRequest{},
+			pathID:         "1",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Flow Not Found",
+			requestBody: updateFlowRequest{
+				Name: "Updated Flow",
+			},
+			pathID: "999",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			h := &flowHandler{
+				flowService: &postgresService{
+					queries: mock,
+				},
+			}
+
+			var body []byte
+			if tt.requestBody != nil {
+				body, _ = json.Marshal(tt.requestBody)
+			}
+			req, _ := http.NewRequest("PUT", "/api/flows/"+tt.pathID, bytes.NewBuffer(body))
+
+			req.SetPathValue("id", tt.pathID)
+
+			rr := httptest.NewRecorder()
+			h.UpdateFlow(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+		})
+	}
+}
+
 func TestCreateFlow(t *testing.T) {
 	tests := []struct {
 		name           string

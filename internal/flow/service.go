@@ -14,6 +14,7 @@ type flowService interface {
 	CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error)
 	GetFlowById(ctx context.Context, id int) (db.Flow, error)
 	GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error)
+	UpdateFlow(ctx context.Context, req updateFlowRequest, id int) (db.Flow, error)
 }
 
 type postgresService struct {
@@ -62,4 +63,21 @@ func (s *postgresService) GetFlowsByProduct(ctx context.Context, id int) ([]db.F
 		flows = []db.Flow{}
 	}
 	return flows, nil
+}
+
+func (s *postgresService) UpdateFlow(ctx context.Context, req updateFlowRequest, id int) (db.Flow, error) {
+	existing, err := s.GetFlowById(ctx, id)
+	if err != nil {
+		return db.Flow{}, err
+	}
+
+	rowsAffected, err := s.queries.UpdateFlow(ctx, req.ToParams(id, existing))
+	if err != nil {
+		return db.Flow{}, fmt.Errorf("failed to update flow: %w", err)
+	}
+	if rowsAffected == 0 {
+		return db.Flow{}, internal.NewNotFoundError(id, "Flow")
+	}
+
+	return s.GetFlowById(ctx, id)
 }

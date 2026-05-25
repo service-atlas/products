@@ -261,3 +261,93 @@ func TestService_GetFlowsByProduct(t *testing.T) {
 		})
 	}
 }
+
+func TestService_UpdateFlow(t *testing.T) {
+	tests := []struct {
+		name          string
+		id            int
+		req           updateFlowRequest
+		mockSetup     func(m *mockFlowQuerier)
+		expectedError string
+		expectedFlow  db.Flow
+	}{
+		{
+			name: "Success",
+			id:   1,
+			req: updateFlowRequest{
+				Name: "Updated Flow",
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					if id == 1 {
+						// Return updated flow on second call (Success case in service calls GetFlowById twice)
+						return db.Flow{ID: 1, Name: "Updated Flow"}, nil
+					}
+					return db.Flow{}, pgx.ErrNoRows
+				}
+				m.updateFlowFunc = func(ctx context.Context, arg db.UpdateFlowParams) (int64, error) {
+					return 1, nil
+				}
+			},
+			expectedFlow: db.Flow{ID: 1, Name: "Updated Flow"},
+		},
+		{
+			name: "Flow Not Found",
+			id:   999,
+			req: updateFlowRequest{
+				Name: "Updated Flow",
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedError: internal.NewNotFoundError(999, "Flow").Error(),
+		},
+		{
+			name: "Update Failed",
+			id:   1,
+			req: updateFlowRequest{
+				Name: "Updated Flow",
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1, Name: "Old Flow"}, nil
+				}
+				m.updateFlowFunc = func(ctx context.Context, arg db.UpdateFlowParams) (int64, error) {
+					return 0, errors.New("db error")
+				}
+			},
+			expectedError: "failed to update flow: db error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			s := &postgresService{queries: mock}
+
+			flow, err := s.UpdateFlow(context.Background(), tt.req, tt.id)
+
+			if tt.expectedError != "" {
+				if err == nil {
+					t.Errorf("expected error %q, got nil", tt.expectedError)
+				} else if err.Error() != tt.expectedError {
+					t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if flow.ID != tt.expectedFlow.ID || flow.Name != tt.expectedFlow.Name {
+				t.Errorf("expected flow %+v, got %+v", tt.expectedFlow, flow)
+			}
+		})
+	}
+}

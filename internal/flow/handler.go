@@ -15,6 +15,7 @@ type Handler interface {
 	CreateFlow(w http.ResponseWriter, r *http.Request)
 	GetFlowById(w http.ResponseWriter, r *http.Request)
 	GetFlowsByProduct(w http.ResponseWriter, r *http.Request)
+	UpdateFlow(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(dbConn db.DBTX) Handler {
@@ -99,4 +100,38 @@ func (h *flowHandler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	internal.WriteJSONResponse(w, r, http.StatusOK, flows)
+}
+
+func (h *flowHandler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+
+	req := &updateFlowRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" && req.Description == "" {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "No updatable fields provided", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+
+	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("updating flow timed out"))
+	defer cancel()
+
+	flow, err := h.flowService.UpdateFlow(contextWithTimeOut, *req, id)
+	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			return
+		}
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to update flow", Instance: r.URL.Path}, http.StatusInternalServerError)
+		return
+	}
+
+	internal.WriteJSONResponse(w, r, http.StatusOK, flow)
 }
