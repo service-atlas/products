@@ -320,6 +320,22 @@ func TestService_UpdateFlow(t *testing.T) {
 			},
 			expectedError: "failed to update flow: db error",
 		},
+		{
+			name: "Flow Not Found on Update (RowsAffected 0)",
+			id:   1,
+			req: updateFlowRequest{
+				Name: "Updated Flow",
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1, Name: "Old Flow"}, nil
+				}
+				m.updateFlowFunc = func(ctx context.Context, arg db.UpdateFlowParams) (int64, error) {
+					return 0, nil
+				}
+			},
+			expectedError: internal.NewNotFoundError(1, "Flow").Error(),
+		},
 	}
 
 	for _, tt := range tests {
