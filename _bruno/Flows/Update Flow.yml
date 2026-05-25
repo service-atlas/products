@@ -1,0 +1,88 @@
+info:
+  name: Update Flow
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/flows/:id"
+  params:
+    - name: id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Updated Flow Name",
+        "description": "Updated flow description"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/api/flows/:id"
+      method: PUT
+      params:
+        - name: id
+          value: "1"
+          type: path
+      body:
+        type: json
+        data: |-
+          {
+            "name": "Updated Flow Name",
+            "description": "Updated flow description"
+          }
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: content-type
+          value: application/json
+        - name: vary
+          value: Origin, Accept-Encoding
+        - name: date
+          value: Mon, 25 May 2026 18:43:48 GMT
+        - name: content-length
+          value: "154"
+      body:
+        type: json
+        data: |-
+          {
+            "id": 1,
+            "product_id": 1,
+            "name": "Updated Flow Name",
+            "description": "Updated flow description",
+            "created_at": "2026-05-24T14:48:11.723191-05:00",
+            "updated_at": "2026-05-25T13:43:48.007311-05:00"
+          }
+
+docs: |-
+  # Update Flow
+
+  Updates an existing flow. The flow ID is passed as a path parameter.
+  Fields that can be updated:
+  - name
+  - description
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 200 | OK |
+  | 400 | Invalid flow ID, request body, or no updatable fields provided |
+  | 404 | Flow not found |
+  | 500 | Internal server error |
