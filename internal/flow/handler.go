@@ -16,6 +16,7 @@ type Handler interface {
 	GetFlowById(w http.ResponseWriter, r *http.Request)
 	GetFlowsByProduct(w http.ResponseWriter, r *http.Request)
 	UpdateFlow(w http.ResponseWriter, r *http.Request)
+	DeleteFlow(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(dbConn db.DBTX) Handler {
@@ -134,4 +135,27 @@ func (h *flowHandler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	internal.WriteJSONResponse(w, r, http.StatusOK, flow)
+}
+
+func (h *flowHandler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+
+	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("deleting flow timed out"))
+	defer cancel()
+
+	err := h.flowService.DeleteFlow(contextWithTimeOut, id)
+	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			return
+		}
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete flow", Instance: r.URL.Path}, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
