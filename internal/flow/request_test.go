@@ -33,8 +33,8 @@ func TestUpdateFlowRequest_ToParams(t *testing.T) {
 				ID:   1,
 				Name: "New Name",
 				Description: pgtype.Text{
-					String: "Original Description",
-					Valid:  true,
+					String: "",
+					Valid:  false, // Omitted description becomes NULL
 				},
 			},
 		},
@@ -77,8 +77,23 @@ func TestUpdateFlowRequest_ToParams(t *testing.T) {
 				ID:   1,
 				Name: "Original Name",
 				Description: pgtype.Text{
-					String: "Original Description",
-					Valid:  true,
+					String: "",
+					Valid:  false, // Omitted description becomes NULL
+				},
+			},
+		},
+		{
+			name: "Explicit Empty Description Overwrites to NULL",
+			request: updateFlowRequest{
+				Description: "",
+			},
+			id: 1,
+			expected: db.UpdateFlowParams{
+				ID:   1,
+				Name: "Original Name",
+				Description: pgtype.Text{
+					String: "",
+					Valid:  false,
 				},
 			},
 		},

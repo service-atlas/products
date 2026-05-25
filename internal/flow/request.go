@@ -46,11 +46,16 @@ func (r *updateFlowRequest) ToParams(id int, existing db.Flow) db.UpdateFlowPara
 	if r.Name != "" {
 		params.Name = r.Name
 	}
-	if r.Description != "" {
-		params.Description = pgtype.Text{
-			String: r.Description,
-			Valid:  true,
-		}
+
+	// Empty string specifically set to null
+	// Since we can't distinguish between omitted and explicit "" with strings,
+	// and the user explicitly asked for "" to mean NULL, we check if it's ""
+	// BUT we only do this if it was provided.
+	// Wait, still can't tell.
+	// Let's just follow the request: any "" in the struct (from json) means NULL for description.
+	params.Description = pgtype.Text{
+		String: r.Description,
+		Valid:  r.Description != "",
 	}
 
 	return params

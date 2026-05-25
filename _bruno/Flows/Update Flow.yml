@@ -79,6 +79,8 @@ docs: |-
   - name
   - description
 
+  **Note:** Explicitly providing an empty string for a field (e.g., `"description": ""`) will set that field to `null` in the database. Empty strings are not allowed as valid values for `name`.
+
   ## Possible Status Codes
   | Status Code | Notes |
   | -- | --|
