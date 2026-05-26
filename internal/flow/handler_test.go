@@ -579,3 +579,136 @@ func TestDeleteFlow(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateFlowStep(t *testing.T) {
+	validUUID := "550e8400-e29b-41d4-a716-446655440000"
+
+	tests := []struct {
+		name           string
+		requestBody    any
+		pathID         string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			requestBody: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  validUUID,
+				Next:     validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.createFlowStepFunc = func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
+					return db.FlowStep{ID: 10, FlowID: 1}, nil
+				}
+			},
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:           "Invalid Path ID",
+			requestBody:    createFlowStepRequest{Current: validUUID, Next: validUUID},
+			pathID:         "abc",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Malformed JSON",
+			requestBody:    []byte(`{"current": "invalid json`),
+			pathID:         "1",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Flow Not Found",
+			requestBody: createFlowStepRequest{
+				Current: validUUID,
+				Next:    validUUID,
+			},
+			pathID: "999",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "Service Failure",
+			requestBody: createFlowStepRequest{
+				Current: validUUID,
+				Next:    validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.createFlowStepFunc = func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
+					return db.FlowStep{}, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Invalid UUID in Request Body",
+			requestBody: createFlowStepRequest{
+				Current: "invalid-uuid",
+				Next:    validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			h := &flowHandler{
+				flowService: &postgresService{
+					queries: mock,
+				},
+			}
+
+			var body []byte
+			switch b := tt.requestBody.(type) {
+			case []byte:
+				body = b
+			default:
+				body, _ = json.Marshal(tt.requestBody)
+			}
+
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/flows/"+tt.pathID+"/steps", bytes.NewBuffer(body))
+			req.SetPathValue("id", tt.pathID)
+
+			rr := httptest.NewRecorder()
+			h.CreateFlowStep(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusCreated {
+				var step db.FlowStep
+				if err := json.NewDecoder(rr.Body).Decode(&step); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if step.ID == 0 {
+					t.Error("expected flow step ID to be set")
+				}
+			}
+		})
+	}
+}
