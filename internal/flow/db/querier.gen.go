@@ -10,7 +10,7 @@ import (
 
 type Querier interface {
 	CreateFlow(ctx context.Context, arg CreateFlowParams) (Flow, error)
-	CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) (int64, error)
+	CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) (FlowStep, error)
 	DeleteFlow(ctx context.Context, id int) (int64, error)
 	DeleteFlowStep(ctx context.Context, id int) (int64, error)
 	GetFlow(ctx context.Context, id int) (Flow, error)
