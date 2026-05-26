@@ -16,7 +16,7 @@ import (
 
 type mockFlowQuerier struct {
 	createFlowFunc        func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error)
-	createFlowStepFunc    func(ctx context.Context, arg db.CreateFlowStepParams) (int64, error)
+	createFlowStepFunc    func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error)
 	deleteFlowFunc        func(ctx context.Context, id int) (int64, error)
 	deleteFlowStepFunc    func(ctx context.Context, id int) (int64, error)
 	getFlowFunc           func(ctx context.Context, id int) (db.Flow, error)
@@ -31,7 +31,7 @@ func (m *mockFlowQuerier) CreateFlow(ctx context.Context, arg db.CreateFlowParam
 	return m.createFlowFunc(ctx, arg)
 }
 
-func (m *mockFlowQuerier) CreateFlowStep(ctx context.Context, arg db.CreateFlowStepParams) (int64, error) {
+func (m *mockFlowQuerier) CreateFlowStep(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
 	return m.createFlowStepFunc(ctx, arg)
 }
 

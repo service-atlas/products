@@ -368,6 +368,107 @@ func TestService_UpdateFlow(t *testing.T) {
 	}
 }
 
+func TestService_CreateFlowStep(t *testing.T) {
+	validUUID := "550e8400-e29b-41d4-a716-446655440000"
+
+	tests := []struct {
+		name          string
+		req           createFlowStepRequest
+		mockSetup     func(m *mockFlowQuerier)
+		expectedError string
+		expectedStep  db.FlowStep
+	}{
+		{
+			name: "Success",
+			req: createFlowStepRequest{
+				FlowId:  1,
+				Current: validUUID,
+				Next:    validUUID,
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.createFlowStepFunc = func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
+					return db.FlowStep{ID: 1, FlowID: 1}, nil
+				}
+			},
+			expectedStep: db.FlowStep{ID: 1, FlowID: 1},
+		},
+		{
+			name: "Flow Not Found",
+			req: createFlowStepRequest{
+				FlowId: 999,
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedError: internal.NewNotFoundError(999, "Flow").Error(),
+		},
+		{
+			name: "Invalid UUID in Request",
+			req: createFlowStepRequest{
+				FlowId:  1,
+				Current: "invalid",
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+			},
+			expectedError: "invalid UUID length: 7",
+		},
+		{
+			name: "Database Error on Create",
+			req: createFlowStepRequest{
+				FlowId:  1,
+				Current: validUUID,
+				Next:    validUUID,
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.createFlowStepFunc = func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
+					return db.FlowStep{}, errors.New("db error")
+				}
+			},
+			expectedError: "failed to create flow step: db error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			s := &postgresService{queries: mock}
+
+			step, err := s.CreateFlowStep(t.Context(), tt.req)
+
+			if tt.expectedError != "" {
+				if err == nil {
+					t.Errorf("expected error %q, got nil", tt.expectedError)
+				} else if err.Error() != tt.expectedError {
+					t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if step.ID != tt.expectedStep.ID || step.FlowID != tt.expectedStep.FlowID {
+				t.Errorf("expected flow step %+v, got %+v", tt.expectedStep, step)
+			}
+		})
+	}
+}
+
 func TestService_DeleteFlow(t *testing.T) {
 	tests := []struct {
 		name          string

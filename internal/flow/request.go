@@ -4,6 +4,7 @@ import (
 	"products/internal/flow/db"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -59,4 +60,42 @@ func (r *updateFlowRequest) ToParams(id int, existing db.Flow) db.UpdateFlowPara
 	}
 
 	return params
+}
+
+type createFlowStepRequest struct {
+	Protocol string `json:"protocol"`
+	Target   string `json:"target"`
+	Current  string `json:"current"`
+	Next     string `json:"next"`
+	FlowId   int    `json:"flow_id"`
+}
+
+func (r *createFlowStepRequest) ToParams() (db.CreateFlowStepParams, error) {
+	currentUUID, err := toPgUUID(r.Current)
+	if err != nil {
+		return db.CreateFlowStepParams{}, err
+	}
+	nextUUID, err := toPgUUID(r.Next)
+	if err != nil {
+		return db.CreateFlowStepParams{}, err
+	}
+	return db.CreateFlowStepParams{
+		FlowID:   r.FlowId,
+		Current:  currentUUID,
+		Next:     nextUUID,
+		Target:   pgtype.Text{String: r.Target},
+		Protocol: pgtype.Text{String: r.Protocol},
+		Timestamp: pgtype.Timestamptz{
+			Time:  time.Now().UTC(),
+			Valid: true,
+		},
+	}, nil
+}
+
+func toPgUUID(val string) (pgtype.UUID, error) {
+	uuidVal, err := uuid.Parse(val)
+	if err != nil {
+		return pgtype.UUID{Valid: false}, err
+	}
+	return pgtype.UUID{Bytes: uuidVal, Valid: true}, nil
 }
