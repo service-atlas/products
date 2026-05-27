@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"products/internal/flow/db"
 	"testing"
 	"time"
@@ -600,6 +601,14 @@ func TestCreateFlowStep(t *testing.T) {
 			},
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]serviceDependency{
+						{Id: validUUID, InteractionType: "data"},
+					})
+				}))
+				t.Cleanup(ts.Close)
+				os.Setenv("SERVICE_URL", ts.URL)
+
 				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
 					return db.Flow{ID: 1}, nil
 				}
@@ -645,6 +654,14 @@ func TestCreateFlowStep(t *testing.T) {
 			},
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]serviceDependency{
+						{Id: validUUID, InteractionType: "data"},
+					})
+				}))
+				t.Cleanup(ts.Close)
+				os.Setenv("SERVICE_URL", ts.URL)
+
 				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
 					return db.Flow{ID: 1}, nil
 				}

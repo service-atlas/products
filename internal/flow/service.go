@@ -2,10 +2,16 @@ package flow
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"os"
 	"products/internal"
 	"products/internal/flow/db"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -23,6 +29,11 @@ type postgresService struct {
 	queries db.Querier
 }
 
+type serviceDependency struct {
+	Id              string `json:"id"`
+	InteractionType string `json:"interaction_type"`
+}
+
 func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error) {
 	_, err := s.GetFlowById(ctx, req.FlowId)
 	if err != nil {
@@ -32,11 +43,63 @@ func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStep
 	if err != nil {
 		return db.FlowStep{}, err
 	}
+
+	ok, err := s.validateDependency(ctx, req.Current, req.Next)
+	if err != nil {
+		return db.FlowStep{}, err
+	}
+	if !ok {
+		return db.FlowStep{}, fmt.Errorf("%s does not have a data dependency on %s", req.Current, req.Next)
+	}
+
 	flowStep, err := s.queries.CreateFlowStep(ctx, params)
 	if err != nil {
 		return db.FlowStep{}, fmt.Errorf("failed to create flow step: %w", err)
 	}
 	return flowStep, nil
+}
+
+func (s *postgresService) validateDependency(ctx context.Context, current, next string) (bool, error) {
+	serviceUrl := os.Getenv("SERVICE_URL")
+	if serviceUrl == "" {
+		return false, fmt.Errorf("SERVICE_URL is not set")
+	}
+	serviceUrl = strings.TrimSuffix(serviceUrl, "/")
+
+	url := fmt.Sprintf("%s/services/%s/dependencies", serviceUrl, current)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to create dependency request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch dependencies: %w", err)
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			slog.Default().Error("failed to close body in dependency validation", "error", err)
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("failed to fetch dependencies: status %d", resp.StatusCode)
+	}
+
+	var dependencies []serviceDependency
+	err = json.NewDecoder(resp.Body).Decode(&dependencies)
+	if err != nil {
+		return false, fmt.Errorf("failed to decode dependencies: %w", err)
+	}
+
+	for _, dep := range dependencies {
+		if strings.EqualFold(dep.Id, next) && dep.InteractionType == "data" {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (s *postgresService) CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error) {
