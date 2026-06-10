@@ -29,36 +29,6 @@ type postgresService struct {
 	queries db.Querier
 }
 
-type serviceDependency struct {
-	Id              string `json:"id"`
-	InteractionType string `json:"interaction_type"`
-}
-
-func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error) {
-	_, err := s.GetFlowById(ctx, req.FlowId)
-	if err != nil {
-		return db.FlowStep{}, err
-	}
-	params, err := req.ToParams()
-	if err != nil {
-		return db.FlowStep{}, err
-	}
-
-	ok, err := s.validateDependency(ctx, req.Current, req.Next)
-	if err != nil {
-		return db.FlowStep{}, err
-	}
-	if !ok {
-		return db.FlowStep{}, fmt.Errorf("%s does not have a data dependency on %s", req.Current, req.Next)
-	}
-
-	flowStep, err := s.queries.CreateFlowStep(ctx, params)
-	if err != nil {
-		return db.FlowStep{}, fmt.Errorf("failed to create flow step: %w", err)
-	}
-	return flowStep, nil
-}
-
 func (s *postgresService) validateDependency(ctx context.Context, current, next string) (bool, error) {
 	serviceUrl := os.Getenv("SERVICE_URL")
 	if serviceUrl == "" {
@@ -171,4 +141,29 @@ func (s *postgresService) DeleteFlow(ctx context.Context, id int) error {
 		return internal.NewNotFoundError(id, "Flow")
 	}
 	return nil
+}
+
+func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error) {
+	_, err := s.GetFlowById(ctx, req.FlowId)
+	if err != nil {
+		return db.FlowStep{}, err
+	}
+	params, err := req.ToParams()
+	if err != nil {
+		return db.FlowStep{}, err
+	}
+
+	ok, err := s.validateDependency(ctx, req.Current, req.Next)
+	if err != nil {
+		return db.FlowStep{}, err
+	}
+	if !ok {
+		return db.FlowStep{}, fmt.Errorf("%s does not have a data dependency on %s", req.Current, req.Next)
+	}
+
+	flowStep, err := s.queries.CreateFlowStep(ctx, params)
+	if err != nil {
+		return db.FlowStep{}, fmt.Errorf("failed to create flow step: %w", err)
+	}
+	return flowStep, nil
 }
