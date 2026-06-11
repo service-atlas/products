@@ -80,4 +80,6 @@ docs: |-
   | 201 | Created |
   | 400 | Invalid flow or request body |
   | 404 | Flow not found |
+  | 409 | Duplicate (flow_id, current, next) combination detected |
+  | 422 | Required dependency relationship not found |
   | 500 | Internal server error |
