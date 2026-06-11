@@ -2,12 +2,19 @@ package flow
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"os"
 	"products/internal"
 	"products/internal/flow/db"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type flowService interface {
@@ -16,10 +23,69 @@ type flowService interface {
 	GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error)
 	UpdateFlow(ctx context.Context, req updateFlowRequest, id int) (db.Flow, error)
 	DeleteFlow(ctx context.Context, id int) error
+	CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error)
+}
+
+type DependencyValidationError struct {
+}
+
+func (e DependencyValidationError) Error() string {
+	return "required data dependency not found"
+}
+
+type ConflictError struct {
+	Message string
+}
+
+func (e ConflictError) Error() string {
+	return e.Message
 }
 
 type postgresService struct {
 	queries db.Querier
+	client  *http.Client
+}
+
+func (s *postgresService) validateDependency(ctx context.Context, current, next string) (bool, error) {
+	serviceUrl := os.Getenv("SERVICE_URL")
+	if serviceUrl == "" {
+		return false, fmt.Errorf("SERVICE_URL is not set")
+	}
+	serviceUrl = strings.TrimSuffix(serviceUrl, "/")
+
+	url := fmt.Sprintf("%s/services/%s/dependencies", serviceUrl, current)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to create dependency request: %w", err)
+	}
+	resp, err := s.client.Do(httpReq)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch dependencies: %w", err)
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			slog.Default().Error("failed to close body in dependency validation", "error", err)
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("failed to fetch dependencies: status %d", resp.StatusCode)
+	}
+
+	var dependencies []serviceDependency
+	err = json.NewDecoder(resp.Body).Decode(&dependencies)
+	if err != nil {
+		return false, fmt.Errorf("failed to decode dependencies: %w", err)
+	}
+
+	for _, dep := range dependencies {
+		if strings.EqualFold(dep.Id, next) && dep.InteractionType == "data" {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (s *postgresService) CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error) {
@@ -91,4 +157,32 @@ func (s *postgresService) DeleteFlow(ctx context.Context, id int) error {
 		return internal.NewNotFoundError(id, "Flow")
 	}
 	return nil
+}
+
+func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error) {
+	_, err := s.GetFlowById(ctx, req.FlowId)
+	if err != nil {
+		return db.FlowStep{}, err
+	}
+	params, err := req.ToParams()
+	if err != nil {
+		return db.FlowStep{}, err
+	}
+
+	ok, err := s.validateDependency(ctx, req.Current, req.Next)
+	if err != nil {
+		return db.FlowStep{}, err
+	}
+	if !ok {
+		return db.FlowStep{}, DependencyValidationError{}
+	}
+
+	flowStep, err := s.queries.CreateFlowStep(ctx, params)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			return db.FlowStep{}, ConflictError{Message: "Flow step already exists"}
+		}
+		return db.FlowStep{}, fmt.Errorf("failed to create flow step: %w", err)
+	}
+	return flowStep, nil
 }

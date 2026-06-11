@@ -121,3 +121,131 @@ func TestUpdateFlowRequest_ToParams(t *testing.T) {
 		})
 	}
 }
+
+func TestToPgUUID(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         string
+		expectedValid bool
+		expectedError bool
+	}{
+		{
+			name:          "Valid UUID",
+			input:         "550e8400-e29b-41d4-a716-446655440000",
+			expectedValid: true,
+			expectedError: false,
+		},
+		{
+			name:          "Invalid UUID",
+			input:         "invalid-uuid",
+			expectedValid: false,
+			expectedError: true,
+		},
+		{
+			name:          "Empty UUID",
+			input:         "",
+			expectedValid: false,
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := toPgUUID(tt.input)
+			if (err != nil) != tt.expectedError {
+				t.Errorf("toPgUUID() error = %v, expectedError %v", err, tt.expectedError)
+				return
+			}
+			if got.Valid != tt.expectedValid {
+				t.Errorf("toPgUUID() valid = %v, expected %v", got.Valid, tt.expectedValid)
+			}
+		})
+	}
+}
+
+func TestCreateFlowStepRequest_ToParams(t *testing.T) {
+	validUUID1 := "550e8400-e29b-41d4-a716-446655440000"
+	validUUID2 := "67123456-e29b-41d4-a716-446655440000"
+
+	tests := []struct {
+		name          string
+		request       createFlowStepRequest
+		expectedError bool
+	}{
+		{
+			name: "Success",
+			request: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  validUUID1,
+				Next:     validUUID2,
+				FlowId:   1,
+			},
+			expectedError: false,
+		},
+		{
+			name: "Invalid Current UUID",
+			request: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  "invalid",
+				Next:     validUUID2,
+				FlowId:   1,
+			},
+			expectedError: true,
+		},
+		{
+			name: "Invalid Next UUID",
+			request: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  validUUID1,
+				Next:     "invalid",
+				FlowId:   1,
+			},
+			expectedError: true,
+		},
+		{
+			name: "Empty Protocol and Target",
+			request: createFlowStepRequest{
+				Protocol: "",
+				Target:   "",
+				Current:  validUUID1,
+				Next:     validUUID2,
+				FlowId:   1,
+			},
+			expectedError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params, err := tt.request.ToParams()
+			if (err != nil) != tt.expectedError {
+				t.Errorf("ToParams() error = %v, expectedError %v", err, tt.expectedError)
+				return
+			}
+
+			if !tt.expectedError {
+				if params.FlowID != tt.request.FlowId {
+					t.Errorf("expected FlowID %d, got %d", tt.request.FlowId, params.FlowID)
+				}
+				if params.Protocol.String != tt.request.Protocol {
+					t.Errorf("expected Protocol %q, got %q", tt.request.Protocol, params.Protocol.String)
+				}
+				if params.Protocol.Valid != (tt.request.Protocol != "") {
+					t.Errorf("expected Protocol valid %v, got %v", tt.request.Protocol != "", params.Protocol.Valid)
+				}
+				if params.Target.String != tt.request.Target {
+					t.Errorf("expected Target %q, got %q", tt.request.Target, params.Target.String)
+				}
+				if params.Target.Valid != (tt.request.Target != "") {
+					t.Errorf("expected Target valid %v, got %v", tt.request.Target != "", params.Target.Valid)
+				}
+				if !params.Timestamp.Valid {
+					t.Error("expected Timestamp to be valid")
+				}
+			}
+		})
+	}
+}

@@ -43,8 +43,10 @@ func (q *Queries) CreateFlow(ctx context.Context, arg CreateFlowParams) (Flow, e
 	return i, err
 }
 
-const createFlowStep = `-- name: CreateFlowStep :execrows
-INSERT INTO flow_steps(flow_id, current, next, target, protocol, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $6)
+const createFlowStep = `-- name: CreateFlowStep :one
+INSERT INTO flow_steps(flow_id, current, next, target, protocol, created_at, updated_at)
+VALUES($1, $2, $3, $4, $5, $6, $6)
+RETURNING id, flow_id, target, protocol, current, next, created_at, updated_at
 `
 
 type CreateFlowStepParams struct {
@@ -56,8 +58,8 @@ type CreateFlowStepParams struct {
 	Timestamp pgtype.Timestamptz `json:"timestamp"`
 }
 
-func (q *Queries) CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) (int64, error) {
-	result, err := q.db.Exec(ctx, createFlowStep,
+func (q *Queries) CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) (FlowStep, error) {
+	row := q.db.QueryRow(ctx, createFlowStep,
 		arg.FlowID,
 		arg.Current,
 		arg.Next,
@@ -65,10 +67,18 @@ func (q *Queries) CreateFlowStep(ctx context.Context, arg CreateFlowStepParams) 
 		arg.Protocol,
 		arg.Timestamp,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+	var i FlowStep
+	err := row.Scan(
+		&i.ID,
+		&i.FlowID,
+		&i.Target,
+		&i.Protocol,
+		&i.Current,
+		&i.Next,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const deleteFlow = `-- name: DeleteFlow :execrows

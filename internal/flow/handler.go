@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"products/internal"
 	"products/internal/flow/db"
@@ -17,12 +18,15 @@ type Handler interface {
 	GetFlowsByProduct(w http.ResponseWriter, r *http.Request)
 	UpdateFlow(w http.ResponseWriter, r *http.Request)
 	DeleteFlow(w http.ResponseWriter, r *http.Request)
+	CreateFlowStep(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(dbConn db.DBTX) Handler {
 	queries := db.New(dbConn)
+	client := &http.Client{Timeout: 5 * time.Second}
 	service := &postgresService{
 		queries: queries,
+		client:  client,
 	}
 	return &flowHandler{
 		flowService: service,
@@ -158,4 +162,60 @@ func (h *flowHandler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *flowHandler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+	req := &createFlowStepRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+	req.FlowId = id
+
+	if req.Current == "" || req.Next == "" {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Current and next UUIDs are required", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+
+	if _, err := toPgUUID(req.Current); err != nil {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid current UUID", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+	if _, err := toPgUUID(req.Next); err != nil {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid next UUID", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+
+	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("creating flow step timed out"))
+	defer cancel()
+	flowStep, err := h.flowService.CreateFlowStep(contextWithTimeOut, *req)
+	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			return
+		}
+
+		if _, ok := errors.AsType[DependencyValidationError](err); ok {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusUnprocessableEntity)
+			return
+		}
+
+		if _, ok := errors.AsType[ConflictError](err); ok {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusConflict)
+			return
+		}
+
+		logger := internal.LoggerFromContext(r.Context())
+		logger.Error("Failed to create flow step",
+			slog.String("error", err.Error()),
+			slog.Int("flow_id", id))
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create flow step", Instance: r.URL.Path}, http.StatusInternalServerError)
+		return
+	}
+	internal.WriteJSONResponse(w, r, http.StatusCreated, flowStep)
 }

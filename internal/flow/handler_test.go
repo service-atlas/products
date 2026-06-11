@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"products/internal/flow/db"
 	"testing"
 	"time"
@@ -16,7 +17,7 @@ import (
 
 type mockFlowQuerier struct {
 	createFlowFunc        func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error)
-	createFlowStepFunc    func(ctx context.Context, arg db.CreateFlowStepParams) (int64, error)
+	createFlowStepFunc    func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error)
 	deleteFlowFunc        func(ctx context.Context, id int) (int64, error)
 	deleteFlowStepFunc    func(ctx context.Context, id int) (int64, error)
 	getFlowFunc           func(ctx context.Context, id int) (db.Flow, error)
@@ -31,7 +32,7 @@ func (m *mockFlowQuerier) CreateFlow(ctx context.Context, arg db.CreateFlowParam
 	return m.createFlowFunc(ctx, arg)
 }
 
-func (m *mockFlowQuerier) CreateFlowStep(ctx context.Context, arg db.CreateFlowStepParams) (int64, error) {
+func (m *mockFlowQuerier) CreateFlowStep(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
 	return m.createFlowStepFunc(ctx, arg)
 }
 
@@ -575,6 +576,210 @@ func TestDeleteFlow(t *testing.T) {
 
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+		})
+	}
+}
+
+func TestCreateFlowStep(t *testing.T) {
+	validUUID := "550e8400-e29b-41d4-a716-446655440000"
+
+	tests := []struct {
+		name           string
+		requestBody    any
+		pathID         string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			requestBody: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  validUUID,
+				Next:     validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]serviceDependency{
+						{Id: validUUID, InteractionType: "data"},
+					})
+				}))
+				t.Cleanup(ts.Close)
+				os.Setenv("SERVICE_URL", ts.URL)
+
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.createFlowStepFunc = func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
+					return db.FlowStep{ID: 10, FlowID: 1}, nil
+				}
+			},
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:           "Invalid Path ID",
+			requestBody:    createFlowStepRequest{Current: validUUID, Next: validUUID},
+			pathID:         "abc",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Malformed JSON",
+			requestBody:    []byte(`{"current": "invalid json`),
+			pathID:         "1",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Flow Not Found",
+			requestBody: createFlowStepRequest{
+				Current: validUUID,
+				Next:    validUUID,
+			},
+			pathID: "999",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "Service Failure",
+			requestBody: createFlowStepRequest{
+				Current: validUUID,
+				Next:    validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					json.NewEncoder(w).Encode([]serviceDependency{
+						{Id: validUUID, InteractionType: "data"},
+					})
+				}))
+				t.Cleanup(ts.Close)
+				os.Setenv("SERVICE_URL", ts.URL)
+
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.createFlowStepFunc = func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
+					return db.FlowStep{}, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Invalid UUID in Request Body",
+			requestBody: createFlowStepRequest{
+				Current: "invalid-uuid",
+				Next:    validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Missing Current Field",
+			requestBody: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Next:     validUUID,
+			},
+			pathID:         "1",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Duplicate Constraint Error",
+			requestBody: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  validUUID,
+				Next:     validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				// Simulate a conflict error returned by the service layer
+				m.createFlowStepFunc = func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
+					return db.FlowStep{}, ConflictError{Message: "Flow step already exists"}
+				}
+			},
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			name: "Dependency Validation Failure",
+			requestBody: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  validUUID,
+				Next:     validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// Return empty dependencies so validation fails
+					json.NewEncoder(w).Encode([]serviceDependency{})
+				}))
+				t.Cleanup(ts.Close)
+				os.Setenv("SERVICE_URL", ts.URL)
+
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+			},
+			expectedStatus: http.StatusUnprocessableEntity,
+		},
+	}
+	client := &http.Client{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			h := &flowHandler{
+				flowService: &postgresService{
+					queries: mock,
+					client:  client,
+				},
+			}
+
+			var body []byte
+			switch b := tt.requestBody.(type) {
+			case []byte:
+				body = b
+			default:
+				body, _ = json.Marshal(tt.requestBody)
+			}
+
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/flows/"+tt.pathID+"/steps", bytes.NewBuffer(body))
+			req.SetPathValue("id", tt.pathID)
+
+			rr := httptest.NewRecorder()
+			h.CreateFlowStep(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusCreated {
+				var step db.FlowStep
+				if err := json.NewDecoder(rr.Body).Decode(&step); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if step.ID == 0 {
+					t.Error("expected flow step ID to be set")
+				}
 			}
 		})
 	}
