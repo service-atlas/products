@@ -740,7 +740,7 @@ func TestCreateFlowStep(t *testing.T) {
 			expectedStatus: http.StatusUnprocessableEntity,
 		},
 	}
-
+	client := &http.Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockFlowQuerier{}
@@ -750,6 +750,7 @@ func TestCreateFlowStep(t *testing.T) {
 			h := &flowHandler{
 				flowService: &postgresService{
 					queries: mock,
+					client:  client,
 				},
 			}
 

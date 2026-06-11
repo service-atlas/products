@@ -23,8 +23,10 @@ type Handler interface {
 
 func NewHandler(dbConn db.DBTX) Handler {
 	queries := db.New(dbConn)
+	client := &http.Client{Timeout: 5 * time.Second}
 	service := &postgresService{
 		queries: queries,
+		client:  client,
 	}
 	return &flowHandler{
 		flowService: service,

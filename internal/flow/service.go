@@ -43,6 +43,7 @@ func (e ConflictError) Error() string {
 
 type postgresService struct {
 	queries db.Querier
+	client  *http.Client
 }
 
 func (s *postgresService) validateDependency(ctx context.Context, current, next string) (bool, error) {
@@ -57,8 +58,7 @@ func (s *postgresService) validateDependency(ctx context.Context, current, next 
 	if err != nil {
 		return false, fmt.Errorf("failed to create dependency request: %w", err)
 	}
-
-	resp, err := http.DefaultClient.Do(httpReq)
+	resp, err := s.client.Do(httpReq)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch dependencies: %w", err)
 	}

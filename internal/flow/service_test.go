@@ -64,14 +64,14 @@ func TestService_CreateFlow(t *testing.T) {
 			expectedError: "failed to create flow: db error",
 		},
 	}
-
+	client := &http.Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockFlowQuerier{}
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &postgresService{queries: mock}
+			s := &postgresService{queries: mock, client: client}
 
 			flow, err := s.CreateFlow(context.Background(), tt.req, tt.productID)
 
@@ -124,14 +124,14 @@ func TestService_GetFlowById(t *testing.T) {
 			expectedError: internal.NewNotFoundError(404, "Flow").Error(),
 		},
 	}
-
+	client := &http.Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockFlowQuerier{}
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &postgresService{queries: mock}
+			s := &postgresService{queries: mock, client: client}
 
 			flow, err := s.GetFlowById(context.Background(), tt.id)
 
@@ -236,14 +236,14 @@ func TestService_GetFlowsByProduct(t *testing.T) {
 			expectedError: "failed to fetch flows: db error",
 		},
 	}
-
+	client := &http.Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockFlowQuerier{}
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &postgresService{queries: mock}
+			s := &postgresService{queries: mock, client: client}
 
 			flows, err := s.GetFlowsByProduct(context.Background(), tt.productID)
 
@@ -342,14 +342,14 @@ func TestService_UpdateFlow(t *testing.T) {
 			expectedError: internal.NewNotFoundError(1, "Flow").Error(),
 		},
 	}
-
+	client := &http.Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockFlowQuerier{}
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &postgresService{queries: mock}
+			s := &postgresService{queries: mock, client: client}
 
 			flow, err := s.UpdateFlow(context.Background(), tt.req, tt.id)
 
@@ -496,14 +496,14 @@ func TestService_CreateFlowStep(t *testing.T) {
 			expectedError: "failed to create flow step: db error",
 		},
 	}
-
+	client := &http.Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockFlowQuerier{}
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &postgresService{queries: mock}
+			s := &postgresService{queries: mock, client: client}
 
 			step, err := s.CreateFlowStep(t.Context(), tt.req)
 
@@ -644,7 +644,7 @@ func TestService_validateDependency(t *testing.T) {
 			expectedError: "failed to decode dependencies:",
 		},
 	}
-
+	client := &http.Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.serviceUrl != "" {
@@ -658,7 +658,7 @@ func TestService_validateDependency(t *testing.T) {
 				os.Unsetenv("SERVICE_URL")
 			}
 
-			s := &postgresService{}
+			s := &postgresService{client: client}
 			ok, err := s.validateDependency(t.Context(), tt.current, tt.next)
 
 			if tt.expectedError != "" {
@@ -719,13 +719,14 @@ func TestService_DeleteFlow(t *testing.T) {
 		},
 	}
 
+	client := &http.Client{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockFlowQuerier{}
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			s := &postgresService{queries: mock}
+			s := &postgresService{queries: mock, client: client}
 
 			err := s.DeleteFlow(context.Background(), tt.id)
 
