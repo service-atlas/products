@@ -10,3 +10,30 @@ services:
       POSTGRES_DB: products
     ports:
       - "5432:5432"
+  neo4j:
+    image: neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    env_file:
+      - .env
+    environment:
+      NEO4J_AUTH: ${N_USERNAME}/${N_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  services:
+    image: ghcr.io/service-atlas/services:latest
+    ports:
+      - "8082:8080"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DB_USERNAME: ${N_USERNAME:?N_USERNAME is required}
+      DB_PASSWORD: ${N_PASSWORD:?N_PASSWORD is required}
+      DB_URL: ${N_URL:?N_URL is required}
