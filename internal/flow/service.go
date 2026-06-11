@@ -27,12 +27,10 @@ type flowService interface {
 }
 
 type DependencyValidationError struct {
-	Current string
-	Next    string
 }
 
 func (e DependencyValidationError) Error() string {
-	return fmt.Sprintf("%s does not have a data dependency on %s", e.Current, e.Next)
+	return "required data dependency not found"
 }
 
 type ConflictError struct {
@@ -176,7 +174,7 @@ func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStep
 		return db.FlowStep{}, err
 	}
 	if !ok {
-		return db.FlowStep{}, DependencyValidationError{Current: req.Current, Next: req.Next}
+		return db.FlowStep{}, DependencyValidationError{}
 	}
 
 	flowStep, err := s.queries.CreateFlowStep(ctx, params)

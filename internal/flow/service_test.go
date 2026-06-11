@@ -428,7 +428,7 @@ func TestService_CreateFlowStep(t *testing.T) {
 					return db.Flow{ID: 1}, nil
 				}
 			},
-			expectedError: validUUID + " does not have a data dependency on 550e8400-e29b-41d4-a716-446655440001",
+			expectedError: "required data dependency not found",
 		},
 		{
 			name: "Service URL Not Set",
