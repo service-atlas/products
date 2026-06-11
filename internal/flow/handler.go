@@ -177,6 +177,11 @@ func (h *flowHandler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 	}
 	req.FlowId = id
 
+	if req.Current == "" || req.Next == "" {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Current and next UUIDs are required", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+
 	if _, err := toPgUUID(req.Current); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid current UUID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
