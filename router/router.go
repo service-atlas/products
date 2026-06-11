@@ -19,7 +19,8 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	slog.Debug("Setting up router")
 	router := chi.NewRouter()
 
-	router.Use(internal.StructuredLogger(slog.Default()))
+	router.Use(internal.RequestIDLogger)
+	router.Use(internal.WebRequestLogger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Compress(5))
 	router.Use(cors.Handler(cors.Options{

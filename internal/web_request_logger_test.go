@@ -16,7 +16,7 @@ func TestStructuredLogger(t *testing.T) {
 	// Create a JSON handler that writes to our buffer
 	jsonHandler := slog.NewJSONHandler(&logBuffer, nil)
 	logger := slog.New(jsonHandler)
-
+	slog.SetDefault(logger)
 	// Create a test HTTP handler that returns a specific status code
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
@@ -24,7 +24,7 @@ func TestStructuredLogger(t *testing.T) {
 	})
 
 	// Wrap our test handler with the StructuredLogger middleware
-	middlewareHandler := StructuredLogger(logger)(testHandler)
+	middlewareHandler := WebRequestLogger(testHandler)
 
 	// Create a test request
 	req := httptest.NewRequest("POST", "/test-path", nil)
@@ -150,6 +150,7 @@ func TestStructuredLoggerWithDefaultStatus(t *testing.T) {
 	// Create a JSON handler that writes to our buffer
 	jsonHandler := slog.NewJSONHandler(&logBuffer, nil)
 	logger := slog.New(jsonHandler)
+	slog.SetDefault(logger)
 
 	// Create a test HTTP handler that doesn't explicitly set a status code
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +158,7 @@ func TestStructuredLoggerWithDefaultStatus(t *testing.T) {
 	})
 
 	// Wrap our test handler with the StructuredLogger middleware
-	middlewareHandler := StructuredLogger(logger)(testHandler)
+	middlewareHandler := WebRequestLogger(testHandler)
 
 	// Create a test request
 	req := httptest.NewRequest("GET", "/default-status", nil)
