@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"products/internal"
 	"products/internal/flow/db"
@@ -191,6 +192,10 @@ func (h *flowHandler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
+		logger := internal.LoggerFromContext(r.Context())
+		logger.Error("Failed to create flow step",
+			slog.String("error", err.Error()),
+			slog.Int("flow_id", id))
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create flow step", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
