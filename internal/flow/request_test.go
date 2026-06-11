@@ -205,6 +205,17 @@ func TestCreateFlowStepRequest_ToParams(t *testing.T) {
 			},
 			expectedError: true,
 		},
+		{
+			name: "Empty Protocol and Target",
+			request: createFlowStepRequest{
+				Protocol: "",
+				Target:   "",
+				Current:  validUUID1,
+				Next:     validUUID2,
+				FlowId:   1,
+			},
+			expectedError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -222,8 +233,14 @@ func TestCreateFlowStepRequest_ToParams(t *testing.T) {
 				if params.Protocol.String != tt.request.Protocol {
 					t.Errorf("expected Protocol %q, got %q", tt.request.Protocol, params.Protocol.String)
 				}
+				if params.Protocol.Valid != (tt.request.Protocol != "") {
+					t.Errorf("expected Protocol valid %v, got %v", tt.request.Protocol != "", params.Protocol.Valid)
+				}
 				if params.Target.String != tt.request.Target {
 					t.Errorf("expected Target %q, got %q", tt.request.Target, params.Target.String)
+				}
+				if params.Target.Valid != (tt.request.Target != "") {
+					t.Errorf("expected Target valid %v, got %v", tt.request.Target != "", params.Target.Valid)
 				}
 				if !params.Timestamp.Valid {
 					t.Error("expected Timestamp to be valid")

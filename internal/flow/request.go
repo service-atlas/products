@@ -83,8 +83,8 @@ func (r *createFlowStepRequest) ToParams() (db.CreateFlowStepParams, error) {
 		FlowID:   r.FlowId,
 		Current:  currentUUID,
 		Next:     nextUUID,
-		Target:   pgtype.Text{String: r.Target},
-		Protocol: pgtype.Text{String: r.Protocol},
+		Target:   pgtype.Text{String: r.Target, Valid: r.Target != ""},
+		Protocol: pgtype.Text{String: r.Protocol, Valid: r.Protocol != ""},
 		Timestamp: pgtype.Timestamptz{
 			Time:  time.Now().UTC(),
 			Valid: true,
