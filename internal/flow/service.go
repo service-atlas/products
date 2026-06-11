@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type flowService interface {
@@ -23,6 +24,23 @@ type flowService interface {
 	UpdateFlow(ctx context.Context, req updateFlowRequest, id int) (db.Flow, error)
 	DeleteFlow(ctx context.Context, id int) error
 	CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error)
+}
+
+type DependencyValidationError struct {
+	Current string
+	Next    string
+}
+
+func (e DependencyValidationError) Error() string {
+	return fmt.Sprintf("%s does not have a data dependency on %s", e.Current, e.Next)
+}
+
+type ConflictError struct {
+	Message string
+}
+
+func (e ConflictError) Error() string {
+	return e.Message
 }
 
 type postgresService struct {
@@ -158,11 +176,14 @@ func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStep
 		return db.FlowStep{}, err
 	}
 	if !ok {
-		return db.FlowStep{}, fmt.Errorf("%s does not have a data dependency on %s", req.Current, req.Next)
+		return db.FlowStep{}, DependencyValidationError{Current: req.Current, Next: req.Next}
 	}
 
 	flowStep, err := s.queries.CreateFlowStep(ctx, params)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			return db.FlowStep{}, ConflictError{Message: "Flow step already exists"}
+		}
 		return db.FlowStep{}, fmt.Errorf("failed to create flow step: %w", err)
 	}
 	return flowStep, nil

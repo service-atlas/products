@@ -192,6 +192,17 @@ func (h *flowHandler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
+
+		if _, ok := errors.AsType[DependencyValidationError](err); ok {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusUnprocessableEntity)
+			return
+		}
+
+		if _, ok := errors.AsType[ConflictError](err); ok {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusConflict)
+			return
+		}
+
 		logger := internal.LoggerFromContext(r.Context())
 		logger.Error("Failed to create flow step",
 			slog.String("error", err.Error()),

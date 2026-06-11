@@ -685,6 +685,60 @@ func TestCreateFlowStep(t *testing.T) {
 			},
 			expectedStatus: http.StatusBadRequest,
 		},
+		{
+			name: "Missing Current Field",
+			requestBody: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Next:     validUUID,
+			},
+			pathID:         "1",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Duplicate Constraint Error",
+			requestBody: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  validUUID,
+				Next:     validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				// Simulate a conflict error returned by the service layer
+				m.createFlowStepFunc = func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error) {
+					return db.FlowStep{}, ConflictError{Message: "Flow step already exists"}
+				}
+			},
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			name: "Dependency Validation Failure",
+			requestBody: createFlowStepRequest{
+				Protocol: "http",
+				Target:   "target",
+				Current:  validUUID,
+				Next:     validUUID,
+			},
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// Return empty dependencies so validation fails
+					json.NewEncoder(w).Encode([]serviceDependency{})
+				}))
+				t.Cleanup(ts.Close)
+				os.Setenv("SERVICE_URL", ts.URL)
+
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+			},
+			expectedStatus: http.StatusUnprocessableEntity,
+		},
 	}
 
 	for _, tt := range tests {
