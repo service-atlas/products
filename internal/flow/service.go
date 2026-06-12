@@ -24,6 +24,7 @@ type flowService interface {
 	UpdateFlow(ctx context.Context, req updateFlowRequest, id int) (db.Flow, error)
 	DeleteFlow(ctx context.Context, id int) error
 	CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error)
+	DeleteFlowStep(ctx context.Context, id int) error
 }
 
 type DependencyValidationError struct {
@@ -185,4 +186,15 @@ func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStep
 		return db.FlowStep{}, fmt.Errorf("failed to create flow step: %w", err)
 	}
 	return flowStep, nil
+}
+
+func (s *postgresService) DeleteFlowStep(ctx context.Context, id int) error {
+	rowsAffected, err := s.queries.DeleteFlowStep(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete flow step: %w", err)
+	}
+	if rowsAffected == 0 {
+		return internal.NewNotFoundError(id, "FlowStep")
+	}
+	return nil
 }

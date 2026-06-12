@@ -581,6 +581,75 @@ func TestDeleteFlow(t *testing.T) {
 	}
 }
 
+func TestDeleteFlowStep(t *testing.T) {
+	tests := []struct {
+		name           string
+		pathID         string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+	}{
+		{
+			name:   "Success",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.deleteFlowStepFunc = func(ctx context.Context, id int) (int64, error) {
+					if id != 1 {
+						return 0, errors.New("unexpected flow step id")
+					}
+					return 1, nil
+				}
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name:           "Invalid Flow Step ID",
+			pathID:         "invalid",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "Flow Step Not Found",
+			pathID: "999",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.deleteFlowStepFunc = func(ctx context.Context, id int) (int64, error) {
+					return 0, nil
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:   "Database Error",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.deleteFlowStepFunc = func(ctx context.Context, id int) (int64, error) {
+					return 0, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			h := &flowHandler{flowService: &postgresService{queries: mock}}
+
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodDelete, "/flows/steps/1", nil)
+			req.SetPathValue("id", tt.pathID)
+			rr := httptest.NewRecorder()
+
+			h.DeleteFlowStep(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, rr.Code)
+			}
+		})
+	}
+}
+
 func TestCreateFlowStep(t *testing.T) {
 	validUUID := "550e8400-e29b-41d4-a716-446655440000"
 

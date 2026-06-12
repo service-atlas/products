@@ -66,6 +66,10 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 			u.Delete("/", flowHandler.DeleteFlow)
 		})
 	})
+
+	router.Route("/api/flows-steps/{id}", func(u chi.Router) {
+		u.Delete("/", flowHandler.DeleteFlowStep)
+	})
 	slog.Debug("Router setup complete")
 	return router
 }
