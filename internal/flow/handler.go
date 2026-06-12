@@ -19,6 +19,7 @@ type Handler interface {
 	UpdateFlow(w http.ResponseWriter, r *http.Request)
 	DeleteFlow(w http.ResponseWriter, r *http.Request)
 	CreateFlowStep(w http.ResponseWriter, r *http.Request)
+	DeleteFlowStep(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(dbConn db.DBTX) Handler {
@@ -218,4 +219,28 @@ func (h *flowHandler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	internal.WriteJSONResponse(w, r, http.StatusCreated, flowStep)
+}
+
+func (h *flowHandler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow step ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("deleting flow step timed out"))
+	defer cancel()
+	err := h.flowService.DeleteFlowStep(contextWithTimeOut, id)
+	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			return
+		}
+		logger := internal.LoggerFromContext(r.Context())
+		logger.Error("Failed to delete flow step",
+			slog.String("error", err.Error()),
+			slog.Int("flow_step_id", id))
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete flow step", Instance: r.URL.Path}, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
