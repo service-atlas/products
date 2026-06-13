@@ -29,26 +29,12 @@ type flowStep interface {
 	CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error)
 	DeleteFlowStep(ctx context.Context, id int) error
 	GetFlowSteps(ctx context.Context, id int) ([]db.FlowStep, error)
+	GetFlowPath(ctx context.Context, id int) (FlowPath, error)
 }
 
 type flowService interface {
 	flow
 	flowStep
-}
-
-type DependencyValidationError struct {
-}
-
-func (e DependencyValidationError) Error() string {
-	return "required data dependency not found"
-}
-
-type ConflictError struct {
-	Message string
-}
-
-func (e ConflictError) Error() string {
-	return e.Message
 }
 
 type postgresService struct {
@@ -224,4 +210,24 @@ func (s *postgresService) GetFlowSteps(ctx context.Context, id int) ([]db.FlowSt
 		flowSteps = []db.FlowStep{}
 	}
 	return flowSteps, nil
+}
+
+func (s *postgresService) GetFlowPath(ctx context.Context, id int) (FlowPath, error) {
+	flowSteps, err := s.GetFlowSteps(ctx, id)
+	if err != nil {
+		return FlowPath{}, err
+	}
+	var pathMap = make(map[string][]string)
+	for _, step := range flowSteps {
+		_, ok := pathMap[step.Current.String()]
+		if !ok {
+			pathMap[step.Current.String()] = []string{}
+		}
+		pathMap[step.Current.String()] = append(pathMap[step.Current.String()], step.Next.String())
+	}
+	var path []PathItem
+	for k, v := range pathMap {
+		path = append(path, PathItem{Current: k, Next: v})
+	}
+	return FlowPath{FlowID: id, Path: path}, nil
 }

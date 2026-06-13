@@ -99,8 +99,3 @@ func toPgUUID(val string) (pgtype.UUID, error) {
 	}
 	return pgtype.UUID{Bytes: uuidVal, Valid: true}, nil
 }
-
-type serviceDependency struct {
-	Id              string `json:"id"`
-	InteractionType string `json:"interaction_type"`
-}
