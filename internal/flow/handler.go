@@ -20,6 +20,7 @@ type Handler interface {
 	DeleteFlow(w http.ResponseWriter, r *http.Request)
 	CreateFlowStep(w http.ResponseWriter, r *http.Request)
 	DeleteFlowStep(w http.ResponseWriter, r *http.Request)
+	GetFlowSteps(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(dbConn db.DBTX) Handler {
@@ -243,4 +244,24 @@ func (h *flowHandler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *flowHandler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		return
+	}
+	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("fetching flow steps timed out"))
+	defer cancel()
+	flowSteps, err := h.flowService.GetFlowSteps(contextWithTimeOut, id)
+	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			return
+		}
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flow steps", Instance: r.URL.Path}, http.StatusInternalServerError)
+		return
+	}
+	internal.WriteJSONResponse(w, r, http.StatusOK, flowSteps)
 }

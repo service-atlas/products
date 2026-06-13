@@ -810,3 +810,92 @@ func TestService_DeleteFlowStep(t *testing.T) {
 		})
 	}
 }
+
+func TestService_GetFlowSteps(t *testing.T) {
+	tests := []struct {
+		name          string
+		id            int
+		mockSetup     func(m *mockFlowQuerier)
+		expectedError string
+		expectedSteps []db.FlowStep
+	}{
+		{
+			name: "Success",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					return []db.FlowStep{{ID: 1, FlowID: 1}, {ID: 2, FlowID: 1}}, nil
+				}
+			},
+			expectedSteps: []db.FlowStep{{ID: 1, FlowID: 1}, {ID: 2, FlowID: 1}},
+		},
+		{
+			name: "Flow Not Found",
+			id:   404,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedError: internal.NewNotFoundError(404, "Flow").Error(),
+		},
+		{
+			name: "Database Error on GetFlowSteps",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					return nil, errors.New("db error")
+				}
+			},
+			expectedError: "db error",
+		},
+		{
+			name: "No Flow Steps Found (Return Empty Slice)",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					return nil, nil
+				}
+			},
+			expectedSteps: []db.FlowStep{},
+		},
+	}
+	client := &http.Client{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			s := &postgresService{queries: mock, client: client}
+
+			steps, err := s.GetFlowSteps(context.Background(), tt.id)
+
+			if tt.expectedError != "" {
+				if err == nil {
+					t.Errorf("expected error %q, got nil", tt.expectedError)
+				} else if !strings.Contains(err.Error(), tt.expectedError) {
+					t.Errorf("expected error containing %q, got %q", tt.expectedError, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if len(steps) != len(tt.expectedSteps) {
+				t.Errorf("expected %d steps, got %d", len(tt.expectedSteps), len(steps))
+			}
+		})
+	}
+}
