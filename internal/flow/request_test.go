@@ -122,6 +122,59 @@ func TestUpdateFlowRequest_ToParams(t *testing.T) {
 	}
 }
 
+func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
+	tests := []struct {
+		name     string
+		req      updateFlowStepRequest
+		existing db.FlowStep
+		expected db.UpdateFlowStepParams
+	}{
+		{
+			name: "Update All Fields",
+			req: updateFlowStepRequest{
+				Target:   "https://new.com",
+				Protocol: "HTTPS",
+			},
+			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
+			expected: db.UpdateFlowStepParams{
+				ID:       1,
+				Target:   pgtype.Text{String: "https://new.com", Valid: true},
+				Protocol: pgtype.Text{String: "HTTPS", Valid: true},
+			},
+		},
+		{
+			name: "Update Only Target",
+			req: updateFlowStepRequest{
+				Target: "https://new.com",
+			},
+			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
+			expected: db.UpdateFlowStepParams{
+				ID:       1,
+				Target:   pgtype.Text{String: "https://new.com", Valid: true},
+				Protocol: pgtype.Text{String: "HTTP", Valid: true},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params := tt.req.ToParams(tt.existing.ID, tt.existing)
+			if params.ID != tt.expected.ID {
+				t.Errorf("expected ID %d, got %d", tt.expected.ID, params.ID)
+			}
+			if params.Target.String != tt.expected.Target.String {
+				t.Errorf("expected target %q, got %q", tt.expected.Target.String, params.Target.String)
+			}
+			if params.Protocol.String != tt.expected.Protocol.String {
+				t.Errorf("expected protocol %q, got %q", tt.expected.Protocol.String, params.Protocol.String)
+			}
+			if !params.UpdatedAt.Valid {
+				t.Error("expected UpdatedAt to be valid")
+			}
+		})
+	}
+}
+
 func TestToPgUUID(t *testing.T) {
 	tests := []struct {
 		name          string
