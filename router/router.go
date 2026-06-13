@@ -71,8 +71,9 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 			})
 		})
 
-		u.Route("/flows-steps/{id}", func(u chi.Router) {
+		u.Route("/flow-steps/{id}", func(u chi.Router) {
 			u.Delete("/", flowHandler.DeleteFlowStep)
+			u.Patch("/", flowHandler.UpdateFlowStep)
 		})
 	})
 	slog.Debug("Router setup complete")
