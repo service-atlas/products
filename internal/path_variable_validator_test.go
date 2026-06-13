@@ -1,11 +1,14 @@
 package internal
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func TestGetGuidFromRequestPath(t *testing.T) {
@@ -114,5 +117,21 @@ func TestGetIntFromRequestPath(t *testing.T) {
 				t.Errorf("GetIntFromRequestPath() got = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestGetIntFromRequestPath_Chi(t *testing.T) {
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", "456")
+
+	req := httptest.NewRequest(http.MethodGet, "/456", nil)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	got, ok := GetIntFromRequestPath("id", req)
+	if !ok {
+		t.Errorf("GetIntFromRequestPath() ok = false, want true")
+	}
+	if got != 456 {
+		t.Errorf("GetIntFromRequestPath() got = %v, want 456", got)
 	}
 }
