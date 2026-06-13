@@ -12,7 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type mockFlowQuerier struct {
@@ -952,6 +954,118 @@ func TestGetFlowSteps(t *testing.T) {
 				}
 				if len(steps) != tt.expectedCount {
 					t.Errorf("expected %d steps, got %d", tt.expectedCount, len(steps))
+				}
+			}
+		})
+	}
+}
+
+func TestGetFlowPath(t *testing.T) {
+	tests := []struct {
+		name           string
+		pathID         string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+	}{
+		{
+			name:   "Success",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					u1 := [16]byte{1}
+					u2 := [16]byte{2}
+					return []db.FlowStep{
+						{
+							ID:      1,
+							FlowID:  1,
+							Current: pgtype.UUID{Bytes: u1, Valid: true},
+							Next:    pgtype.UUID{Bytes: u2, Valid: true},
+						},
+					}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:   "Flow Not Found",
+			pathID: "404",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{}, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "Invalid ID",
+			pathID:         "abc",
+			mockSetup:      func(m *mockFlowQuerier) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:   "Database Error",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					return nil, errors.New("db error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	client := &http.Client{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			h := &flowHandler{
+				flowService: &postgresService{
+					queries: mock,
+					client:  client,
+				},
+			}
+
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/flows/"+tt.pathID+"/path", nil)
+			req.SetPathValue("id", tt.pathID)
+
+			rr := httptest.NewRecorder()
+			h.GetFlowPath(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+
+			if tt.expectedStatus == http.StatusOK {
+				var path FlowPath
+				if err := json.NewDecoder(rr.Body).Decode(&path); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if path.FlowID != 1 {
+					t.Errorf("expected flow id 1, got %d", path.FlowID)
+				}
+				if path.Path == nil || len(path.Path) != 1 {
+					t.Fatalf("expected 1 path item, got %d", len(path.Path))
+				}
+				item := path.Path[0]
+				u1 := [16]byte{1}
+				u2 := [16]byte{2}
+				expectedCurrent := uuid.UUID(u1).String()
+				expectedNext := uuid.UUID(u2).String()
+
+				if item.Current != expectedCurrent {
+					t.Errorf("expected current %s, got %s", expectedCurrent, item.Current)
+				}
+				if len(item.Next) != 1 || item.Next[0] != expectedNext {
+					t.Errorf("expected next [%s], got %v", expectedNext, item.Next)
 				}
 			}
 		})
