@@ -902,6 +902,89 @@ func TestService_GetFlowSteps(t *testing.T) {
 	}
 }
 
+func TestService_UpdateFlowStep(t *testing.T) {
+	tests := []struct {
+		name          string
+		id            int
+		req           updateFlowStepRequest
+		mockSetup     func(m *mockFlowQuerier)
+		expectedError string
+		expectedStep  db.FlowStep
+	}{
+		{
+			name: "Success",
+			id:   1,
+			req: updateFlowStepRequest{
+				Target:   "https://example.com",
+				Protocol: "HTTPS",
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				existing := db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}}
+				updated := db.FlowStep{ID: 1, Target: pgtype.Text{String: "https://example.com", Valid: true}, Protocol: pgtype.Text{String: "HTTPS", Valid: true}}
+				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
+					if id == 1 {
+						if m.updateFlowStepFunc != nil {
+							// Return updated after update
+							return updated, nil
+						}
+						return existing, nil
+					}
+					return db.FlowStep{}, pgx.ErrNoRows
+				}
+				m.updateFlowStepFunc = func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error) {
+					return 1, nil
+				}
+			},
+			expectedStep: db.FlowStep{ID: 1, Target: pgtype.Text{String: "https://example.com", Valid: true}, Protocol: pgtype.Text{String: "HTTPS", Valid: true}},
+		},
+		{
+			name: "Flow Step Not Found",
+			id:   999,
+			req: updateFlowStepRequest{
+				Target: "https://example.com",
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
+					return db.FlowStep{}, pgx.ErrNoRows
+				}
+			},
+			expectedError: internal.NewNotFoundError(999, "FlowStep").Error(),
+		},
+	}
+	client := &http.Client{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			s := &postgresService{queries: mock, client: client}
+
+			step, err := s.UpdateFlowStep(context.Background(), tt.req, tt.id)
+
+			if tt.expectedError != "" {
+				if err == nil {
+					t.Errorf("expected error %q, got nil", tt.expectedError)
+				} else if err.Error() != tt.expectedError {
+					t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if step.Target.String != tt.expectedStep.Target.String {
+				t.Errorf("expected target %q, got %q", tt.expectedStep.Target.String, step.Target.String)
+			}
+			if step.Protocol.String != tt.expectedStep.Protocol.String {
+				t.Errorf("expected protocol %q, got %q", tt.expectedStep.Protocol.String, step.Protocol.String)
+			}
+		})
+	}
+}
+
 func TestService_GetFlowPath(t *testing.T) {
 	uuidA := uuid.New()
 	uuidB := uuid.New()
