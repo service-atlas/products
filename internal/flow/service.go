@@ -217,17 +217,38 @@ func (s *postgresService) GetFlowPath(ctx context.Context, id int) (FlowPath, er
 	if err != nil {
 		return FlowPath{}, err
 	}
-	var pathMap = make(map[string][]string)
+	pathMap := make(map[string][]string)
+	nextSet := make(map[string]bool)
 	for _, step := range flowSteps {
-		_, ok := pathMap[step.Current.String()]
-		if !ok {
-			pathMap[step.Current.String()] = []string{}
+		current, next := step.Current.String(), step.Next.String()
+		if _, ok := pathMap[current]; !ok {
+			pathMap[current] = []string{}
 		}
-		pathMap[step.Current.String()] = append(pathMap[step.Current.String()], step.Next.String())
+		pathMap[current] = append(pathMap[current], next)
+		nextSet[next] = true
+	}
+	var queue []string
+	for k := range pathMap {
+		if _, ok := nextSet[k]; !ok {
+			queue = append(queue, k)
+		}
+	}
+
+	if len(queue) == 0 && len(pathMap) > 0 {
+		return FlowPath{}, fmt.Errorf("no entry point found in flow")
+	}
+	if len(queue) > 1 {
+		return FlowPath{}, fmt.Errorf("multiple entry points found in flow")
 	}
 	var path []PathItem
-	for k, v := range pathMap {
-		path = append(path, PathItem{Current: k, Next: v})
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		if nexts, ok := pathMap[current]; ok {
+			queue = append(queue, nexts...)
+			path = append(path, PathItem{Current: current, Next: nexts})
+		}
 	}
+
 	return FlowPath{FlowID: id, Path: path}, nil
 }

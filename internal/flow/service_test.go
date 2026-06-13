@@ -907,6 +907,7 @@ func TestService_GetFlowPath(t *testing.T) {
 	uuidB := uuid.New()
 	uuidC := uuid.New()
 	uuidD := uuid.New()
+	uuidE := uuid.New()
 
 	toPg := func(u uuid.UUID) pgtype.UUID {
 		return pgtype.UUID{Bytes: u, Valid: true}
@@ -978,6 +979,75 @@ func TestService_GetFlowPath(t *testing.T) {
 			},
 			expectedPath: FlowPath{FlowID: 1, Path: nil},
 		},
+		{
+			name: "Success - Complex Ordered Path",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					// Graph:
+					// A -> B
+					// B -> C
+					// C -> D
+					// D -> E
+					// A is the only entry point (never appears in Next)
+					return []db.FlowStep{
+						{ID: 1, FlowID: 1, Current: toPg(uuidA), Next: toPg(uuidB)},
+						{ID: 2, FlowID: 1, Current: toPg(uuidB), Next: toPg(uuidC)},
+						{ID: 3, FlowID: 1, Current: toPg(uuidC), Next: toPg(uuidD)},
+						{ID: 4, FlowID: 1, Current: toPg(uuidD), Next: toPg(uuidE)},
+					}, nil
+				}
+			},
+			expectedPath: FlowPath{
+				FlowID: 1,
+				Path: []PathItem{
+					{Current: uuidA.String(), Next: []string{uuidB.String()}},
+					{Current: uuidB.String(), Next: []string{uuidC.String()}},
+					{Current: uuidC.String(), Next: []string{uuidD.String()}},
+					{Current: uuidD.String(), Next: []string{uuidE.String()}},
+				},
+			},
+		},
+		{
+			name: "Failure - Multiple Entry Points",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					// A -> B
+					// C -> D
+					// Both A and C are entry points
+					return []db.FlowStep{
+						{ID: 1, FlowID: 1, Current: toPg(uuidA), Next: toPg(uuidB)},
+						{ID: 2, FlowID: 1, Current: toPg(uuidC), Next: toPg(uuidD)},
+					}, nil
+				}
+			},
+			expectedError: "multiple entry points found in flow",
+		},
+		{
+			name: "Failure - No Entry Point (Cycle)",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					// A -> B
+					// B -> A
+					return []db.FlowStep{
+						{ID: 1, FlowID: 1, Current: toPg(uuidA), Next: toPg(uuidB)},
+						{ID: 2, FlowID: 1, Current: toPg(uuidB), Next: toPg(uuidA)},
+					}, nil
+				}
+			},
+			expectedError: "no entry point found in flow",
+		},
 	}
 	client := &http.Client{}
 	for _, tt := range tests {
@@ -1009,6 +1079,31 @@ func TestService_GetFlowPath(t *testing.T) {
 
 			if len(path.Path) != len(tt.expectedPath.Path) {
 				t.Errorf("expected %d path items, got %d", len(tt.expectedPath.Path), len(path.Path))
+			}
+
+			// For ordering-sensitive tests, we check the exact sequence
+			if tt.name == "Success - Complex Ordered Path" {
+				for i, expectedItem := range tt.expectedPath.Path {
+					if i >= len(path.Path) {
+						break
+					}
+					actualItem := path.Path[i]
+					if actualItem.Current != expectedItem.Current {
+						t.Errorf("at index %d: expected current %s, got %s", i, expectedItem.Current, actualItem.Current)
+					}
+					if len(actualItem.Next) != len(expectedItem.Next) {
+						t.Errorf("at index %d: expected %d next steps, got %d", i, len(expectedItem.Next), len(actualItem.Next))
+					}
+					for j, expectedNext := range expectedItem.Next {
+						if j >= len(actualItem.Next) {
+							break
+						}
+						if actualItem.Next[j] != expectedNext {
+							t.Errorf("at index %d, next %d: expected %s, got %s", i, j, expectedNext, actualItem.Next[j])
+						}
+					}
+				}
+				return
 			}
 
 			for _, expectedItem := range tt.expectedPath.Path {
