@@ -855,6 +855,19 @@ func TestService_GetFlowSteps(t *testing.T) {
 			},
 			expectedError: "db error",
 		},
+		{
+			name: "No Flow Steps Found (Return Empty Slice)",
+			id:   1,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					return nil, nil
+				}
+			},
+			expectedSteps: []db.FlowStep{},
+		},
 	}
 	client := &http.Client{}
 	for _, tt := range tests {

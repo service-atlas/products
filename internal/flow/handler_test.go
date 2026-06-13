@@ -905,6 +905,20 @@ func TestGetFlowSteps(t *testing.T) {
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
+		{
+			name:   "Success - No Flow Steps",
+			pathID: "1",
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (db.Flow, error) {
+					return db.Flow{ID: 1}, nil
+				}
+				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					return nil, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+			expectedCount:  0,
+		},
 	}
 
 	client := &http.Client{}

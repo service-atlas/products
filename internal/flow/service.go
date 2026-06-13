@@ -218,7 +218,13 @@ func (s *postgresService) GetFlowSteps(ctx context.Context, id int) ([]db.FlowSt
 	}
 	flowSteps, err := s.queries.GetFlowSteps(ctx, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []db.FlowStep{}, nil
+		}
 		return nil, err
+	}
+	if flowSteps == nil {
+		flowSteps = []db.FlowStep{}
 	}
 	return flowSteps, nil
 }
