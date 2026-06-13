@@ -211,9 +211,6 @@ func (s *postgresService) DeleteFlowStep(ctx context.Context, id int) error {
 func (s *postgresService) GetFlowSteps(ctx context.Context, id int) ([]db.FlowStep, error) {
 	_, err := s.GetFlowById(ctx, id)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, internal.NewNotFoundError(id, "Flow")
-		}
 		return nil, err
 	}
 	flowSteps, err := s.queries.GetFlowSteps(ctx, id)
