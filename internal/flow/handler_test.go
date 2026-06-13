@@ -12,7 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type mockFlowQuerier struct {
@@ -973,8 +975,15 @@ func TestGetFlowPath(t *testing.T) {
 					return db.Flow{ID: 1}, nil
 				}
 				m.getFlowStepsFunc = func(ctx context.Context, flowID int) ([]db.FlowStep, error) {
+					u1 := [16]byte{1}
+					u2 := [16]byte{2}
 					return []db.FlowStep{
-						{ID: 1, FlowID: 1},
+						{
+							ID:      1,
+							FlowID:  1,
+							Current: pgtype.UUID{Bytes: u1, Valid: true},
+							Next:    pgtype.UUID{Bytes: u2, Valid: true},
+						},
 					}, nil
 				}
 			},
@@ -1042,6 +1051,21 @@ func TestGetFlowPath(t *testing.T) {
 				}
 				if path.FlowID != 1 {
 					t.Errorf("expected flow id 1, got %d", path.FlowID)
+				}
+				if path.Path == nil || len(path.Path) != 1 {
+					t.Fatalf("expected 1 path item, got %d", len(path.Path))
+				}
+				item := path.Path[0]
+				u1 := [16]byte{1}
+				u2 := [16]byte{2}
+				expectedCurrent := uuid.UUID(u1).String()
+				expectedNext := uuid.UUID(u2).String()
+
+				if item.Current != expectedCurrent {
+					t.Errorf("expected current %s, got %s", expectedCurrent, item.Current)
+				}
+				if len(item.Next) != 1 || item.Next[0] != expectedNext {
+					t.Errorf("expected next [%s], got %v", expectedNext, item.Next)
 				}
 			}
 		})
