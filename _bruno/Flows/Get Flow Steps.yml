@@ -26,9 +26,8 @@ settings:
 
 examples:
   - name: sample
-    description: sample successful call
     request:
-      url: "{{baseUrl}}/api/flows/:id"
+      url: "{{baseUrl}}/api/flows/:id/steps"
       method: GET
       params:
         - name: id
@@ -43,25 +42,29 @@ examples:
         - name: vary
           value: Origin, Accept-Encoding
         - name: date
-          value: Sun, 17 May 2026 01:18:16 GMT
+          value: Sat, 13 Jun 2026 00:50:10 GMT
         - name: content-length
-          value: "134"
+          value: "184"
       body:
         type: json
         data: |-
-          {
-            "id": 1,
-            "product_id": 2,
-            "name": "Flow 1",
-            "description": "flow 1 desc",
-            "created_at": "2026-05-15T19:11:09.35732-05:00",
-            "updated_at": "2026-05-15T19:11:09.35732-05:00"
-          }
+          [
+            {
+              "id": 5,
+              "flow_id": 1,
+              "target": null,
+              "protocol": null,
+              "current": "cea050e5-ebc3-4d2b-aad2-877c47fa8961",
+              "next": "75fce8b6-ca55-41dc-b5fb-1c12707887c0",
+              "created_at": "2026-06-12T19:50:04.54019-05:00",
+              "updated_at": "2026-06-12T19:50:04.54019-05:00"
+            }
+          ]
 
 docs: |
   # Get Flow Steps
 
-  Gets a flow by id. The id is provided in the path. See sample call for success. 
+  Gets an array of flow steps by flow id. The id is provided in the path. See sample call for success. 
 
   ## Possible Responses 
   | Status Code | Notes |
