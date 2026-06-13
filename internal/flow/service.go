@@ -17,14 +17,23 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-type flowService interface {
+type flow interface {
 	CreateFlow(ctx context.Context, req createFlowRequest, id int) (db.Flow, error)
 	GetFlowById(ctx context.Context, id int) (db.Flow, error)
 	GetFlowsByProduct(ctx context.Context, id int) ([]db.Flow, error)
 	UpdateFlow(ctx context.Context, req updateFlowRequest, id int) (db.Flow, error)
 	DeleteFlow(ctx context.Context, id int) error
+}
+
+type flowStep interface {
 	CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error)
 	DeleteFlowStep(ctx context.Context, id int) error
+	GetFlowSteps(ctx context.Context, id int) ([]db.FlowStep, error)
+}
+
+type flowService interface {
+	flow
+	flowStep
 }
 
 type DependencyValidationError struct {
@@ -197,4 +206,19 @@ func (s *postgresService) DeleteFlowStep(ctx context.Context, id int) error {
 		return internal.NewNotFoundError(id, "FlowStep")
 	}
 	return nil
+}
+
+func (s *postgresService) GetFlowSteps(ctx context.Context, id int) ([]db.FlowStep, error) {
+	_, err := s.GetFlowById(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, internal.NewNotFoundError(id, "Flow")
+		}
+		return nil, err
+	}
+	flowSteps, err := s.queries.GetFlowSteps(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return flowSteps, nil
 }
