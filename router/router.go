@@ -64,6 +64,7 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 			u.Route("/{id}", func(u chi.Router) {
 				u.Post("/steps", flowHandler.CreateFlowStep)
 				u.Get("/steps", flowHandler.GetFlowSteps)
+				u.Get("/path", flowHandler.GetFlowPath)
 				u.Get("/", flowHandler.GetFlowById)
 				u.Put("/", flowHandler.UpdateFlow)
 				u.Delete("/", flowHandler.DeleteFlow)
