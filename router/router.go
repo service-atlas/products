@@ -36,40 +36,43 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	productHandler := product.NewProductHandler(dbConn)
 	flowHandler := flow.NewHandler(dbConn)
 
-	router.Route("/api/platforms", func(u chi.Router) {
-		u.Post("/", platformHandler.CreatePlatform)
-		u.Get("/", platformHandler.GetPlatforms)
-		u.Route("/{id}", func(u chi.Router) {
-			u.Get("/", platformHandler.GetPlatform)
-			u.Delete("/", platformHandler.DeletePlatform)
-			u.Put("/", platformHandler.UpdatePlatform)
-			u.Get("/products", productHandler.GetProductsByPlatform)
+	router.Route("/api", func(u chi.Router) {
+
+		u.Route("/platforms", func(u chi.Router) {
+			u.Post("/", platformHandler.CreatePlatform)
+			u.Get("/", platformHandler.GetPlatforms)
+			u.Route("/{id}", func(u chi.Router) {
+				u.Get("/", platformHandler.GetPlatform)
+				u.Delete("/", platformHandler.DeletePlatform)
+				u.Put("/", platformHandler.UpdatePlatform)
+				u.Get("/products", productHandler.GetProductsByPlatform)
+			})
+
+		})
+		u.Route("/products", func(u chi.Router) {
+			u.Post("/", productHandler.CreateProduct)
+			u.Route("/{id}", func(u chi.Router) {
+				u.Get("/", productHandler.GetProductById)
+				u.Delete("/", productHandler.DeleteProduct)
+				u.Put("/", productHandler.UpdateProduct)
+				u.Post("/flows", flowHandler.CreateFlow)
+				u.Get("/flows", flowHandler.GetFlowsByProduct)
+			})
+
+		})
+		u.Route("/flows", func(u chi.Router) {
+			u.Route("/{id}", func(u chi.Router) {
+				u.Post("/steps", flowHandler.CreateFlowStep)
+				u.Get("/steps", flowHandler.GetFlowSteps)
+				u.Get("/", flowHandler.GetFlowById)
+				u.Put("/", flowHandler.UpdateFlow)
+				u.Delete("/", flowHandler.DeleteFlow)
+			})
 		})
 
-	})
-	router.Route("/api/products", func(u chi.Router) {
-		u.Post("/", productHandler.CreateProduct)
-		u.Route("/{id}", func(u chi.Router) {
-			u.Get("/", productHandler.GetProductById)
-			u.Delete("/", productHandler.DeleteProduct)
-			u.Put("/", productHandler.UpdateProduct)
-			u.Post("/flows", flowHandler.CreateFlow)
-			u.Get("/flows", flowHandler.GetFlowsByProduct)
+		u.Route("/flows-steps/{id}", func(u chi.Router) {
+			u.Delete("/", flowHandler.DeleteFlowStep)
 		})
-
-	})
-	router.Route("/api/flows", func(u chi.Router) {
-		u.Route("/{id}", func(u chi.Router) {
-			u.Post("/steps", flowHandler.CreateFlowStep)
-			u.Get("/steps", flowHandler.GetFlowSteps)
-			u.Get("/", flowHandler.GetFlowById)
-			u.Put("/", flowHandler.UpdateFlow)
-			u.Delete("/", flowHandler.DeleteFlow)
-		})
-	})
-
-	router.Route("/api/flows-steps/{id}", func(u chi.Router) {
-		u.Delete("/", flowHandler.DeleteFlowStep)
 	})
 	slog.Debug("Router setup complete")
 	return router
