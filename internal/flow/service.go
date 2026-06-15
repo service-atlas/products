@@ -194,9 +194,12 @@ func (s *postgresService) UpdateFlowStep(ctx context.Context, req updateFlowStep
 	}
 
 	params := req.ToParams(id, existing)
-	_, err = s.queries.UpdateFlowStep(ctx, params)
+	rowsAffected, err := s.queries.UpdateFlowStep(ctx, params)
 	if err != nil {
 		return db.FlowStep{}, fmt.Errorf("failed to update flow step: %w", err)
+	}
+	if rowsAffected == 0 {
+		return db.FlowStep{}, internal.NewNotFoundError(id, "FlowStep")
 	}
 
 	updated, err := s.queries.GetFlowStep(ctx, id)

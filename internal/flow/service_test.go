@@ -950,6 +950,24 @@ func TestService_UpdateFlowStep(t *testing.T) {
 			},
 			expectedError: internal.NewNotFoundError(999, "FlowStep").Error(),
 		},
+		{
+			name: "Flow Step Deleted After Fetch",
+			id:   1,
+			req: updateFlowStepRequest{
+				Target: "https://example.com",
+			},
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
+					// Initial fetch succeeds
+					return db.FlowStep{ID: 1}, nil
+				}
+				m.updateFlowStepFunc = func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error) {
+					// Simulate deletion before update
+					return 0, nil
+				}
+			},
+			expectedError: internal.NewNotFoundError(1, "FlowStep").Error(),
+		},
 	}
 	client := &http.Client{}
 	for _, tt := range tests {
