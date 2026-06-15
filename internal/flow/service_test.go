@@ -923,7 +923,7 @@ func TestService_UpdateFlowStep(t *testing.T) {
 				updated := db.FlowStep{ID: 1, Target: pgtype.Text{String: "https://example.com", Valid: true}, Protocol: pgtype.Text{String: "HTTPS", Valid: true}}
 				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
 					if id == 1 {
-						if m.updateFlowStepFunc != nil {
+						if m.updateFlowStepExecuted > 0 {
 							// Return updated after update
 							return updated, nil
 						}

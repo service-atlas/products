@@ -20,17 +20,18 @@ import (
 )
 
 type mockFlowQuerier struct {
-	createFlowFunc        func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error)
-	createFlowStepFunc    func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error)
-	deleteFlowFunc        func(ctx context.Context, id int) (int64, error)
-	deleteFlowStepFunc    func(ctx context.Context, id int) (int64, error)
-	getFlowFunc           func(ctx context.Context, id int) (db.Flow, error)
-	getFlowStepsFunc      func(ctx context.Context, flowID int) ([]db.FlowStep, error)
-	getFlowsByProductFunc func(ctx context.Context, productID int) ([]db.Flow, error)
-	getProductByIdFunc    func(ctx context.Context, id int) (int, error)
-	getFlowStepFunc       func(ctx context.Context, id int) (db.FlowStep, error)
-	updateFlowFunc        func(ctx context.Context, arg db.UpdateFlowParams) (int64, error)
-	updateFlowStepFunc    func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error)
+	createFlowFunc         func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error)
+	createFlowStepFunc     func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error)
+	deleteFlowFunc         func(ctx context.Context, id int) (int64, error)
+	deleteFlowStepFunc     func(ctx context.Context, id int) (int64, error)
+	getFlowFunc            func(ctx context.Context, id int) (db.Flow, error)
+	getFlowStepsFunc       func(ctx context.Context, flowID int) ([]db.FlowStep, error)
+	getFlowsByProductFunc  func(ctx context.Context, productID int) ([]db.Flow, error)
+	getProductByIdFunc     func(ctx context.Context, id int) (int, error)
+	getFlowStepFunc        func(ctx context.Context, id int) (db.FlowStep, error)
+	updateFlowFunc         func(ctx context.Context, arg db.UpdateFlowParams) (int64, error)
+	updateFlowStepFunc     func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error)
+	updateFlowStepExecuted int
 }
 
 func (m *mockFlowQuerier) CreateFlow(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
@@ -74,6 +75,7 @@ func (m *mockFlowQuerier) UpdateFlow(ctx context.Context, arg db.UpdateFlowParam
 }
 
 func (m *mockFlowQuerier) UpdateFlowStep(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error) {
+	m.updateFlowStepExecuted++
 	return m.updateFlowStepFunc(ctx, arg)
 }
 
