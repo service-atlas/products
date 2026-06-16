@@ -93,8 +93,8 @@ func (r *createFlowStepRequest) ToParams() (db.CreateFlowStepParams, error) {
 }
 
 type updateFlowStepRequest struct {
-	Protocol string `json:"protocol,omitzero"`
-	Target   string `json:"target,omitzero"`
+	Protocol *string `json:"protocol,omitzero"`
+	Target   *string `json:"target,omitzero"`
 }
 
 func (r *updateFlowStepRequest) ToParams(id int, existing db.FlowStep) db.UpdateFlowStepParams {
@@ -108,12 +108,12 @@ func (r *updateFlowStepRequest) ToParams(id int, existing db.FlowStep) db.Update
 		},
 	}
 
-	if r.Target != "" {
-		params.Target = pgtype.Text{String: r.Target, Valid: true}
+	if r.Target != nil {
+		params.Target = pgtype.Text{String: *r.Target, Valid: true}
 	}
 
-	if r.Protocol != "" {
-		params.Protocol = pgtype.Text{String: r.Protocol, Valid: true}
+	if r.Protocol != nil {
+		params.Protocol = pgtype.Text{String: *r.Protocol, Valid: true}
 	}
 
 	return params

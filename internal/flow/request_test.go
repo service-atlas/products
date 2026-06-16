@@ -123,6 +123,8 @@ func TestUpdateFlowRequest_ToParams(t *testing.T) {
 }
 
 func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
+	ptr := func(s string) *string { return &s }
+
 	tests := []struct {
 		name     string
 		req      updateFlowStepRequest
@@ -132,8 +134,8 @@ func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
 		{
 			name: "Update All Fields",
 			req: updateFlowStepRequest{
-				Target:   "https://new.com",
-				Protocol: "HTTPS",
+				Target:   ptr("https://new.com"),
+				Protocol: ptr("HTTPS"),
 			},
 			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
 			expected: db.UpdateFlowStepParams{
@@ -145,12 +147,34 @@ func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
 		{
 			name: "Update Only Target",
 			req: updateFlowStepRequest{
-				Target: "https://new.com",
+				Target: ptr("https://new.com"),
 			},
 			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
 			expected: db.UpdateFlowStepParams{
 				ID:       1,
 				Target:   pgtype.Text{String: "https://new.com", Valid: true},
+				Protocol: pgtype.Text{String: "HTTP", Valid: true},
+			},
+		},
+		{
+			name: "Explicitly Empty Protocol",
+			req: updateFlowStepRequest{
+				Protocol: ptr(""),
+			},
+			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
+			expected: db.UpdateFlowStepParams{
+				ID:       1,
+				Target:   pgtype.Text{String: "old", Valid: true},
+				Protocol: pgtype.Text{String: "", Valid: true},
+			},
+		},
+		{
+			name:     "Omitted Fields (keep existing)",
+			req:      updateFlowStepRequest{},
+			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
+			expected: db.UpdateFlowStepParams{
+				ID:       1,
+				Target:   pgtype.Text{String: "old", Valid: true},
 				Protocol: pgtype.Text{String: "HTTP", Valid: true},
 			},
 		},

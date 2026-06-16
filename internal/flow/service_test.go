@@ -903,6 +903,7 @@ func TestService_GetFlowSteps(t *testing.T) {
 }
 
 func TestService_UpdateFlowStep(t *testing.T) {
+	ptr := func(s string) *string { return &s }
 	tests := []struct {
 		name          string
 		id            int
@@ -915,8 +916,8 @@ func TestService_UpdateFlowStep(t *testing.T) {
 			name: "Success",
 			id:   1,
 			req: updateFlowStepRequest{
-				Target:   "https://example.com",
-				Protocol: "HTTPS",
+				Target:   ptr("https://example.com"),
+				Protocol: ptr("HTTPS"),
 			},
 			mockSetup: func(m *mockFlowQuerier) {
 				existing := db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}}
@@ -941,7 +942,7 @@ func TestService_UpdateFlowStep(t *testing.T) {
 			name: "Flow Step Not Found",
 			id:   999,
 			req: updateFlowStepRequest{
-				Target: "https://example.com",
+				Target: ptr("https://example.com"),
 			},
 			mockSetup: func(m *mockFlowQuerier) {
 				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
@@ -954,7 +955,7 @@ func TestService_UpdateFlowStep(t *testing.T) {
 			name: "Flow Step Deleted After Fetch",
 			id:   1,
 			req: updateFlowStepRequest{
-				Target: "https://example.com",
+				Target: ptr("https://example.com"),
 			},
 			mockSetup: func(m *mockFlowQuerier) {
 				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
