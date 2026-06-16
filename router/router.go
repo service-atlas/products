@@ -25,7 +25,7 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	router.Use(middleware.Compress(5))
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://127.0.0.1:3000"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           300,
@@ -71,8 +71,9 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 			})
 		})
 
-		u.Route("/flows-steps/{id}", func(u chi.Router) {
+		u.Route("/flow-steps/{id}", func(u chi.Router) {
 			u.Delete("/", flowHandler.DeleteFlowStep)
+			u.Patch("/", flowHandler.UpdateFlowStep)
 		})
 	})
 	slog.Debug("Router setup complete")

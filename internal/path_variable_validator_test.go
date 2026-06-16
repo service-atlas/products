@@ -1,11 +1,14 @@
 package internal
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func TestGetGuidFromRequestPath(t *testing.T) {
@@ -112,6 +115,76 @@ func TestGetIntFromRequestPath(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("GetIntFromRequestPath() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetIntFromRequestPath_Chi(t *testing.T) {
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", "456")
+
+	req := httptest.NewRequest(http.MethodGet, "/456", nil)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	got, ok := GetIntFromRequestPath("id", req)
+	if !ok {
+		t.Errorf("GetIntFromRequestPath() ok = false, want true")
+	}
+	if got != 456 {
+		t.Errorf("GetIntFromRequestPath() got = %v, want 456", got)
+	}
+}
+
+func TestGetGuidFromRequestPath_Chi(t *testing.T) {
+	testCases := []struct {
+		name     string
+		pathVal  string
+		expected string
+		ok       bool
+	}{
+		{"Valid GUID", "85622399-b2b7-4e98-9a8d-628e28b9aeb4", "85622399-b2b7-4e98-9a8d-628e28b9aeb4", true},
+		{"Invalid GUID", "invalid-guid", "invalid-guid", false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tc.pathVal)
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			guidVal, ok := GetGuidFromRequestPath("id", req)
+			if guidVal != tc.expected || ok != tc.ok {
+				t.Errorf("GetGuidFromRequestPath() = (%q, %v), want (%q, %v)", guidVal, ok, tc.expected, tc.ok)
+			}
+		})
+	}
+}
+
+func TestGetDateFromRequestPath_Chi(t *testing.T) {
+	testCases := []struct {
+		name     string
+		pathVal  string
+		expected time.Time
+		ok       bool
+	}{
+		{"Valid Date", "2023-10-05", time.Date(2023, 10, 5, 0, 0, 0, 0, time.UTC), true},
+		{"Invalid Date", "2023-10-32", time.Time{}, false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("startDate", tc.pathVal)
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			dateVal, ok := GetDateFromRequestPath("startDate", req)
+			if !dateVal.Equal(tc.expected) || ok != tc.ok {
+				t.Errorf("GetDateFromRequestPath() = (%v, %v), want (%v, %v)", dateVal, ok, tc.expected, tc.ok)
 			}
 		})
 	}

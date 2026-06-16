@@ -9,25 +9,29 @@ import (
 	"net/http/httptest"
 	"os"
 	"products/internal/flow/db"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type mockFlowQuerier struct {
-	createFlowFunc        func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error)
-	createFlowStepFunc    func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error)
-	deleteFlowFunc        func(ctx context.Context, id int) (int64, error)
-	deleteFlowStepFunc    func(ctx context.Context, id int) (int64, error)
-	getFlowFunc           func(ctx context.Context, id int) (db.Flow, error)
-	getFlowStepsFunc      func(ctx context.Context, flowID int) ([]db.FlowStep, error)
-	getFlowsByProductFunc func(ctx context.Context, productID int) ([]db.Flow, error)
-	getProductByIdFunc    func(ctx context.Context, id int) (int, error)
-	updateFlowFunc        func(ctx context.Context, arg db.UpdateFlowParams) (int64, error)
-	updateFlowStepFunc    func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error)
+	createFlowFunc         func(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error)
+	createFlowStepFunc     func(ctx context.Context, arg db.CreateFlowStepParams) (db.FlowStep, error)
+	deleteFlowFunc         func(ctx context.Context, id int) (int64, error)
+	deleteFlowStepFunc     func(ctx context.Context, id int) (int64, error)
+	getFlowFunc            func(ctx context.Context, id int) (db.Flow, error)
+	getFlowStepsFunc       func(ctx context.Context, flowID int) ([]db.FlowStep, error)
+	getFlowsByProductFunc  func(ctx context.Context, productID int) ([]db.Flow, error)
+	getProductByIdFunc     func(ctx context.Context, id int) (int, error)
+	getFlowStepFunc        func(ctx context.Context, id int) (db.FlowStep, error)
+	updateFlowFunc         func(ctx context.Context, arg db.UpdateFlowParams) (int64, error)
+	updateFlowStepFunc     func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error)
+	updateFlowStepExecuted int
 }
 
 func (m *mockFlowQuerier) CreateFlow(ctx context.Context, arg db.CreateFlowParams) (db.Flow, error) {
@@ -50,6 +54,10 @@ func (m *mockFlowQuerier) GetFlow(ctx context.Context, id int) (db.Flow, error) 
 	return m.getFlowFunc(ctx, id)
 }
 
+func (m *mockFlowQuerier) GetFlowStep(ctx context.Context, id int) (db.FlowStep, error) {
+	return m.getFlowStepFunc(ctx, id)
+}
+
 func (m *mockFlowQuerier) GetFlowSteps(ctx context.Context, flowID int) ([]db.FlowStep, error) {
 	return m.getFlowStepsFunc(ctx, flowID)
 }
@@ -67,6 +75,7 @@ func (m *mockFlowQuerier) UpdateFlow(ctx context.Context, arg db.UpdateFlowParam
 }
 
 func (m *mockFlowQuerier) UpdateFlowStep(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error) {
+	m.updateFlowStepExecuted++
 	return m.updateFlowStepFunc(ctx, arg)
 }
 
@@ -851,6 +860,70 @@ func TestCreateFlowStep(t *testing.T) {
 				if step.ID == 0 {
 					t.Error("expected flow step ID to be set")
 				}
+			}
+		})
+	}
+}
+
+func TestUpdateFlowStep(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		reqBody        string
+		mockSetup      func(m *mockFlowQuerier)
+		expectedStatus int
+	}{
+		{
+			name:    "Success",
+			id:      "1",
+			reqBody: `{"target": "https://example.com", "protocol": "HTTPS"}`,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
+					return db.FlowStep{ID: 1}, nil
+				}
+				m.updateFlowStepFunc = func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error) {
+					return 1, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Invalid ID",
+			id:             "abc",
+			reqBody:        `{}`,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:    "Flow Step Not Found",
+			id:      "999",
+			reqBody: `{}`,
+			mockSetup: func(m *mockFlowQuerier) {
+				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
+					return db.FlowStep{}, pgx.ErrNoRows
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &mockFlowQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(m)
+			}
+			h := &flowHandler{flowService: &postgresService{queries: m, client: &http.Client{}}}
+
+			req := httptest.NewRequest(http.MethodPatch, "/api/flow-steps/"+tt.id, strings.NewReader(tt.reqBody))
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tt.id)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+			req.SetPathValue("id", tt.id)
+			rr := httptest.NewRecorder()
+			h.UpdateFlowStep(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
 			}
 		})
 	}

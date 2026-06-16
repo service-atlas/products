@@ -5,13 +5,22 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type PathValidator func(string, *http.Request) (string, bool)
 
+func getPathValue(req *http.Request, varName string) string {
+	val := req.PathValue(varName)
+	if val == "" {
+		val = chi.URLParam(req, varName)
+	}
+	return val
+}
+
 func GetGuidFromRequestPath(varName string, req *http.Request) (string, bool) {
-	guidVal := req.PathValue(varName)
+	guidVal := getPathValue(req, varName)
 	return IsValidGuid(guidVal)
 }
 
@@ -21,13 +30,13 @@ func IsValidGuid(guidVal string) (string, bool) {
 }
 
 func GetDateFromRequestPath(varName string, req *http.Request) (time.Time, bool) {
-	dateVal := req.PathValue(varName)
+	dateVal := getPathValue(req, varName)
 	date, err := time.Parse("2006-01-02", dateVal)
 	return date, err == nil
 }
 
 func GetIntFromRequestPath(varName string, req *http.Request) (int, bool) {
-	val := req.PathValue(varName)
+	val := getPathValue(req, varName)
 	if val == "" {
 		return 0, false
 	}

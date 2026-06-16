@@ -26,6 +26,9 @@ RETURNING *;
 -- name: UpdateFlowStep :execrows
 UPDATE flow_steps SET target = @target, protocol = @protocol, updated_at = @updated_at WHERE id = @id;
 
+-- name: GetFlowStep :one
+SELECT id, flow_id, target, protocol, current, next, created_at, updated_at FROM flow_steps WHERE id = @id;
+
 -- name: DeleteFlowStep :execrows
 DELETE FROM flow_steps WHERE id = @id;
 

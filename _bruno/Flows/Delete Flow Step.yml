@@ -5,10 +5,10 @@ info:
 
 http:
   method: DELETE
-  url: "{{baseUrl}}/api/flows-steps/:id"
+  url: "{{baseUrl}}/api/flow-steps/:id"
   params:
     - name: id
-      value: "3"
+      value: "5"
       type: path
   auth: inherit
 

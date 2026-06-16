@@ -92,6 +92,33 @@ func (r *createFlowStepRequest) ToParams() (db.CreateFlowStepParams, error) {
 	}, nil
 }
 
+type updateFlowStepRequest struct {
+	Protocol *string `json:"protocol,omitzero"`
+	Target   *string `json:"target,omitzero"`
+}
+
+func (r *updateFlowStepRequest) ToParams(id int, existing db.FlowStep) db.UpdateFlowStepParams {
+	params := db.UpdateFlowStepParams{
+		ID:       id,
+		Target:   existing.Target,
+		Protocol: existing.Protocol,
+		UpdatedAt: pgtype.Timestamptz{
+			Time:  time.Now().UTC(),
+			Valid: true,
+		},
+	}
+
+	if r.Target != nil {
+		params.Target = pgtype.Text{String: *r.Target, Valid: true}
+	}
+
+	if r.Protocol != nil {
+		params.Protocol = pgtype.Text{String: *r.Protocol, Valid: true}
+	}
+
+	return params
+}
+
 func toPgUUID(val string) (pgtype.UUID, error) {
 	uuidVal, err := uuid.Parse(val)
 	if err != nil {
