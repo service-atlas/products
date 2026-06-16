@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{baseUrl}}/api/platforms/:id"
+  url: "{{baseUrl}}/platforms/:id"
   params:
     - name: id
       value: "4"
@@ -27,7 +27,7 @@ settings:
 examples:
   - name: sample
     request:
-      url: "{{baseUrl}}/api/platforms/:id"
+      url: "{{baseUrl}}/platforms/:id"
       method: GET
       params:
         - name: id
@@ -57,7 +57,7 @@ examples:
           }
   - name: sample
     request:
-      url: "{{baseUrl}}/api/platforms/:id"
+      url: "{{baseUrl}}/platforms/:id"
       method: DELETE
       params:
         - name: id

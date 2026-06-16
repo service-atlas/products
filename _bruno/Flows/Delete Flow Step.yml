@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{baseUrl}}/api/flow-steps/:id"
+  url: "{{baseUrl}}/flow-steps/:id"
   params:
     - name: id
       value: "5"
@@ -21,7 +21,7 @@ settings:
 examples:
   - name: sample
     request:
-      url: "{{baseUrl}}/api/flows-steps/:id"
+      url: "{{baseUrl}}/flows-steps/:id"
       method: DELETE
       params:
         - name: id

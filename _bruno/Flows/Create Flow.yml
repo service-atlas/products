@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/products/:id/flows"
+  url: "{{baseUrl}}/products/:id/flows"
   params:
     - name: id
       value: "2"
@@ -35,7 +35,7 @@ examples:
   - name: sample
     description: sample successful call to create a product flow
     request:
-      url: "{{baseUrl}}/api/products/:id/flows"
+      url: "{{baseUrl}}/products/:id/flows"
       method: POST
       params:
         - name: id

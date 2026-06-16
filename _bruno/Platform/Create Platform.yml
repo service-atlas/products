@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/platforms"
+  url: "{{baseUrl}}/platforms"
   body:
     type: json
     data: |-
@@ -31,7 +31,7 @@ examples:
   - name: Success Example
     description: Example of a successful post call
     request:
-      url: "{{baseUrl}}/api/platforms"
+      url: "{{baseUrl}}/platforms"
       method: POST
       body:
         type: json

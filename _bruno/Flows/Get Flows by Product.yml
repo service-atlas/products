@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/api/products/:id/flows"
+  url: "{{baseUrl}}/products/:id/flows"
   params:
     - name: id
       value: "2"
@@ -27,7 +27,7 @@ settings:
 examples:
   - name: sample
     request:
-      url: "{{baseUrl}}/api/products/:id/flows"
+      url: "{{baseUrl}}/products/:id/flows"
       method: GET
       params:
         - name: id

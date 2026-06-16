@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/api/platforms/:platform_id/products"
+  url: "{{baseUrl}}/platforms/:platform_id/products"
   params:
     - name: platform_id
       value: "1"
@@ -21,7 +21,7 @@ settings:
 examples:
   - name: Success
     request:
-      url: "{{baseUrl}}/api/platforms/:platform_id/products"
+      url: "{{baseUrl}}/platforms/:platform_id/products"
       method: GET
       params:
         - name: platform_id
