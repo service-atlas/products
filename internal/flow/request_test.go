@@ -123,7 +123,6 @@ func TestUpdateFlowRequest_ToParams(t *testing.T) {
 }
 
 func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
-	ptr := func(s string) *string { return &s }
 
 	tests := []struct {
 		name     string
@@ -134,8 +133,8 @@ func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
 		{
 			name: "Update All Fields",
 			req: updateFlowStepRequest{
-				Target:   ptr("https://new.com"),
-				Protocol: ptr("HTTPS"),
+				Target:   new("https://new.com"),
+				Protocol: new("HTTPS"),
 			},
 			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
 			expected: db.UpdateFlowStepParams{
@@ -147,7 +146,7 @@ func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
 		{
 			name: "Update Only Target",
 			req: updateFlowStepRequest{
-				Target: ptr("https://new.com"),
+				Target: new("https://new.com"),
 			},
 			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
 			expected: db.UpdateFlowStepParams{
@@ -157,9 +156,21 @@ func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
 			},
 		},
 		{
+			name: "Update Only Protocol",
+			req: updateFlowStepRequest{
+				Protocol: new("HTTPS"),
+			},
+			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
+			expected: db.UpdateFlowStepParams{
+				ID:       1,
+				Target:   pgtype.Text{String: "old", Valid: true},
+				Protocol: pgtype.Text{String: "HTTPS", Valid: true},
+			},
+		},
+		{
 			name: "Explicitly Empty Protocol",
 			req: updateFlowStepRequest{
-				Protocol: ptr(""),
+				Protocol: new(""),
 			},
 			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
 			expected: db.UpdateFlowStepParams{
@@ -178,6 +189,16 @@ func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
 				Protocol: pgtype.Text{String: "HTTP", Valid: true},
 			},
 		},
+		{
+			name:     "No Fields Provided",
+			req:      updateFlowStepRequest{Target: nil, Protocol: nil},
+			existing: db.FlowStep{ID: 1, Target: pgtype.Text{String: "old", Valid: true}, Protocol: pgtype.Text{String: "HTTP", Valid: true}},
+			expected: db.UpdateFlowStepParams{
+				ID:       1,
+				Target:   pgtype.Text{String: "old", Valid: true},
+				Protocol: pgtype.Text{String: "HTTP", Valid: true},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -187,10 +208,16 @@ func TestUpdateFlowStepRequest_ToParams(t *testing.T) {
 				t.Errorf("expected ID %d, got %d", tt.expected.ID, params.ID)
 			}
 			if params.Target.String != tt.expected.Target.String {
-				t.Errorf("expected target %q, got %q", tt.expected.Target.String, params.Target.String)
+				t.Errorf("expected target string %q, got %q", tt.expected.Target.String, params.Target.String)
+			}
+			if params.Target.Valid != tt.expected.Target.Valid {
+				t.Errorf("expected target valid %v, got %v", tt.expected.Target.Valid, params.Target.Valid)
 			}
 			if params.Protocol.String != tt.expected.Protocol.String {
-				t.Errorf("expected protocol %q, got %q", tt.expected.Protocol.String, params.Protocol.String)
+				t.Errorf("expected protocol string %q, got %q", tt.expected.Protocol.String, params.Protocol.String)
+			}
+			if params.Protocol.Valid != tt.expected.Protocol.Valid {
+				t.Errorf("expected protocol valid %v, got %v", tt.expected.Protocol.Valid, params.Protocol.Valid)
 			}
 			if !params.UpdatedAt.Valid {
 				t.Error("expected UpdatedAt to be valid")
