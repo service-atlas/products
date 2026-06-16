@@ -89,10 +89,6 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	return router
 }
 
-func setupRoutes(router *chi.Mux) {
-
-}
-
 func registerSystemCallHandler(r *chi.Mux) {
 	h := system.NewSystemCallHandler()
 	r.Get("/api/time", h.GetTime)
