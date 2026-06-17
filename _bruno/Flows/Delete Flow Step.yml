@@ -21,7 +21,7 @@ settings:
 examples:
   - name: sample
     request:
-      url: "{{baseUrl}}/flows-steps/:id"
+      url: "{{baseUrl}}/flow-steps/:id"
       method: DELETE
       params:
         - name: id
