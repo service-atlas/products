@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/products"
+  url: "{{baseUrl}}/products"
   body:
     type: json
     data: |-
@@ -25,7 +25,7 @@ settings:
 examples:
   - name: sample
     request:
-      url: "{{baseUrl}}/api/products"
+      url: "{{baseUrl}}/products"
       method: POST
       body:
         type: json

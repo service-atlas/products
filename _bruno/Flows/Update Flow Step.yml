@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{baseUrl}}/api/flow-steps/:id"
+  url: "{{baseUrl}}/flow-steps/:id"
   params:
     - name: id
       value: "5"
@@ -28,7 +28,7 @@ settings:
 examples:
   - name: sample
     request:
-      url: "{{baseUrl}}/api/flow-steps/:id"
+      url: "{{baseUrl}}/flow-steps/:id"
       method: PATCH
       params:
         - name: id

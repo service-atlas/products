@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/api/platforms"
+  url: "{{baseUrl}}/platforms"
   auth: inherit
 
 runtime:
@@ -25,7 +25,7 @@ settings:
 examples:
   - name: sample
     request:
-      url: "{{baseUrl}}/api/platforms"
+      url: "{{baseUrl}}/platforms"
       method: GET
     response:
       status: 200
