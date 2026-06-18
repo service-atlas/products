@@ -36,12 +36,12 @@ func (m *mockQuerier) UpdateProduct(ctx context.Context, arg db.UpdateProductPar
 
 func TestPostgresService_CreateProduct(t *testing.T) {
 	ctx := context.Background()
-	req := createProductRequest{Name: "Test", PlatformID: 1}
+	req := createProductRequest{Name: "Test", Description: "Test Description", PlatformID: 1}
 
 	t.Run("Success", func(t *testing.T) {
 		m := &mockQuerier{
 			createProduct: func(ctx context.Context, arg db.CreateProductParams) (db.Product, error) {
-				return db.Product{Name: arg.Name, PlatformID: arg.PlatformID}, nil
+				return db.Product{Name: arg.Name, Description: arg.Description, PlatformID: arg.PlatformID}, nil
 			},
 		}
 		s := postgresService{queries: m}
@@ -51,6 +51,12 @@ func TestPostgresService_CreateProduct(t *testing.T) {
 		}
 		if product.Name != "Test" {
 			t.Errorf("expected name Test, got %s", product.Name)
+		}
+		if product.PlatformID != 1 {
+			t.Errorf("expected platform ID 1, got %d", product.PlatformID)
+		}
+		if product.Description.String != "Test Description" {
+			t.Errorf("expected description Test Description, got %s", product.Description.String)
 		}
 	})
 
