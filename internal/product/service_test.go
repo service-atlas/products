@@ -11,14 +11,14 @@ import (
 )
 
 type mockQuerier struct {
-	createProduct         func(ctx context.Context, arg db.CreateProductParams) error
+	createProduct         func(ctx context.Context, arg db.CreateProductParams) (db.Product, error)
 	deleteProduct         func(ctx context.Context, id int) (int, error)
 	getProductById        func(ctx context.Context, id int) (db.Product, error)
 	getProductsByPlatform func(ctx context.Context, platformID int) ([]db.Product, error)
 	updateProduct         func(ctx context.Context, arg db.UpdateProductParams) (int, error)
 }
 
-func (m *mockQuerier) CreateProduct(ctx context.Context, arg db.CreateProductParams) error {
+func (m *mockQuerier) CreateProduct(ctx context.Context, arg db.CreateProductParams) (db.Product, error) {
 	return m.createProduct(ctx, arg)
 }
 func (m *mockQuerier) DeleteProduct(ctx context.Context, id int) (int, error) {
@@ -36,29 +36,38 @@ func (m *mockQuerier) UpdateProduct(ctx context.Context, arg db.UpdateProductPar
 
 func TestPostgresService_CreateProduct(t *testing.T) {
 	ctx := context.Background()
-	req := createProductRequest{Name: "Test", PlatformID: 1}
+	req := createProductRequest{Name: "Test", Description: "Test Description", PlatformID: 1}
 
 	t.Run("Success", func(t *testing.T) {
 		m := &mockQuerier{
-			createProduct: func(ctx context.Context, arg db.CreateProductParams) error {
-				return nil
+			createProduct: func(ctx context.Context, arg db.CreateProductParams) (db.Product, error) {
+				return db.Product{Name: arg.Name, Description: arg.Description, PlatformID: arg.PlatformID}, nil
 			},
 		}
 		s := postgresService{queries: m}
-		err := s.CreateProduct(ctx, req)
+		product, err := s.CreateProduct(ctx, req)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
+		}
+		if product.Name != "Test" {
+			t.Errorf("expected name Test, got %s", product.Name)
+		}
+		if product.PlatformID != 1 {
+			t.Errorf("expected platform ID 1, got %d", product.PlatformID)
+		}
+		if product.Description.String != "Test Description" {
+			t.Errorf("expected description Test Description, got %s", product.Description.String)
 		}
 	})
 
 	t.Run("DB Error", func(t *testing.T) {
 		m := &mockQuerier{
-			createProduct: func(ctx context.Context, arg db.CreateProductParams) error {
-				return errors.New("db error")
+			createProduct: func(ctx context.Context, arg db.CreateProductParams) (db.Product, error) {
+				return db.Product{}, errors.New("db error")
 			},
 		}
 		s := postgresService{queries: m}
-		err := s.CreateProduct(ctx, req)
+		_, err := s.CreateProduct(ctx, req)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}

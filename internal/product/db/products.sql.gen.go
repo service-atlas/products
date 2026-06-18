@@ -11,8 +11,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createProduct = `-- name: CreateProduct :exec
-INSERT INTO products (platform_id, name, description, created_at, updated_at) VALUES ($1, $2, $3, $4, $4)
+const createProduct = `-- name: CreateProduct :one
+INSERT INTO products (platform_id, name, description, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $4)
+RETURNING id, platform_id, name, description, created_at, updated_at
 `
 
 type CreateProductParams struct {
@@ -22,14 +24,23 @@ type CreateProductParams struct {
 	Timestamp   pgtype.Timestamptz `json:"timestamp"`
 }
 
-func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) error {
-	_, err := q.db.Exec(ctx, createProduct,
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, createProduct,
 		arg.PlatformID,
 		arg.Name,
 		arg.Description,
 		arg.Timestamp,
 	)
-	return err
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.PlatformID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const deleteProduct = `-- name: DeleteProduct :one
