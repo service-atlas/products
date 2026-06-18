@@ -45,13 +45,12 @@ func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-
-	if err := h.service.CreateProduct(contextWithTimeOut, req); err != nil {
+	newProduct, err := h.service.CreateProduct(contextWithTimeOut, req)
+	if err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create product"}, http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusCreated)
+	internal.WriteJSONResponse(w, r, http.StatusCreated, newProduct)
 }
 
 func (h *productHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {

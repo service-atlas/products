@@ -10,7 +10,7 @@ import (
 )
 
 type productService interface {
-	CreateProduct(ctx context.Context, req createProductRequest) error
+	CreateProduct(ctx context.Context, req createProductRequest) (db.Product, error)
 	GetProductsByPlatform(ctx context.Context, platformID int) ([]db.Product, error)
 	GetProductById(ctx context.Context, id int) (db.Product, error)
 	UpdateProduct(ctx context.Context, req updateProductRequest, id int) (int, error)
@@ -21,7 +21,7 @@ type postgresService struct {
 	queries db.Querier
 }
 
-func (s *postgresService) CreateProduct(ctx context.Context, req createProductRequest) error {
+func (s *postgresService) CreateProduct(ctx context.Context, req createProductRequest) (db.Product, error) {
 	return s.queries.CreateProduct(ctx, req.ToParams())
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 type Querier interface {
-	CreateProduct(ctx context.Context, arg CreateProductParams) error
+	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	DeleteProduct(ctx context.Context, id int) (int, error)
 	GetProductById(ctx context.Context, id int) (Product, error)
 	GetProductsByPlatform(ctx context.Context, platformID int) ([]Product, error)

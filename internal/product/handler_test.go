@@ -14,14 +14,14 @@ import (
 )
 
 type mockProductService struct {
-	createProductFunc         func(ctx context.Context, req createProductRequest) error
+	createProductFunc         func(ctx context.Context, req createProductRequest) (db.Product, error)
 	getProductsByPlatformFunc func(ctx context.Context, platformID int) ([]db.Product, error)
 	getProductByIdFunc        func(ctx context.Context, id int) (db.Product, error)
 	updateProductFunc         func(ctx context.Context, req updateProductRequest, id int) (int, error)
 	deleteProductFunc         func(ctx context.Context, id int) (int, error)
 }
 
-func (m *mockProductService) CreateProduct(ctx context.Context, req createProductRequest) error {
+func (m *mockProductService) CreateProduct(ctx context.Context, req createProductRequest) (db.Product, error) {
 	return m.createProductFunc(ctx, req)
 }
 
@@ -55,14 +55,14 @@ func TestCreateProduct(t *testing.T) {
 				Name:       "Test Product",
 			},
 			mockSetup: func(m *mockProductService) {
-				m.createProductFunc = func(ctx context.Context, req createProductRequest) error {
+				m.createProductFunc = func(ctx context.Context, req createProductRequest) (db.Product, error) {
 					if req.Name != "Test Product" {
-						return errors.New("unexpected name")
+						return db.Product{}, errors.New("unexpected name")
 					}
 					if req.PlatformID != 1 {
-						return errors.New("unexpected platform id")
+						return db.Product{}, errors.New("unexpected platform id")
 					}
-					return nil
+					return db.Product{ID: 1, Name: req.Name, PlatformID: req.PlatformID}, nil
 				}
 			},
 			expectedStatus: http.StatusCreated,
@@ -80,8 +80,8 @@ func TestCreateProduct(t *testing.T) {
 				Name:       "Fail Product",
 			},
 			mockSetup: func(m *mockProductService) {
-				m.createProductFunc = func(ctx context.Context, req createProductRequest) error {
-					return errors.New("db error")
+				m.createProductFunc = func(ctx context.Context, req createProductRequest) (db.Product, error) {
+					return db.Product{}, errors.New("db error")
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
