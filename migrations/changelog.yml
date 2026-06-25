@@ -7,3 +7,4 @@ databaseChangeLog:
   - include:
       file: changelogs/add_capabilities.yml
       context: sqlc
+      labels: v1.0.0

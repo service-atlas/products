@@ -29,15 +29,15 @@ databaseChangeLog:
               - column:
                   name: created_at
                   type: TIMESTAMPTZ
+                  defaultValue: now()
                   constraints:
                     nullable: false
-                    default: now()
               - column:
                   name: updated_at
                   type: TIMESTAMPTZ
+                  defaultValue: now()
                   constraints:
                     nullable: false
-                    default: now()
         - addForeignKeyConstraint:
             baseColumnNames: flow_id
             baseTableName: capabilities
@@ -78,15 +78,15 @@ databaseChangeLog:
               - column:
                   name: created_at
                   type: TIMESTAMPTZ
+                  defaultValue: now()
                   constraints:
                     nullable: false
-                    default: now()
               - column:
                   name: updated_at
                   type: TIMESTAMPTZ
+                  defaultValue: now()
                   constraints:
                     nullable: false
-                    default: now()
         - addForeignKeyConstraint:
             baseColumnNames: capability_id
             baseTableName: capability_steps
