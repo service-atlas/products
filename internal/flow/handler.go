@@ -19,7 +19,6 @@ type Handler interface {
 	UpdateFlow(w http.ResponseWriter, r *http.Request)
 	DeleteFlow(w http.ResponseWriter, r *http.Request)
 	CreateFlowStep(w http.ResponseWriter, r *http.Request)
-	UpdateFlowStep(w http.ResponseWriter, r *http.Request)
 	DeleteFlowStep(w http.ResponseWriter, r *http.Request)
 	GetFlowSteps(w http.ResponseWriter, r *http.Request)
 	GetFlowPath(w http.ResponseWriter, r *http.Request)
@@ -246,39 +245,6 @@ func (h *flowHandler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *flowHandler) UpdateFlowStep(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
-	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow step ID", Instance: r.URL.Path}, http.StatusBadRequest)
-		return
-	}
-
-	var req updateFlowStepRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body", Instance: r.URL.Path}, http.StatusBadRequest)
-		return
-	}
-
-	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("updating flow step timed out"))
-	defer cancel()
-
-	flowStep, err := h.flowService.UpdateFlowStep(contextWithTimeOut, req, id)
-	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
-			return
-		}
-		logger := internal.LoggerFromContext(r.Context())
-		logger.Error("Failed to update flow step",
-			slog.String("error", err.Error()),
-			slog.Int("flow_step_id", id))
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to update flow step", Instance: r.URL.Path}, http.StatusInternalServerError)
-		return
-	}
-
-	internal.WriteJSONResponse(w, r, http.StatusOK, flowStep)
 }
 
 func (h *flowHandler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {

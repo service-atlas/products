@@ -19,7 +19,6 @@ type Querier interface {
 	GetFlowsByProduct(ctx context.Context, productID int) ([]Flow, error)
 	GetProductById(ctx context.Context, id int) (int, error)
 	UpdateFlow(ctx context.Context, arg UpdateFlowParams) (int64, error)
-	UpdateFlowStep(ctx context.Context, arg UpdateFlowStepParams) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

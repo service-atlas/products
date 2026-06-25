@@ -145,12 +145,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: target
-                  type: TEXT
-              - column:
-                  name: protocol
-                  type: VARCHAR(200)
-              - column:
                   name: current
                   type: UUID
                   constraints:

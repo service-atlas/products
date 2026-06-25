@@ -1,7 +1,7 @@
 info:
   name: Create Flow Step
   type: http
-  seq: 6
+  seq: 5
 
 http:
   method: POST
@@ -61,8 +61,6 @@ examples:
           {
             "id": 3,
             "flow_id": 1,
-            "target": null,
-            "protocol": null,
             "current": "cea050e5-ebc3-4d2b-aad2-877c47fa8961",
             "next": "75fce8b6-ca55-41dc-b5fb-1c12707887c0",
             "created_at": "2026-06-10T19:07:22.055291-05:00",
