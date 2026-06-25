@@ -28,12 +28,17 @@ test-full-cover:
   go tool cover -func="coverage.out"
 
 # Generates schema from liquibase then converts it to SQLC golang code
-generate_schema: liquibase_update_sql sqlc_gen
+generate_schema: lb-update-sql sqlc_gen
 
 # Generates schema.sql from liquibase based on the sqlc context
 [working-directory: "migrations"]
-liquibase_update_sql:
+lb-update-sql:
   liquibase update-sql --context-filter="sqlc" --output-file=../schema.sql
+
+# Synchronizes liquibase changelog with database
+[working-directory: "migrations"]
+lb-changelog-sync:
+  liquibase changelog-sync
 
 # Generates SQLC golang code from schema.sql
 sqlc_gen:
