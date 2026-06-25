@@ -9,11 +9,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"products/internal/flow/db"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -30,7 +28,6 @@ type mockFlowQuerier struct {
 	getProductByIdFunc     func(ctx context.Context, id int) (int, error)
 	getFlowStepFunc        func(ctx context.Context, id int) (db.FlowStep, error)
 	updateFlowFunc         func(ctx context.Context, arg db.UpdateFlowParams) (int64, error)
-	updateFlowStepFunc     func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error)
 	updateFlowStepExecuted int
 }
 
@@ -72,11 +69,6 @@ func (m *mockFlowQuerier) GetProductById(ctx context.Context, id int) (int, erro
 
 func (m *mockFlowQuerier) UpdateFlow(ctx context.Context, arg db.UpdateFlowParams) (int64, error) {
 	return m.updateFlowFunc(ctx, arg)
-}
-
-func (m *mockFlowQuerier) UpdateFlowStep(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error) {
-	m.updateFlowStepExecuted++
-	return m.updateFlowStepFunc(ctx, arg)
 }
 
 func TestUpdateFlow(t *testing.T) {
@@ -674,10 +666,8 @@ func TestCreateFlowStep(t *testing.T) {
 		{
 			name: "Success",
 			requestBody: createFlowStepRequest{
-				Protocol: "http",
-				Target:   "target",
-				Current:  validUUID,
-				Next:     validUUID,
+				Current: validUUID,
+				Next:    validUUID,
 			},
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
@@ -768,9 +758,7 @@ func TestCreateFlowStep(t *testing.T) {
 		{
 			name: "Missing Current Field",
 			requestBody: createFlowStepRequest{
-				Protocol: "http",
-				Target:   "target",
-				Next:     validUUID,
+				Next: validUUID,
 			},
 			pathID:         "1",
 			mockSetup:      func(m *mockFlowQuerier) {},
@@ -779,10 +767,8 @@ func TestCreateFlowStep(t *testing.T) {
 		{
 			name: "Duplicate Constraint Error",
 			requestBody: createFlowStepRequest{
-				Protocol: "http",
-				Target:   "target",
-				Current:  validUUID,
-				Next:     validUUID,
+				Current: validUUID,
+				Next:    validUUID,
 			},
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
@@ -799,10 +785,8 @@ func TestCreateFlowStep(t *testing.T) {
 		{
 			name: "Dependency Validation Failure",
 			requestBody: createFlowStepRequest{
-				Protocol: "http",
-				Target:   "target",
-				Current:  validUUID,
-				Next:     validUUID,
+				Current: validUUID,
+				Next:    validUUID,
 			},
 			pathID: "1",
 			mockSetup: func(m *mockFlowQuerier) {
@@ -860,70 +844,6 @@ func TestCreateFlowStep(t *testing.T) {
 				if step.ID == 0 {
 					t.Error("expected flow step ID to be set")
 				}
-			}
-		})
-	}
-}
-
-func TestUpdateFlowStep(t *testing.T) {
-	tests := []struct {
-		name           string
-		id             string
-		reqBody        string
-		mockSetup      func(m *mockFlowQuerier)
-		expectedStatus int
-	}{
-		{
-			name:    "Success",
-			id:      "1",
-			reqBody: `{"target": "https://example.com", "protocol": "HTTPS"}`,
-			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
-					return db.FlowStep{ID: 1}, nil
-				}
-				m.updateFlowStepFunc = func(ctx context.Context, arg db.UpdateFlowStepParams) (int64, error) {
-					return 1, nil
-				}
-			},
-			expectedStatus: http.StatusOK,
-		},
-		{
-			name:           "Invalid ID",
-			id:             "abc",
-			reqBody:        `{}`,
-			expectedStatus: http.StatusBadRequest,
-		},
-		{
-			name:    "Flow Step Not Found",
-			id:      "999",
-			reqBody: `{}`,
-			mockSetup: func(m *mockFlowQuerier) {
-				m.getFlowStepFunc = func(ctx context.Context, id int) (db.FlowStep, error) {
-					return db.FlowStep{}, pgx.ErrNoRows
-				}
-			},
-			expectedStatus: http.StatusNotFound,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &mockFlowQuerier{}
-			if tt.mockSetup != nil {
-				tt.mockSetup(m)
-			}
-			h := &flowHandler{flowService: &postgresService{queries: m, client: &http.Client{}}}
-
-			req := httptest.NewRequest(http.MethodPatch, "/api/flow-steps/"+tt.id, strings.NewReader(tt.reqBody))
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("id", tt.id)
-			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-			req.SetPathValue("id", tt.id)
-			rr := httptest.NewRecorder()
-			h.UpdateFlowStep(rr, req)
-
-			if rr.Code != tt.expectedStatus {
-				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
 			}
 		})
 	}

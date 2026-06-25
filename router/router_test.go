@@ -88,9 +88,6 @@ func (m *mockFlowHandler) CreateFlowStep(w http.ResponseWriter, r *http.Request)
 func (m *mockFlowHandler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 	m.called["DeleteFlowStep"] = true
 }
-func (m *mockFlowHandler) UpdateFlowStep(w http.ResponseWriter, r *http.Request) {
-	m.called["UpdateFlowStep"] = true
-}
 func (m *mockFlowHandler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
 	m.called["GetFlowSteps"] = true
 }
@@ -140,7 +137,6 @@ func TestProductRoutes_SetupRoutes(t *testing.T) {
 		{"DELETE", "/flows/1", "DeleteFlow", mockFlow.called},
 
 		{"DELETE", "/flow-steps/1", "DeleteFlowStep", mockFlow.called},
-		{"PATCH", "/flow-steps/1", "UpdateFlowStep", mockFlow.called},
 	}
 
 	for _, tt := range tests {

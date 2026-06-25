@@ -27,7 +27,6 @@ type flow interface {
 
 type flowStep interface {
 	CreateFlowStep(ctx context.Context, req createFlowStepRequest) (db.FlowStep, error)
-	UpdateFlowStep(ctx context.Context, req updateFlowStepRequest, id int) (db.FlowStep, error)
 	DeleteFlowStep(ctx context.Context, id int) error
 	GetFlowSteps(ctx context.Context, id int) ([]db.FlowStep, error)
 	GetFlowPath(ctx context.Context, id int) (FlowPath, error)
@@ -182,32 +181,6 @@ func (s *postgresService) CreateFlowStep(ctx context.Context, req createFlowStep
 		return db.FlowStep{}, fmt.Errorf("failed to create flow step: %w", err)
 	}
 	return flowStep, nil
-}
-
-func (s *postgresService) UpdateFlowStep(ctx context.Context, req updateFlowStepRequest, id int) (db.FlowStep, error) {
-	existing, err := s.queries.GetFlowStep(ctx, id)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return db.FlowStep{}, internal.NewNotFoundError(id, "FlowStep")
-		}
-		return db.FlowStep{}, fmt.Errorf("failed to fetch flow step: %w", err)
-	}
-
-	params := req.ToParams(id, existing)
-	rowsAffected, err := s.queries.UpdateFlowStep(ctx, params)
-	if err != nil {
-		return db.FlowStep{}, fmt.Errorf("failed to update flow step: %w", err)
-	}
-	if rowsAffected == 0 {
-		return db.FlowStep{}, internal.NewNotFoundError(id, "FlowStep")
-	}
-
-	updated, err := s.queries.GetFlowStep(ctx, id)
-	if err != nil {
-		return db.FlowStep{}, fmt.Errorf("failed to fetch updated flow step: %w", err)
-	}
-
-	return updated, nil
 }
 
 func (s *postgresService) DeleteFlowStep(ctx context.Context, id int) error {

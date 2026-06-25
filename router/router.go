@@ -57,7 +57,6 @@ func (h *productRoutes) setupRoutes(router *chi.Mux) {
 
 	router.Route("/flow-steps/{id}", func(u chi.Router) {
 		u.Delete("/", h.flowHandler.DeleteFlowStep)
-		u.Patch("/", h.flowHandler.UpdateFlowStep)
 	})
 }
 
