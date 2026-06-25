@@ -1,0 +1,103 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-capabilities-table
+      author: junie
+      changes:
+        - createTable:
+            tableName: capabilities
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 1
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: flow_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                    default: now()
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                    default: now()
+        - addForeignKeyConstraint:
+            baseColumnNames: flow_id
+            baseTableName: capabilities
+            constraintName: fk_capabilities_flows
+            referencedColumnNames: id
+            referencedTableName: flows
+            onDelete: CASCADE
+  - changeSet:
+      id: create-capability-steps-table
+      author: junie
+      changes:
+        - createTable:
+            tableName: capability_steps
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 1
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: capability_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: flow_step_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: protocol
+                  type: varchar(255)
+              - column:
+                  name: target
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                    default: now()
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                    default: now()
+        - addForeignKeyConstraint:
+            baseColumnNames: capability_id
+            baseTableName: capability_steps
+            constraintName: fk_capability_steps_capabilities
+            referencedColumnNames: id
+            referencedTableName: capabilities
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseColumnNames: flow_step_id
+            baseTableName: capability_steps
+            constraintName: fk_capability_steps_flow_steps
+            referencedColumnNames: id
+            referencedTableName: flow_steps
+            onDelete: CASCADE
