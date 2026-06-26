@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"products/internal"
+	"products/internal/capability"
 	"products/internal/db"
 	"products/internal/flow"
 	"products/internal/platform"
@@ -16,9 +17,10 @@ import (
 )
 
 type productRoutes struct {
-	productHandler  product.Handler
-	platformHandler platform.Handler
-	flowHandler     flow.Handler
+	productHandler    product.Handler
+	platformHandler   platform.Handler
+	flowHandler       flow.Handler
+	capabilityHandler capability.Handler
 }
 
 func (h *productRoutes) setupRoutes(router *chi.Mux) {
@@ -58,6 +60,10 @@ func (h *productRoutes) setupRoutes(router *chi.Mux) {
 	router.Route("/flow-steps/{id}", func(u chi.Router) {
 		u.Delete("/", h.flowHandler.DeleteFlowStep)
 	})
+
+	router.Route("/capabilities", func(u chi.Router) {
+		u.Post("/", h.capabilityHandler.CreateCapability)
+	})
 }
 
 func SetupRouter(dbConn db.DBTX) http.Handler {
@@ -78,9 +84,10 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 
 	registerSystemCallHandler(router)
 	prodRouter := &productRoutes{
-		productHandler:  product.NewProductHandler(dbConn),
-		flowHandler:     flow.NewHandler(dbConn),
-		platformHandler: platform.NewPlatformHandler(dbConn),
+		productHandler:    product.NewProductHandler(dbConn),
+		flowHandler:       flow.NewHandler(dbConn),
+		platformHandler:   platform.NewPlatformHandler(dbConn),
+		capabilityHandler: capability.NewHandler(dbConn),
 	}
 	prodRouter.setupRoutes(router)
 

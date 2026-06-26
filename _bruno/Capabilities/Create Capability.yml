@@ -1,0 +1,78 @@
+info:
+  name: Create Capability
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/capabilities"
+  body:
+    type: json
+    data: |-
+      {
+        "flow_id": 1,
+        "name": "a test capability",
+        "description": "test"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/capabilities"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+            "flow_id": 1,
+            "name": "a test capability",
+            "description": "test"
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: content-type
+          value: application/json
+        - name: vary
+          value: Origin, Accept-Encoding
+        - name: date
+          value: Fri, 26 Jun 2026 01:08:53 GMT
+        - name: content-length
+          value: "136"
+      body:
+        type: json
+        data: |-
+          {
+            "id": 1,
+            "flow_id": 1,
+            "name": "a test capability",
+            "description": "test",
+            "created_at": "2026-06-25T20:08:53.813971-05:00",
+            "updated_at": "2026-06-25T20:08:53.813971-05:00"
+          }
+
+docs: |-
+  # Create Capability
+
+  Creates a new capability for a specific flow.
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 201 | Created |
+  | 400 | Invalid flow ID or request body |
+  | 500 | Internal server error |
