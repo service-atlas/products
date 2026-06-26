@@ -14,3 +14,6 @@ UPDATE capabilities SET name = @name, description = @description, updated_at = @
 
 -- name: DeleteCapability :execrows
 DELETE FROM capabilities WHERE id = @id;
+
+-- name: GetFlow :one
+SELECT name FROM flows WHERE id = @id;

@@ -13,6 +13,7 @@ type Querier interface {
 	DeleteCapability(ctx context.Context, id int) (int64, error)
 	GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]Capability, error)
 	GetCapability(ctx context.Context, id int) (Capability, error)
+	GetFlow(ctx context.Context, id int) (string, error)
 	UpdateCapability(ctx context.Context, arg UpdateCapabilityParams) (int64, error)
 }
 

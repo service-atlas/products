@@ -104,6 +104,17 @@ func (q *Queries) GetCapability(ctx context.Context, id int) (Capability, error)
 	return i, err
 }
 
+const getFlow = `-- name: GetFlow :one
+SELECT name FROM flows WHERE id = $1
+`
+
+func (q *Queries) GetFlow(ctx context.Context, id int) (string, error) {
+	row := q.db.QueryRow(ctx, getFlow, id)
+	var name string
+	err := row.Scan(&name)
+	return name, err
+}
+
 const updateCapability = `-- name: UpdateCapability :execrows
 UPDATE capabilities SET name = $1, description = $2, updated_at = $3 WHERE id = $4
 `
