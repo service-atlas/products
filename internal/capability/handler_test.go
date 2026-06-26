@@ -59,7 +59,8 @@ func TestHandler_CreateCapability(t *testing.T) {
 		{
 			name: "Service Error",
 			requestBody: createCapabilityRequest{
-				Name: "Test Cap",
+				Name:   "Test Cap",
+				FlowId: 1,
 			},
 			mockSetup: func(m *mockCapabilityService) {
 				m.createCapabilityFunc = func(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {

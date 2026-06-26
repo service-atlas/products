@@ -49,7 +49,8 @@ func TestCreateCapabilityRequest_Validate(t *testing.T) {
 		{
 			name: "Valid request",
 			req: createCapabilityRequest{
-				Name: "Test",
+				Name:   "Test",
+				FlowId: 1,
 			},
 			wantErr: false,
 		},
@@ -57,6 +58,13 @@ func TestCreateCapabilityRequest_Validate(t *testing.T) {
 			name: "Missing name",
 			req: createCapabilityRequest{
 				Name: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Missing flow id",
+			req: createCapabilityRequest{
+				Name: "Test",
 			},
 			wantErr: true,
 		},

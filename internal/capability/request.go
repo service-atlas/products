@@ -33,5 +33,8 @@ func (r *createCapabilityRequest) Validate() error {
 	if len(r.Name) == 0 {
 		return errors.New("name is required")
 	}
+	if r.FlowId == 0 {
+		return errors.New("flow_id is required")
+	}
 	return nil
 }
