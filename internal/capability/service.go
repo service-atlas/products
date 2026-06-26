@@ -2,10 +2,11 @@ package capability
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log/slog"
 	"products/internal/capability/db"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type capabilityService interface {
@@ -23,7 +24,7 @@ type postgresService struct {
 func (s *postgresService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
 	name, err := s.queries.GetFlow(ctx, req.FlowId)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return db.Capability{}, NotFoundError{
 				"Flow not found",
 			}

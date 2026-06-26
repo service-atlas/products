@@ -5,6 +5,8 @@ import (
 	"errors"
 	"products/internal/capability/db"
 	"testing"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type mockCapabilityQuerier struct {
@@ -12,6 +14,7 @@ type mockCapabilityQuerier struct {
 	deleteCapabilityFunc      func(ctx context.Context, id int) (int64, error)
 	getCapabilitiesByFlowFunc func(ctx context.Context, flowID int) ([]db.Capability, error)
 	getCapabilityFunc         func(ctx context.Context, id int) (db.Capability, error)
+	getFlowFunc               func(ctx context.Context, id int) (string, error)
 	updateCapabilityFunc      func(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error)
 }
 
@@ -31,6 +34,10 @@ func (m *mockCapabilityQuerier) GetCapability(ctx context.Context, id int) (db.C
 	return m.getCapabilityFunc(ctx, id)
 }
 
+func (m *mockCapabilityQuerier) GetFlow(ctx context.Context, id int) (string, error) {
+	return m.getFlowFunc(ctx, id)
+}
+
 func (m *mockCapabilityQuerier) UpdateCapability(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error) {
 	return m.updateCapabilityFunc(ctx, arg)
 }
@@ -46,9 +53,13 @@ func TestService_CreateCapability(t *testing.T) {
 		{
 			name: "Success",
 			req: createCapabilityRequest{
-				Name: "Test Cap",
+				FlowId: 1,
+				Name:   "Test Cap",
 			},
 			mockSetup: func(m *mockCapabilityQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+					return "Test Flow", nil
+				}
 				m.createCapabilityFunc = func(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error) {
 					return db.Capability{ID: 1, Name: arg.Name}, nil
 				}
@@ -56,16 +67,59 @@ func TestService_CreateCapability(t *testing.T) {
 			expectedCap: db.Capability{ID: 1, Name: "Test Cap"},
 		},
 		{
-			name: "Database Error",
+			name: "Flow Not Found - sql.ErrNoRows",
 			req: createCapabilityRequest{
-				Name: "Test Cap",
+				FlowId: 999,
+				Name:   "Test Cap",
 			},
 			mockSetup: func(m *mockCapabilityQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+					return "", pgx.ErrNoRows
+				}
+			},
+			expectedError: "Flow not found",
+		},
+		{
+			name: "Flow Not Found - Empty Name",
+			req: createCapabilityRequest{
+				FlowId: 999,
+				Name:   "Test Cap",
+			},
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+					return "", nil
+				}
+			},
+			expectedError: "Flow not found",
+		},
+		{
+			name: "Database Error on GetFlow",
+			req: createCapabilityRequest{
+				FlowId: 1,
+				Name:   "Test Cap",
+			},
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+					return "", errors.New("db error")
+				}
+			},
+			expectedError: "db error",
+		},
+		{
+			name: "Database Error on CreateCapability",
+			req: createCapabilityRequest{
+				FlowId: 1,
+				Name:   "Test Cap",
+			},
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+					return "Test Flow", nil
+				}
 				m.createCapabilityFunc = func(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error) {
 					return db.Capability{}, errors.New("db error")
 				}
 			},
-			expectedError: "db error",
+			expectedError: "error creating capability",
 		},
 	}
 
