@@ -95,15 +95,30 @@ func (m *mockFlowHandler) GetFlowPath(w http.ResponseWriter, r *http.Request) {
 	m.called["GetFlowPath"] = true
 }
 
+// Mock Capability Handler
+type mockCapabilityHandler struct {
+	called map[string]bool
+}
+
+func newMockCapabilityHandler() *mockCapabilityHandler {
+	return &mockCapabilityHandler{called: make(map[string]bool)}
+}
+
+func (m *mockCapabilityHandler) CreateCapability(w http.ResponseWriter, r *http.Request) {
+	m.called["CreateCapability"] = true
+}
+
 func TestProductRoutes_SetupRoutes(t *testing.T) {
 	mockPlatform := newMockPlatformHandler()
 	mockProduct := newMockProductHandler()
 	mockFlow := newMockFlowHandler()
+	mockCapability := newMockCapabilityHandler()
 
 	pr := &productRoutes{
-		platformHandler: mockPlatform,
-		productHandler:  mockProduct,
-		flowHandler:     mockFlow,
+		platformHandler:   mockPlatform,
+		productHandler:    mockProduct,
+		flowHandler:       mockFlow,
+		capabilityHandler: mockCapability,
 	}
 
 	r := chi.NewRouter()
@@ -135,8 +150,9 @@ func TestProductRoutes_SetupRoutes(t *testing.T) {
 		{"GET", "/flows/1", "GetFlowById", mockFlow.called},
 		{"PUT", "/flows/1", "UpdateFlow", mockFlow.called},
 		{"DELETE", "/flows/1", "DeleteFlow", mockFlow.called},
-
 		{"DELETE", "/flow-steps/1", "DeleteFlowStep", mockFlow.called},
+
+		{"POST", "/capabilities/", "CreateCapability", mockCapability.called},
 	}
 
 	for _, tt := range tests {
