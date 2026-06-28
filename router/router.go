@@ -54,6 +54,7 @@ func (h *productRoutes) setupRoutes(router *chi.Mux) {
 			u.Get("/", h.flowHandler.GetFlowById)
 			u.Put("/", h.flowHandler.UpdateFlow)
 			u.Delete("/", h.flowHandler.DeleteFlow)
+			u.Get("/capabilities", h.capabilityHandler.GetCapabilitiesByFlow)
 		})
 	})
 
@@ -63,6 +64,7 @@ func (h *productRoutes) setupRoutes(router *chi.Mux) {
 
 	router.Route("/capabilities", func(u chi.Router) {
 		u.Post("/", h.capabilityHandler.CreateCapability)
+		u.Get("/{id}", h.capabilityHandler.GetCapability)
 	})
 }
 
