@@ -55,13 +55,17 @@ func (h *capabilityHandler) GetCapability(w http.ResponseWriter, r *http.Request
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
+		return
 	}
 	capability, err := h.service.GetCapability(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if errors.Is(err, NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
+			return
 		}
 		slog.Error("Failed to fetch capability", slog.Int("capability_id", id), slog.String("error", err.Error()))
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch capability"}, http.StatusInternalServerError)
+		return
 	}
 	internal.WriteJSONResponse(w, r, http.StatusOK, capability)
 }
@@ -70,14 +74,17 @@ func (h *capabilityHandler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
+		return
 	}
 	capabilities, err := h.service.GetCapabilitiesByFlow(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if errors.Is(err, NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Flow not found"}, http.StatusNotFound)
+			return
 		}
 		slog.Error("Failed to fetch capabilities", slog.Int("flow_id", id), slog.String("error", err.Error()))
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch capabilities"}, http.StatusInternalServerError)
+		return
 	}
 	internal.WriteJSONResponse(w, r, http.StatusOK, capabilities)
 }
