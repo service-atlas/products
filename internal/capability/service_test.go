@@ -16,6 +16,7 @@ type mockCapabilityQuerier struct {
 	getCapabilitiesByProductFunc func(ctx context.Context, productID int) ([]db.GetCapabilitiesByProductRow, error)
 	getCapabilityFunc            func(ctx context.Context, id int) (db.Capability, error)
 	getFlowFunc                  func(ctx context.Context, id int) (string, error)
+	getProductFunc               func(ctx context.Context, id int) (string, error)
 	updateCapabilityFunc         func(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error)
 }
 
@@ -41,6 +42,10 @@ func (m *mockCapabilityQuerier) GetCapability(ctx context.Context, id int) (db.C
 
 func (m *mockCapabilityQuerier) GetFlow(ctx context.Context, id int) (string, error) {
 	return m.getFlowFunc(ctx, id)
+}
+
+func (m *mockCapabilityQuerier) GetProduct(ctx context.Context, id int) (string, error) {
+	return m.getProductFunc(ctx, id)
 }
 
 func (m *mockCapabilityQuerier) UpdateCapability(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error) {
@@ -240,8 +245,8 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 			name: "Success",
 			id:   1,
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
-					return "Test Flow", nil
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
+					return "Test Product", nil
 				}
 				m.getCapabilitiesByProductFunc = func(ctx context.Context, productID int) ([]db.GetCapabilitiesByProductRow, error) {
 					return []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap"}}, nil
@@ -250,20 +255,20 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 			expectedCaps: []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap"}},
 		},
 		{
-			name: "Flow Not Found",
+			name: "Product Not Found",
 			id:   999,
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
 					return "", pgx.ErrNoRows
 				}
 			},
-			expectedError: "Flow not found",
+			expectedError: "Product not found",
 		},
 		{
-			name: "Database Error on GetFlow",
+			name: "Database Error on GetProduct",
 			id:   1,
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
 					return "", errors.New("db error")
 				}
 			},
@@ -273,8 +278,8 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 			name: "Database Error on GetCapabilities",
 			id:   1,
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
-					return "Test Flow", nil
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
+					return "Test Product", nil
 				}
 				m.getCapabilitiesByProductFunc = func(ctx context.Context, productID int) ([]db.GetCapabilitiesByProductRow, error) {
 					return nil, errors.New("db error")

@@ -29,3 +29,6 @@ DELETE FROM capabilities WHERE id = @id;
 
 -- name: GetFlow :one
 SELECT name FROM flows WHERE id = @id;
+
+-- name: GetProduct :one
+SELECT name FROM products WHERE id = @id;

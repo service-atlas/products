@@ -61,11 +61,11 @@ func (s *postgresService) GetCapability(ctx context.Context, id int) (db.Capabil
 }
 
 func (s *postgresService) GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
-	_, err := s.queries.GetFlow(ctx, id)
+	_, err := s.queries.GetProduct(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, NotFoundError{
-				"Flow not found",
+				"Product not found",
 			}
 		}
 		return nil, err
