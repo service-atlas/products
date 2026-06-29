@@ -10,12 +10,12 @@ import (
 )
 
 type mockCapabilityQuerier struct {
-	createCapabilityFunc      func(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error)
-	deleteCapabilityFunc      func(ctx context.Context, id int) (int64, error)
-	getCapabilitiesByFlowFunc func(ctx context.Context, flowID int) ([]db.Capability, error)
-	getCapabilityFunc         func(ctx context.Context, id int) (db.Capability, error)
-	getFlowFunc               func(ctx context.Context, id int) (string, error)
-	updateCapabilityFunc      func(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error)
+	createCapabilityFunc         func(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error)
+	deleteCapabilityFunc         func(ctx context.Context, id int) (int64, error)
+	getCapabilitiesByProductFunc func(ctx context.Context, productID int) ([]db.GetCapabilitiesByProductRow, error)
+	getCapabilityFunc            func(ctx context.Context, id int) (db.Capability, error)
+	getFlowFunc                  func(ctx context.Context, id int) (string, error)
+	updateCapabilityFunc         func(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error)
 }
 
 func (m *mockCapabilityQuerier) CreateCapability(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error) {
@@ -26,8 +26,8 @@ func (m *mockCapabilityQuerier) DeleteCapability(ctx context.Context, id int) (i
 	return m.deleteCapabilityFunc(ctx, id)
 }
 
-func (m *mockCapabilityQuerier) GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]db.Capability, error) {
-	return m.getCapabilitiesByFlowFunc(ctx, flowID)
+func (m *mockCapabilityQuerier) GetCapabilitiesByProduct(ctx context.Context, productID int) ([]db.GetCapabilitiesByProductRow, error) {
+	return m.getCapabilitiesByProductFunc(ctx, productID)
 }
 
 func (m *mockCapabilityQuerier) GetCapability(ctx context.Context, id int) (db.Capability, error) {
@@ -223,13 +223,13 @@ func TestService_GetCapability(t *testing.T) {
 	}
 }
 
-func TestService_GetCapabilitiesByFlow(t *testing.T) {
+func TestService_GetCapabilitiesByProduct(t *testing.T) {
 	tests := []struct {
 		name          string
 		id            int
 		mockSetup     func(m *mockCapabilityQuerier)
 		expectedError string
-		expectedCaps  []db.Capability
+		expectedCaps  []db.GetCapabilitiesByProductRow
 	}{
 		{
 			name: "Success",
@@ -238,11 +238,11 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
 					return "Test Flow", nil
 				}
-				m.getCapabilitiesByFlowFunc = func(ctx context.Context, flowID int) ([]db.Capability, error) {
-					return []db.Capability{{ID: 1, Name: "Test Cap"}}, nil
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, productID int) ([]db.GetCapabilitiesByProductRow, error) {
+					return []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap"}}, nil
 				}
 			},
-			expectedCaps: []db.Capability{{ID: 1, Name: "Test Cap"}},
+			expectedCaps: []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap"}},
 		},
 		{
 			name: "Flow Not Found",
@@ -271,7 +271,7 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
 					return "Test Flow", nil
 				}
-				m.getCapabilitiesByFlowFunc = func(ctx context.Context, flowID int) ([]db.Capability, error) {
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, productID int) ([]db.GetCapabilitiesByProductRow, error) {
 					return nil, errors.New("db error")
 				}
 			},
@@ -287,7 +287,7 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 			}
 			s := &postgresService{queries: mock}
 
-			caps, err := s.GetCapabilitiesByFlow(context.Background(), tt.id)
+			caps, err := s.GetCapabilitiesByProduct(context.Background(), tt.id)
 
 			if tt.expectedError != "" {
 				if err == nil {

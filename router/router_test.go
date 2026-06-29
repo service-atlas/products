@@ -111,7 +111,7 @@ func (m *mockCapabilityHandler) GetCapability(w http.ResponseWriter, r *http.Req
 	m.called["GetCapability"] = true
 }
 func (m *mockCapabilityHandler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http.Request) {
-	m.called["GetCapabilitiesByFlow"] = true
+	m.called["GetCapabilitiesByProduct"] = true
 }
 
 func TestProductRoutes_SetupRoutes(t *testing.T) {
@@ -159,7 +159,7 @@ func TestProductRoutes_SetupRoutes(t *testing.T) {
 		{"DELETE", "/flow-steps/1", "DeleteFlowStep", mockFlow.called},
 		{"POST", "/capabilities/", "CreateCapability", mockCapability.called},
 		{"GET", "/capabilities/1", "GetCapability", mockCapability.called},
-		{"GET", "/flows/1/capabilities", "GetCapabilitiesByFlow", mockCapability.called},
+		{"GET", "/flows/1/capabilities", "GetCapabilitiesByProduct", mockCapability.called},
 	}
 
 	for _, tt := range tests {

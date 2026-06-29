@@ -55,24 +55,42 @@ func (q *Queries) DeleteCapability(ctx context.Context, id int) (int64, error) {
 	return result.RowsAffected(), nil
 }
 
-const getCapabilitiesByFlow = `-- name: GetCapabilitiesByFlow :many
-SELECT id, flow_id, name, description, created_at, updated_at FROM capabilities WHERE flow_id = $1
+const getCapabilitiesByProduct = `-- name: GetCapabilitiesByProduct :many
+SELECT
+    c.id,
+    c.flow_id,
+    c.name,
+    f.name as flow_name,
+    c.created_at,
+    c.updated_at
+FROM capabilities c
+INNER JOIN flows f ON f.id = c.flow_id
+WHERE f.product_id = $1
 `
 
-func (q *Queries) GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]Capability, error) {
-	rows, err := q.db.Query(ctx, getCapabilitiesByFlow, flowID)
+type GetCapabilitiesByProductRow struct {
+	ID        int                `json:"id"`
+	FlowID    int                `json:"flow_id"`
+	Name      string             `json:"name"`
+	FlowName  string             `json:"flow_name"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetCapabilitiesByProduct(ctx context.Context, productID int) ([]GetCapabilitiesByProductRow, error) {
+	rows, err := q.db.Query(ctx, getCapabilitiesByProduct, productID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Capability
+	var items []GetCapabilitiesByProductRow
 	for rows.Next() {
-		var i Capability
+		var i GetCapabilitiesByProductRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FlowID,
 			&i.Name,
-			&i.Description,
+			&i.FlowName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

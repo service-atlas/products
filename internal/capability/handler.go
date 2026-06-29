@@ -76,7 +76,7 @@ func (h *capabilityHandler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
 		return
 	}
-	capabilities, err := h.service.GetCapabilitiesByFlow(r.Context(), id)
+	capabilities, err := h.service.GetCapabilitiesByProduct(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Flow not found"}, http.StatusNotFound)

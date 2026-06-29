@@ -16,9 +16,9 @@ import (
 )
 
 type mockCapabilityService struct {
-	createCapabilityFunc      func(ctx context.Context, req createCapabilityRequest) (db.Capability, error)
-	getCapabilityFunc         func(ctx context.Context, id int) (db.Capability, error)
-	getCapabilitiesByFlowFunc func(ctx context.Context, id int) ([]db.Capability, error)
+	createCapabilityFunc         func(ctx context.Context, req createCapabilityRequest) (db.Capability, error)
+	getCapabilityFunc            func(ctx context.Context, id int) (db.Capability, error)
+	getCapabilitiesByProductFunc func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error)
 }
 
 func (m *mockCapabilityService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
@@ -29,8 +29,8 @@ func (m *mockCapabilityService) GetCapability(ctx context.Context, id int) (db.C
 	return m.getCapabilityFunc(ctx, id)
 }
 
-func (m *mockCapabilityService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.Capability, error) {
-	return m.getCapabilitiesByFlowFunc(ctx, id)
+func (m *mockCapabilityService) GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
+	return m.getCapabilitiesByProductFunc(ctx, id)
 }
 
 func TestHandler_CreateCapability(t *testing.T) {
@@ -216,8 +216,8 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 			name: "Success",
 			id:   "1",
 			mockSetup: func(m *mockCapabilityService) {
-				m.getCapabilitiesByFlowFunc = func(ctx context.Context, id int) ([]db.Capability, error) {
-					return []db.Capability{{ID: 1, Name: "Test Cap"}}, nil
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
+					return []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap"}}, nil
 				}
 			},
 			expectedStatus: http.StatusOK,
@@ -226,7 +226,7 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 			name: "Flow Not Found",
 			id:   "999",
 			mockSetup: func(m *mockCapabilityService) {
-				m.getCapabilitiesByFlowFunc = func(ctx context.Context, id int) ([]db.Capability, error) {
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
 					return nil, NotFoundError{Msg: "Flow not found"}
 				}
 			},
@@ -242,7 +242,7 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 			name: "Service Error",
 			id:   "1",
 			mockSetup: func(m *mockCapabilityService) {
-				m.getCapabilitiesByFlowFunc = func(ctx context.Context, id int) ([]db.Capability, error) {
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
 					return nil, errors.New("service error")
 				}
 			},
