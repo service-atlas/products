@@ -43,6 +43,7 @@ func (h *productRoutes) setupRoutes(router *chi.Mux) {
 			u.Put("/", h.productHandler.UpdateProduct)
 			u.Post("/flows", h.flowHandler.CreateFlow)
 			u.Get("/flows", h.flowHandler.GetFlowsByProduct)
+			u.Get("/capabilities", h.capabilityHandler.GetCapabilitiesByProduct)
 		})
 
 	})

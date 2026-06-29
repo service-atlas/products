@@ -16,7 +16,9 @@ runtime:
   assertions:
     - expression: res.status
       operator: eq
-      value: "201"
+      value: "200"
+    - expression: res.body
+      operator: isArray
 
 settings:
   encodeUrl: true

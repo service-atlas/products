@@ -111,6 +111,9 @@ func (m *mockCapabilityHandler) GetCapability(w http.ResponseWriter, r *http.Req
 	m.called["GetCapability"] = true
 }
 func (m *mockCapabilityHandler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http.Request) {
+	m.called["GetCapabilitiesByFlow"] = true
+}
+func (m *mockCapabilityHandler) GetCapabilitiesByProduct(w http.ResponseWriter, r *http.Request) {
 	m.called["GetCapabilitiesByProduct"] = true
 }
 
@@ -149,6 +152,7 @@ func TestProductRoutes_SetupRoutes(t *testing.T) {
 		{"PUT", "/products/1", "UpdateProduct", mockProduct.called},
 		{"POST", "/products/1/flows", "CreateFlow", mockFlow.called},
 		{"GET", "/products/1/flows", "GetFlowsByProduct", mockFlow.called},
+		{"GET", "/products/1/capabilities", "GetCapabilitiesByProduct", mockCapability.called},
 
 		{"POST", "/flows/1/steps", "CreateFlowStep", mockFlow.called},
 		{"GET", "/flows/1/steps", "GetFlowSteps", mockFlow.called},
@@ -157,9 +161,9 @@ func TestProductRoutes_SetupRoutes(t *testing.T) {
 		{"PUT", "/flows/1", "UpdateFlow", mockFlow.called},
 		{"DELETE", "/flows/1", "DeleteFlow", mockFlow.called},
 		{"DELETE", "/flow-steps/1", "DeleteFlowStep", mockFlow.called},
+		{"GET", "/flows/1/capabilities", "GetCapabilitiesByFlow", mockCapability.called},
 		{"POST", "/capabilities/", "CreateCapability", mockCapability.called},
 		{"GET", "/capabilities/1", "GetCapability", mockCapability.called},
-		{"GET", "/flows/1/capabilities", "GetCapabilitiesByProduct", mockCapability.called},
 	}
 
 	for _, tt := range tests {

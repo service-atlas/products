@@ -279,3 +279,73 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		mockSetup      func(m *mockCapabilityService)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			id:   "1",
+			mockSetup: func(m *mockCapabilityService) {
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
+					return []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap"}}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Product Not Found",
+			id:   "999",
+			mockSetup: func(m *mockCapabilityService) {
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
+					return nil, NotFoundError{Msg: "Product not found"}
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "Invalid ID",
+			id:             "abc",
+			mockSetup:      func(m *mockCapabilityService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Service Error",
+			id:   "1",
+			mockSetup: func(m *mockCapabilityService) {
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
+					return nil, errors.New("service error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/products/"+tt.id+"/capabilities", nil)
+			if tt.id != "" {
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", tt.id)
+				req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+			}
+
+			w := httptest.NewRecorder()
+			mockSvc := &mockCapabilityService{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockSvc)
+			}
+			h := &capabilityHandler{service: mockSvc}
+
+			h.GetCapabilitiesByProduct(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
