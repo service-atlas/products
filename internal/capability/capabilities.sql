@@ -6,9 +6,8 @@ RETURNING *;
 -- name: GetCapability :one
 SELECT id, flow_id, name, description, created_at, updated_at FROM capabilities WHERE id = @id;
 
-
 -- name: GetCapabilitiesByFlow :many
-SELECT id, flow_id, name, description, created_at, updated_at FROM capabilities WHERE flow_id = @flow_id;
+SELECT * FROM capabilities WHERE flow_id = @flow_id;
 
 -- name: GetCapabilitiesByProduct :many
 SELECT

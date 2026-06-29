@@ -14,6 +14,7 @@ type capabilityService interface {
 	CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error)
 	GetCapability(ctx context.Context, id int) (db.Capability, error)
 	GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error)
+	GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.Capability, error)
 }
 
 type capabilityStepService interface {
@@ -70,6 +71,23 @@ func (s *postgresService) GetCapabilitiesByProduct(ctx context.Context, id int) 
 		return nil, err
 	}
 	capabilities, err := s.queries.GetCapabilitiesByProduct(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return capabilities, nil
+}
+
+func (s *postgresService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.Capability, error) {
+	_, err := s.queries.GetFlow(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, NotFoundError{
+				"Flow not found",
+			}
+		}
+		return nil, err
+	}
+	capabilities, err := s.queries.GetCapabilitiesByFlow(ctx, id)
 	if err != nil {
 		return nil, err
 	}
