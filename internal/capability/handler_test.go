@@ -142,6 +142,7 @@ func TestHandler_GetCapability(t *testing.T) {
 		id             string
 		mockSetup      func(m *mockCapabilityService)
 		expectedStatus int
+		assertBody     func(t *testing.T, body []byte)
 	}{
 		{
 			name: "Success",
@@ -152,6 +153,15 @@ func TestHandler_GetCapability(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
+			assertBody: func(t *testing.T, body []byte) {
+				var got db.Capability
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got.ID != 1 || got.Name != "Test Cap" {
+					t.Errorf("unexpected capability: %+v", got)
+				}
+			},
 		},
 		{
 			name: "Not Found",
@@ -162,12 +172,36 @@ func TestHandler_GetCapability(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusNotFound,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Capability not found" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusNotFound) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 		{
 			name:           "Invalid ID",
 			id:             "abc",
 			mockSetup:      func(m *mockCapabilityService) {},
 			expectedStatus: http.StatusBadRequest,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Invalid capability ID" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusBadRequest) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 		{
 			name: "Service Error",
@@ -178,6 +212,18 @@ func TestHandler_GetCapability(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Failed to fetch capability" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusInternalServerError) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 	}
 
@@ -197,14 +243,13 @@ func TestHandler_GetCapability(t *testing.T) {
 			}
 			h := &capabilityHandler{service: mockSvc}
 
-			// We might need to mock internal.GetIntFromRequestPath or use a router that sets it.
-			// For now, let's assume it works if we set it in the request context or if the router does it.
-			// Many Go routers use context for path variables.
-
 			h.GetCapability(w, req)
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+			if tt.assertBody != nil {
+				tt.assertBody(t, w.Body.Bytes())
 			}
 		})
 	}
@@ -216,6 +261,7 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 		id             string
 		mockSetup      func(m *mockCapabilityService)
 		expectedStatus int
+		assertBody     func(t *testing.T, body []byte)
 	}{
 		{
 			name: "Success",
@@ -226,6 +272,15 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
+			assertBody: func(t *testing.T, body []byte) {
+				var got []db.Capability
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if len(got) != 1 || got[0].ID != 1 || got[0].Name != "Test Cap" {
+					t.Errorf("unexpected capabilities: %+v", got)
+				}
+			},
 		},
 		{
 			name: "Flow Not Found",
@@ -236,12 +291,36 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusNotFound,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Flow not found" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusNotFound) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 		{
 			name:           "Invalid ID",
 			id:             "abc",
 			mockSetup:      func(m *mockCapabilityService) {},
 			expectedStatus: http.StatusBadRequest,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Invalid capability ID" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusBadRequest) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 		{
 			name: "Service Error",
@@ -252,6 +331,18 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Failed to fetch capabilities" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusInternalServerError) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 	}
 
@@ -276,6 +367,9 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 			if w.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
 			}
+			if tt.assertBody != nil {
+				tt.assertBody(t, w.Body.Bytes())
+			}
 		})
 	}
 }
@@ -286,16 +380,26 @@ func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
 		id             string
 		mockSetup      func(m *mockCapabilityService)
 		expectedStatus int
+		assertBody     func(t *testing.T, body []byte)
 	}{
 		{
 			name: "Success",
 			id:   "1",
 			mockSetup: func(m *mockCapabilityService) {
 				m.getCapabilitiesByProductFunc = func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
-					return []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap"}}, nil
+					return []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap", FlowName: "Flow A"}}, nil
 				}
 			},
 			expectedStatus: http.StatusOK,
+			assertBody: func(t *testing.T, body []byte) {
+				var got []db.GetCapabilitiesByProductRow
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if len(got) != 1 || got[0].ID != 1 || got[0].Name != "Test Cap" || got[0].FlowName != "Flow A" {
+					t.Errorf("unexpected capabilities: %+v", got)
+				}
+			},
 		},
 		{
 			name: "Product Not Found",
@@ -306,12 +410,36 @@ func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusNotFound,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Product not found" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusNotFound) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 		{
 			name:           "Invalid ID",
 			id:             "abc",
 			mockSetup:      func(m *mockCapabilityService) {},
 			expectedStatus: http.StatusBadRequest,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Invalid capability ID" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusBadRequest) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 		{
 			name: "Service Error",
@@ -322,6 +450,18 @@ func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
+			assertBody: func(t *testing.T, body []byte) {
+				var got map[string]any
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("failed to decode body: %v", err)
+				}
+				if got["detail"] != "Failed to fetch capabilities" {
+					t.Errorf("unexpected detail: %v", got["detail"])
+				}
+				if got["status"] != float64(http.StatusInternalServerError) {
+					t.Errorf("unexpected status: %v", got["status"])
+				}
+			},
 		},
 	}
 
@@ -345,6 +485,9 @@ func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+			if tt.assertBody != nil {
+				tt.assertBody(t, w.Body.Bytes())
 			}
 		})
 	}
