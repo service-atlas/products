@@ -70,5 +70,6 @@ docs: |-
   | Status Code | Notes |
   | -- | --|
   | 200 | Created |
+  | 400 | Invalid Id |
   | 404 | Flow not found |
   | 500 | Internal server error |
