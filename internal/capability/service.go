@@ -74,6 +74,9 @@ func (s *postgresService) GetCapabilitiesByProduct(ctx context.Context, id int) 
 	if err != nil {
 		return nil, err
 	}
+	if capabilities == nil {
+		capabilities = []db.GetCapabilitiesByProductRow{}
+	}
 	return capabilities, nil
 }
 
@@ -90,6 +93,9 @@ func (s *postgresService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]
 	capabilities, err := s.queries.GetCapabilitiesByFlow(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if capabilities == nil {
+		capabilities = []db.Capability{}
 	}
 	return capabilities, nil
 }

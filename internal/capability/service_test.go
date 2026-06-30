@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"products/internal/capability/db"
+	"reflect"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -283,6 +284,19 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 			expectedCaps: []db.GetCapabilitiesByProductRow{{ID: 1, Name: "Test Cap"}},
 		},
 		{
+			name: "No Capabilities Returns Empty Slice",
+			id:   1,
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
+					return "Test Product", nil
+				}
+				m.getCapabilitiesByProductFunc = func(ctx context.Context, productID int) ([]db.GetCapabilitiesByProductRow, error) {
+					return nil, nil
+				}
+			},
+			expectedCaps: []db.GetCapabilitiesByProductRow{},
+		},
+		{
 			name: "Product Not Found",
 			id:   999,
 			mockSetup: func(m *mockCapabilityQuerier) {
@@ -350,8 +364,8 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if len(caps) != len(tt.expectedCaps) {
-				t.Errorf("expected %d capabilities, got %d", len(tt.expectedCaps), len(caps))
+			if !reflect.DeepEqual(caps, tt.expectedCaps) {
+				t.Errorf("expected capabilities %+v, got %+v", tt.expectedCaps, caps)
 			}
 		})
 	}
@@ -378,6 +392,19 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 				}
 			},
 			expectedCaps: []db.Capability{{ID: 1, Name: "Test Cap"}},
+		},
+		{
+			name: "No Capabilities Returns Empty Slice",
+			id:   1,
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+					return "Test Flow", nil
+				}
+				m.getCapabilitiesByFlowFunc = func(ctx context.Context, flowID int) ([]db.Capability, error) {
+					return nil, nil
+				}
+			},
+			expectedCaps: []db.Capability{},
 		},
 		{
 			name: "Flow Not Found",
@@ -447,8 +474,8 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if len(caps) != len(tt.expectedCaps) {
-				t.Errorf("expected %d capabilities, got %d", len(tt.expectedCaps), len(caps))
+			if !reflect.DeepEqual(caps, tt.expectedCaps) {
+				t.Errorf("expected capabilities %+v, got %+v", tt.expectedCaps, caps)
 			}
 		})
 	}
