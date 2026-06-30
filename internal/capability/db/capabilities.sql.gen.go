@@ -86,6 +86,55 @@ func (q *Queries) GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]Capa
 	return items, nil
 }
 
+const getCapabilitiesByProduct = `-- name: GetCapabilitiesByProduct :many
+SELECT
+    c.id,
+    c.flow_id,
+    c.name,
+    f.name as flow_name,
+    c.created_at,
+    c.updated_at
+FROM capabilities c
+INNER JOIN flows f ON f.id = c.flow_id
+WHERE f.product_id = $1
+`
+
+type GetCapabilitiesByProductRow struct {
+	ID        int                `json:"id"`
+	FlowID    int                `json:"flow_id"`
+	Name      string             `json:"name"`
+	FlowName  string             `json:"flow_name"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetCapabilitiesByProduct(ctx context.Context, productID int) ([]GetCapabilitiesByProductRow, error) {
+	rows, err := q.db.Query(ctx, getCapabilitiesByProduct, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCapabilitiesByProductRow
+	for rows.Next() {
+		var i GetCapabilitiesByProductRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FlowID,
+			&i.Name,
+			&i.FlowName,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCapability = `-- name: GetCapability :one
 SELECT id, flow_id, name, description, created_at, updated_at FROM capabilities WHERE id = $1
 `
@@ -110,6 +159,17 @@ SELECT name FROM flows WHERE id = $1
 
 func (q *Queries) GetFlow(ctx context.Context, id int) (string, error) {
 	row := q.db.QueryRow(ctx, getFlow, id)
+	var name string
+	err := row.Scan(&name)
+	return name, err
+}
+
+const getProduct = `-- name: GetProduct :one
+SELECT name FROM products WHERE id = $1
+`
+
+func (q *Queries) GetProduct(ctx context.Context, id int) (string, error) {
+	row := q.db.QueryRow(ctx, getProduct, id)
 	var name string
 	err := row.Scan(&name)
 	return name, err

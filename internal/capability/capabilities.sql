@@ -7,7 +7,19 @@ RETURNING *;
 SELECT id, flow_id, name, description, created_at, updated_at FROM capabilities WHERE id = @id;
 
 -- name: GetCapabilitiesByFlow :many
-SELECT id, flow_id, name, description, created_at, updated_at FROM capabilities WHERE flow_id = @flow_id;
+SELECT * FROM capabilities WHERE flow_id = @flow_id;
+
+-- name: GetCapabilitiesByProduct :many
+SELECT
+    c.id,
+    c.flow_id,
+    c.name,
+    f.name as flow_name,
+    c.created_at,
+    c.updated_at
+FROM capabilities c
+INNER JOIN flows f ON f.id = c.flow_id
+WHERE f.product_id = @product_id;
 
 -- name: UpdateCapability :execrows
 UPDATE capabilities SET name = @name, description = @description, updated_at = @updated_at WHERE id = @id;
@@ -17,3 +29,6 @@ DELETE FROM capabilities WHERE id = @id;
 
 -- name: GetFlow :one
 SELECT name FROM flows WHERE id = @id;
+
+-- name: GetProduct :one
+SELECT name FROM products WHERE id = @id;
