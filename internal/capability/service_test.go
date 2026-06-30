@@ -57,6 +57,7 @@ func TestService_CreateCapability(t *testing.T) {
 		name          string
 		req           createCapabilityRequest
 		mockSetup     func(m *mockCapabilityQuerier)
+		checkError    func(t *testing.T, err error)
 		expectedError string
 		expectedCap   db.Capability
 	}{
@@ -87,6 +88,11 @@ func TestService_CreateCapability(t *testing.T) {
 					return "", pgx.ErrNoRows
 				}
 			},
+			checkError: func(t *testing.T, err error) {
+				if !errors.Is(err, NotFoundError{}) {
+					t.Errorf("expected NotFoundError, got %T", err)
+				}
+			},
 			expectedError: "Flow not found",
 		},
 		{
@@ -98,6 +104,11 @@ func TestService_CreateCapability(t *testing.T) {
 			mockSetup: func(m *mockCapabilityQuerier) {
 				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
 					return "", nil
+				}
+			},
+			checkError: func(t *testing.T, err error) {
+				if !errors.Is(err, NotFoundError{}) {
+					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
 			expectedError: "Flow not found",
@@ -146,8 +157,13 @@ func TestService_CreateCapability(t *testing.T) {
 			if tt.expectedError != "" {
 				if err == nil {
 					t.Errorf("expected error %q, got nil", tt.expectedError)
-				} else if err.Error() != tt.expectedError {
-					t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+				} else {
+					if err.Error() != tt.expectedError {
+						t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+					}
+					if tt.checkError != nil {
+						tt.checkError(t, err)
+					}
 				}
 				return
 			}
@@ -168,6 +184,7 @@ func TestService_GetCapability(t *testing.T) {
 		name          string
 		id            int
 		mockSetup     func(m *mockCapabilityQuerier)
+		checkError    func(t *testing.T, err error)
 		expectedError string
 		expectedCap   db.Capability
 	}{
@@ -187,6 +204,11 @@ func TestService_GetCapability(t *testing.T) {
 			mockSetup: func(m *mockCapabilityQuerier) {
 				m.getCapabilityFunc = func(ctx context.Context, id int) (db.Capability, error) {
 					return db.Capability{}, pgx.ErrNoRows
+				}
+			},
+			checkError: func(t *testing.T, err error) {
+				if !errors.Is(err, NotFoundError{}) {
+					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
 			expectedError: "Capability not found",
@@ -216,8 +238,13 @@ func TestService_GetCapability(t *testing.T) {
 			if tt.expectedError != "" {
 				if err == nil {
 					t.Errorf("expected error %q, got nil", tt.expectedError)
-				} else if err.Error() != tt.expectedError {
-					t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+				} else {
+					if err.Error() != tt.expectedError {
+						t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+					}
+					if tt.checkError != nil {
+						tt.checkError(t, err)
+					}
 				}
 				return
 			}
@@ -238,6 +265,7 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 		name          string
 		id            int
 		mockSetup     func(m *mockCapabilityQuerier)
+		checkError    func(t *testing.T, err error)
 		expectedError string
 		expectedCaps  []db.GetCapabilitiesByProductRow
 	}{
@@ -260,6 +288,11 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 			mockSetup: func(m *mockCapabilityQuerier) {
 				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
 					return "", pgx.ErrNoRows
+				}
+			},
+			checkError: func(t *testing.T, err error) {
+				if !errors.Is(err, NotFoundError{}) {
+					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
 			expectedError: "Product not found",
@@ -302,8 +335,13 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 			if tt.expectedError != "" {
 				if err == nil {
 					t.Errorf("expected error %q, got nil", tt.expectedError)
-				} else if err.Error() != tt.expectedError {
-					t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+				} else {
+					if err.Error() != tt.expectedError {
+						t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+					}
+					if tt.checkError != nil {
+						tt.checkError(t, err)
+					}
 				}
 				return
 			}
@@ -324,6 +362,7 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 		name          string
 		id            int
 		mockSetup     func(m *mockCapabilityQuerier)
+		checkError    func(t *testing.T, err error)
 		expectedError string
 		expectedCaps  []db.Capability
 	}{
@@ -346,6 +385,11 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 			mockSetup: func(m *mockCapabilityQuerier) {
 				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
 					return "", pgx.ErrNoRows
+				}
+			},
+			checkError: func(t *testing.T, err error) {
+				if !errors.Is(err, NotFoundError{}) {
+					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
 			expectedError: "Flow not found",
@@ -388,8 +432,13 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 			if tt.expectedError != "" {
 				if err == nil {
 					t.Errorf("expected error %q, got nil", tt.expectedError)
-				} else if err.Error() != tt.expectedError {
-					t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+				} else {
+					if err.Error() != tt.expectedError {
+						t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+					}
+					if tt.checkError != nil {
+						tt.checkError(t, err)
+					}
 				}
 				return
 			}
