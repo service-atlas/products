@@ -7,17 +7,12 @@ import (
 	"log/slog"
 	"net/http"
 	"products/internal"
-	"products/internal/capability/db"
 	"time"
 )
 
-func newHandler(dbConn db.DBTX) *handler {
-	queries := db.New(dbConn)
-	service := &postgresService{
-		queries: queries,
-	}
+func newHandler(svc capabilityService) *handler {
 	return &handler{
-		service: service,
+		service: svc,
 	}
 }
 

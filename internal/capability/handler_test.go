@@ -129,8 +129,8 @@ func (m *mockDBTX) QueryRow(context.Context, string, ...interface{}) pgx.Row {
 }
 
 func TestNewHandler(t *testing.T) {
-	mockDB := &mockDBTX{}
-	h := newHandler(mockDB)
+	mockService := &mockCapabilityService{}
+	h := newHandler(mockService)
 	if h == nil {
 		t.Error("expected handler to be non-nil")
 	}
