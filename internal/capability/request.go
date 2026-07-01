@@ -38,3 +38,23 @@ func (r *createCapabilityRequest) Validate() error {
 	}
 	return nil
 }
+
+type updateCapabilityRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+func (r *updateCapabilityRequest) ToParams(id int) db.UpdateCapabilityParams {
+	return db.UpdateCapabilityParams{
+		Name: r.Name,
+		ID:   id,
+		Description: pgtype.Text{
+			Valid:  r.Description != "",
+			String: r.Description,
+		},
+		UpdatedAt: pgtype.Timestamptz{
+			Valid: true,
+			Time:  time.Now().UTC(),
+		},
+	}
+}

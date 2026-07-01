@@ -78,3 +78,38 @@ func TestCreateCapabilityRequest_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateCapabilityRequest_ToParams(t *testing.T) {
+	id := 1
+	req := updateCapabilityRequest{
+		Name:        "Test Cap",
+		Description: "Test Description",
+	}
+
+	params := req.ToParams(id)
+
+	if params.ID != id {
+		t.Errorf("expected ID %d, got %d", id, params.ID)
+	}
+	if params.Name != req.Name {
+		t.Errorf("expected Name %s, got %s", req.Name, params.Name)
+	}
+	if !params.Description.Valid || params.Description.String != req.Description {
+		t.Errorf("expected Description %s, got %v", req.Description, params.Description)
+	}
+	if !params.UpdatedAt.Valid {
+		t.Error("expected UpdatedAt to be valid")
+	}
+}
+
+func TestUpdateCapabilityRequest_ToParams_EmptyDescription(t *testing.T) {
+	req := updateCapabilityRequest{
+		Name: "Test Cap",
+	}
+
+	params := req.ToParams(1)
+
+	if params.Description.Valid {
+		t.Error("expected Description to be invalid for empty string")
+	}
+}
