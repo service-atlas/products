@@ -153,7 +153,7 @@ func TestUpdateFlow(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{
+			h := &handler{
 				flowService: &postgresService{
 					queries: mock,
 				},
@@ -287,7 +287,7 @@ func TestCreateFlow(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{flowService: &postgresService{queries: mock}}
+			h := &handler{flowService: &postgresService{queries: mock}}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
@@ -380,7 +380,7 @@ func TestGetFlowById(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{flowService: &postgresService{queries: mock}}
+			h := &handler{flowService: &postgresService{queries: mock}}
 
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/flows/1", nil)
 			req.SetPathValue("id", tt.pathID)
@@ -487,7 +487,7 @@ func TestGetFlowsByProduct(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{flowService: &postgresService{queries: mock}}
+			h := &handler{flowService: &postgresService{queries: mock}}
 
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/products/1/flows", nil)
 			req.SetPathValue("id", tt.pathID)
@@ -569,7 +569,7 @@ func TestDeleteFlow(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{flowService: &postgresService{queries: mock}}
+			h := &handler{flowService: &postgresService{queries: mock}}
 
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodDelete, "/flows/1", nil)
 			req.SetPathValue("id", tt.pathID)
@@ -638,7 +638,7 @@ func TestDeleteFlowStep(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{flowService: &postgresService{queries: mock}}
+			h := &handler{flowService: &postgresService{queries: mock}}
 
 			req := httptest.NewRequestWithContext(t.Context(), http.MethodDelete, "/flows/steps/1", nil)
 			req.SetPathValue("id", tt.pathID)
@@ -811,7 +811,7 @@ func TestCreateFlowStep(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{
+			h := &handler{
 				flowService: &postgresService{
 					queries: mock,
 					client:  client,
@@ -923,7 +923,7 @@ func TestGetFlowSteps(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{
+			h := &handler{
 				flowService: &postgresService{
 					queries: mock,
 					client:  client,
@@ -1020,7 +1020,7 @@ func TestGetFlowPath(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mock)
 			}
-			h := &flowHandler{
+			h := &handler{
 				flowService: &postgresService{
 					queries: mock,
 					client:  client,
