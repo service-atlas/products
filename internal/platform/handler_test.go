@@ -106,7 +106,7 @@ func TestCreatePlatform(t *testing.T) {
 					return db.Platform{}, tt.dbErr
 				},
 			}
-			h := &platformHandler{service: mSvc}
+			h := &handler{service: mSvc}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
@@ -164,7 +164,7 @@ func TestGetPlatforms(t *testing.T) {
 					return tt.platforms, tt.dbErr
 				},
 			}
-			h := &platformHandler{service: mSvc}
+			h := &handler{service: mSvc}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms", nil)
 			rr := httptest.NewRecorder()
@@ -248,7 +248,7 @@ func TestGetPlatform(t *testing.T) {
 					return tt.dbPlatform, tt.dbErr
 				},
 			}
-			h := &platformHandler{service: mSvc}
+			h := &handler{service: mSvc}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -335,7 +335,7 @@ func TestDeletePlatform(t *testing.T) {
 					return id, tt.dbErr
 				},
 			}
-			h := &platformHandler{service: mSvc}
+			h := &handler{service: mSvc}
 
 			req := httptest.NewRequest(http.MethodDelete, "/api/platforms/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -491,7 +491,7 @@ func TestUpdatePlatform(t *testing.T) {
 					return id, tt.dbErr
 				},
 			}
-			h := &platformHandler{service: mSvc}
+			h := &handler{service: mSvc}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
