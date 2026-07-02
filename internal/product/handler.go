@@ -11,26 +11,18 @@ import (
 	"time"
 )
 
-type Handler interface {
-	CreateProduct(w http.ResponseWriter, r *http.Request)
-	GetProductsByPlatform(w http.ResponseWriter, r *http.Request)
-	GetProductById(w http.ResponseWriter, r *http.Request)
-	UpdateProduct(w http.ResponseWriter, r *http.Request)
-	DeleteProduct(w http.ResponseWriter, r *http.Request)
-}
+func newHandler(svc productService) *handler {
 
-func NewProductHandler(dbConn db.DBTX) Handler {
-	queries := db.New(dbConn)
-	return &productHandler{
-		service: &postgresService{queries: queries},
+	return &handler{
+		service: svc,
 	}
 }
 
-type productHandler struct {
+type handler struct {
 	service productService
 }
 
-func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var req createProductRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
@@ -53,7 +45,7 @@ func (h *productHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	internal.WriteJSONResponse(w, r, http.StatusCreated, newProduct)
 }
 
-func (h *productHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+func (h *handler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
@@ -72,7 +64,7 @@ func (h *productHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *productHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+func (h *handler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
@@ -107,7 +99,7 @@ func (h *productHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetProductsByPlatform fetches products by platform ID.
-func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetProductsByPlatform(w http.ResponseWriter, r *http.Request) {
 	platformID, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
@@ -129,7 +121,7 @@ func (h *productHandler) GetProductsByPlatform(w http.ResponseWriter, r *http.Re
 
 	internal.WriteJSONResponse(w, r, http.StatusOK, products)
 }
-func (h *productHandler) GetProductById(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetProductById(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)

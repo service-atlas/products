@@ -9,12 +9,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type productService interface {
-	CreateProduct(ctx context.Context, req createProductRequest) (db.Product, error)
-	GetProductsByPlatform(ctx context.Context, platformID int) ([]db.Product, error)
-	GetProductById(ctx context.Context, id int) (db.Product, error)
-	UpdateProduct(ctx context.Context, req updateProductRequest, id int) (int, error)
-	DeleteProduct(ctx context.Context, id int) (int, error)
+func newPostgresService(dbConn db.DBTX) productService {
+	queries := db.New(dbConn)
+	return &postgresService{
+		queries: queries,
+	}
 }
 
 type postgresService struct {
