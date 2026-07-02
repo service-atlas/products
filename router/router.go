@@ -16,59 +16,6 @@ import (
 	"github.com/go-chi/cors"
 )
 
-type productRoutes struct {
-	productHandler    product.Handler
-	platformHandler   platform.Handler
-	flowHandler       flow.Handler
-	capabilityHandler capability.Handler
-}
-
-func (h *productRoutes) setupRoutes(router *chi.Mux) {
-	router.Route("/platforms", func(u chi.Router) {
-		u.Post("/", h.platformHandler.CreatePlatform)
-		u.Get("/", h.platformHandler.GetPlatforms)
-		u.Route("/{id}", func(u chi.Router) {
-			u.Get("/", h.platformHandler.GetPlatform)
-			u.Delete("/", h.platformHandler.DeletePlatform)
-			u.Put("/", h.platformHandler.UpdatePlatform)
-			u.Get("/products", h.productHandler.GetProductsByPlatform)
-		})
-
-	})
-	router.Route("/products", func(u chi.Router) {
-		u.Post("/", h.productHandler.CreateProduct)
-		u.Route("/{id}", func(u chi.Router) {
-			u.Get("/", h.productHandler.GetProductById)
-			u.Delete("/", h.productHandler.DeleteProduct)
-			u.Put("/", h.productHandler.UpdateProduct)
-			u.Post("/flows", h.flowHandler.CreateFlow)
-			u.Get("/flows", h.flowHandler.GetFlowsByProduct)
-			u.Get("/capabilities", h.capabilityHandler.GetCapabilitiesByProduct)
-		})
-
-	})
-	router.Route("/flows", func(u chi.Router) {
-		u.Route("/{id}", func(u chi.Router) {
-			u.Post("/steps", h.flowHandler.CreateFlowStep)
-			u.Get("/steps", h.flowHandler.GetFlowSteps)
-			u.Get("/path", h.flowHandler.GetFlowPath)
-			u.Get("/", h.flowHandler.GetFlowById)
-			u.Put("/", h.flowHandler.UpdateFlow)
-			u.Delete("/", h.flowHandler.DeleteFlow)
-			u.Get("/capabilities", h.capabilityHandler.GetCapabilitiesByFlow)
-		})
-	})
-
-	router.Route("/flow-steps/{id}", func(u chi.Router) {
-		u.Delete("/", h.flowHandler.DeleteFlowStep)
-	})
-
-	router.Route("/capabilities", func(u chi.Router) {
-		u.Post("/", h.capabilityHandler.CreateCapability)
-		u.Get("/{id}", h.capabilityHandler.GetCapability)
-	})
-}
-
 func SetupRouter(dbConn db.DBTX) http.Handler {
 	slog.Debug("Setting up router")
 	router := chi.NewRouter()
@@ -86,13 +33,10 @@ func SetupRouter(dbConn db.DBTX) http.Handler {
 	}))
 
 	registerSystemCallHandler(router)
-	prodRouter := &productRoutes{
-		productHandler:    product.NewProductHandler(dbConn),
-		flowHandler:       flow.NewHandler(dbConn),
-		platformHandler:   platform.NewPlatformHandler(dbConn),
-		capabilityHandler: capability.NewHandler(dbConn),
-	}
-	prodRouter.setupRoutes(router)
+	platform.RegisterRoutes(router, dbConn)
+	product.RegisterRoutes(router, dbConn)
+	flow.RegisterRoutes(router, dbConn)
+	capability.RegisterRoutes(router, dbConn)
 
 	slog.Debug("Router setup complete")
 	return router
