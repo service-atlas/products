@@ -84,9 +84,10 @@ func TestUpdateCapabilityRequest_ToParams(t *testing.T) {
 	req := updateCapabilityRequest{
 		Name:        "Test Cap",
 		Description: "Test Description",
+		Id:          id,
 	}
 
-	params := req.ToParams(id)
+	params := req.ToParams()
 
 	if params.ID != id {
 		t.Errorf("expected ID %d, got %d", id, params.ID)
@@ -107,7 +108,7 @@ func TestUpdateCapabilityRequest_ToParams_EmptyDescription(t *testing.T) {
 		Name: "Test Cap",
 	}
 
-	params := req.ToParams(1)
+	params := req.ToParams()
 
 	if params.Description.Valid {
 		t.Error("expected Description to be invalid for empty string")

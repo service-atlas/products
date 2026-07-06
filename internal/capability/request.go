@@ -42,12 +42,13 @@ func (r *createCapabilityRequest) Validate() error {
 type updateCapabilityRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Id          int    `json:"id"`
 }
 
-func (r *updateCapabilityRequest) ToParams(id int) db.UpdateCapabilityParams {
+func (r *updateCapabilityRequest) ToParams() db.UpdateCapabilityParams {
 	return db.UpdateCapabilityParams{
 		Name: r.Name,
-		ID:   id,
+		ID:   r.Id,
 		Description: pgtype.Text{
 			Valid:  r.Description != "",
 			String: r.Description,
