@@ -7,32 +7,20 @@ import (
 	"log/slog"
 	"net/http"
 	"products/internal"
-	"products/internal/capability/db"
 	"time"
 )
 
-type Handler interface {
-	CreateCapability(w http.ResponseWriter, r *http.Request)
-	GetCapability(w http.ResponseWriter, r *http.Request)
-	GetCapabilitiesByFlow(w http.ResponseWriter, r *http.Request)
-	GetCapabilitiesByProduct(w http.ResponseWriter, r *http.Request)
-}
-
-func NewHandler(dbConn db.DBTX) Handler {
-	queries := db.New(dbConn)
-	service := &postgresService{
-		queries: queries,
-	}
-	return &capabilityHandler{
-		service: service,
+func newHandler(svc capabilityService) *handler {
+	return &handler{
+		service: svc,
 	}
 }
 
-type capabilityHandler struct {
+type handler struct {
 	service capabilityService
 }
 
-func (h *capabilityHandler) CreateCapability(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateCapability(w http.ResponseWriter, r *http.Request) {
 	capReq := &createCapabilityRequest{}
 	if err := json.NewDecoder(r.Body).Decode(capReq); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -52,7 +40,7 @@ func (h *capabilityHandler) CreateCapability(w http.ResponseWriter, r *http.Requ
 	internal.WriteJSONResponse(w, r, http.StatusCreated, newCap)
 }
 
-func (h *capabilityHandler) GetCapability(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetCapability(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
@@ -73,7 +61,7 @@ func (h *capabilityHandler) GetCapability(w http.ResponseWriter, r *http.Request
 	internal.WriteJSONResponse(w, r, http.StatusOK, capability)
 }
 
-func (h *capabilityHandler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
@@ -94,7 +82,7 @@ func (h *capabilityHandler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http
 	internal.WriteJSONResponse(w, r, http.StatusOK, capabilities)
 }
 
-func (h *capabilityHandler) GetCapabilitiesByProduct(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetCapabilitiesByProduct(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)

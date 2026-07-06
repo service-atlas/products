@@ -117,7 +117,7 @@ func TestCreateProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductService{}
 			tt.mockSetup(mock)
-			h := &productHandler{service: mock}
+			h := &handler{service: mock}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {
@@ -224,7 +224,7 @@ func TestDeleteProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductService{}
 			tt.mockSetup(mock)
-			h := &productHandler{service: mock}
+			h := &handler{service: mock}
 
 			req := httptest.NewRequest(http.MethodDelete, "/api/products/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -297,7 +297,7 @@ func TestGetProductsByPlatform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductService{}
 			tt.mockSetup(mock)
-			h := &productHandler{service: mock}
+			h := &handler{service: mock}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/platforms/"+tt.platformID+"/products", nil)
 			req.SetPathValue("id", tt.platformID)
@@ -377,7 +377,7 @@ func TestGetProductById(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductService{}
 			tt.mockSetup(mock)
-			h := &productHandler{service: mock}
+			h := &handler{service: mock}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/products/"+tt.id, nil)
 			req.SetPathValue("id", tt.id)
@@ -496,7 +496,7 @@ func TestUpdateProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockProductService{}
 			tt.mockSetup(mock)
-			h := &productHandler{service: mock}
+			h := &handler{service: mock}
 
 			var body []byte
 			if s, ok := tt.requestBody.(string); ok {

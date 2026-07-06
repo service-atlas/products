@@ -7,40 +7,21 @@ import (
 	"log/slog"
 	"net/http"
 	"products/internal"
-	"products/internal/flow/db"
 	"strings"
 	"time"
 )
 
-type Handler interface {
-	CreateFlow(w http.ResponseWriter, r *http.Request)
-	GetFlowById(w http.ResponseWriter, r *http.Request)
-	GetFlowsByProduct(w http.ResponseWriter, r *http.Request)
-	UpdateFlow(w http.ResponseWriter, r *http.Request)
-	DeleteFlow(w http.ResponseWriter, r *http.Request)
-	CreateFlowStep(w http.ResponseWriter, r *http.Request)
-	DeleteFlowStep(w http.ResponseWriter, r *http.Request)
-	GetFlowSteps(w http.ResponseWriter, r *http.Request)
-	GetFlowPath(w http.ResponseWriter, r *http.Request)
-}
-
-func NewHandler(dbConn db.DBTX) Handler {
-	queries := db.New(dbConn)
-	client := &http.Client{Timeout: 5 * time.Second}
-	service := &postgresService{
-		queries: queries,
-		client:  client,
-	}
-	return &flowHandler{
+func newHandler(service flowService) *handler {
+	return &handler{
 		flowService: service,
 	}
 }
 
-type flowHandler struct {
+type handler struct {
 	flowService flowService
 }
 
-func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
@@ -70,7 +51,7 @@ func (h *flowHandler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 	internal.WriteJSONResponse(w, r, http.StatusCreated, flow)
 }
 
-func (h *flowHandler) GetFlowById(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetFlowById(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
@@ -90,7 +71,7 @@ func (h *flowHandler) GetFlowById(w http.ResponseWriter, r *http.Request) {
 	internal.WriteJSONResponse(w, r, http.StatusOK, flow)
 }
 
-func (h *flowHandler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID", Instance: r.URL.Path}, http.StatusBadRequest)
@@ -110,7 +91,7 @@ func (h *flowHandler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) 
 	internal.WriteJSONResponse(w, r, http.StatusOK, flows)
 }
 
-func (h *flowHandler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
+func (h *handler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
@@ -144,7 +125,7 @@ func (h *flowHandler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
 	internal.WriteJSONResponse(w, r, http.StatusOK, flow)
 }
 
-func (h *flowHandler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
+func (h *handler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
@@ -167,7 +148,7 @@ func (h *flowHandler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *flowHandler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
@@ -223,7 +204,7 @@ func (h *flowHandler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 	internal.WriteJSONResponse(w, r, http.StatusCreated, flowStep)
 }
 
-func (h *flowHandler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
+func (h *handler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow step ID", Instance: r.URL.Path}, http.StatusBadRequest)
@@ -247,7 +228,7 @@ func (h *flowHandler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *flowHandler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
@@ -267,7 +248,7 @@ func (h *flowHandler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
 	internal.WriteJSONResponse(w, r, http.StatusOK, flowSteps)
 }
 
-func (h *flowHandler) GetFlowPath(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetFlowPath(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)

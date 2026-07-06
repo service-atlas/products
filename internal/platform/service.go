@@ -9,12 +9,9 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type platformService interface {
-	CreatePlatform(ctx context.Context, req createPlatformRequest) (db.Platform, error)
-	GetPlatform(ctx context.Context, id int) (db.Platform, error)
-	GetPlatforms(ctx context.Context) ([]db.Platform, error)
-	UpdatePlatform(ctx context.Context, req updatePlatformRequest, id int) (int, error)
-	DeletePlatform(ctx context.Context, id int) (int, error)
+func newPostgresService(dbConn db.DBTX) platformService {
+	queries := db.New(dbConn)
+	return &postgresService{queries}
 }
 
 type postgresService struct {

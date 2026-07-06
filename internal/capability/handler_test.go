@@ -104,7 +104,7 @@ func TestHandler_CreateCapability(t *testing.T) {
 				tt.mockSetup(mockSvc)
 			}
 
-			h := &capabilityHandler{service: mockSvc}
+			h := &handler{service: mockSvc}
 			h.CreateCapability(w, req)
 
 			if w.Code != tt.expectedStatus {
@@ -129,8 +129,8 @@ func (m *mockDBTX) QueryRow(context.Context, string, ...interface{}) pgx.Row {
 }
 
 func TestNewHandler(t *testing.T) {
-	mockDB := &mockDBTX{}
-	h := NewHandler(mockDB)
+	mockService := &mockCapabilityService{}
+	h := newHandler(mockService)
 	if h == nil {
 		t.Error("expected handler to be non-nil")
 	}
@@ -241,7 +241,7 @@ func TestHandler_GetCapability(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mockSvc)
 			}
-			h := &capabilityHandler{service: mockSvc}
+			h := &handler{service: mockSvc}
 
 			h.GetCapability(w, req)
 
@@ -360,7 +360,7 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mockSvc)
 			}
-			h := &capabilityHandler{service: mockSvc}
+			h := &handler{service: mockSvc}
 
 			h.GetCapabilitiesByFlow(w, req)
 
@@ -479,7 +479,7 @@ func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mockSvc)
 			}
-			h := &capabilityHandler{service: mockSvc}
+			h := &handler{service: mockSvc}
 
 			h.GetCapabilitiesByProduct(w, req)
 

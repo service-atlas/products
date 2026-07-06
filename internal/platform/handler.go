@@ -10,26 +10,17 @@ import (
 	"time"
 )
 
-type Handler interface {
-	CreatePlatform(w http.ResponseWriter, r *http.Request)
-	GetPlatforms(w http.ResponseWriter, r *http.Request)
-	GetPlatform(w http.ResponseWriter, r *http.Request)
-	UpdatePlatform(w http.ResponseWriter, r *http.Request)
-	DeletePlatform(w http.ResponseWriter, r *http.Request)
-}
-
-func NewPlatformHandler(dbConn db.DBTX) Handler {
-	queries := db.New(dbConn)
-	return &platformHandler{
-		service: postgresService{db: queries},
+func newHandler(svc platformService) *handler {
+	return &handler{
+		service: svc,
 	}
 }
 
-type platformHandler struct {
+type handler struct {
 	service platformService
 }
 
-func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreatePlatform(w http.ResponseWriter, r *http.Request) {
 	var req createPlatformRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
@@ -51,7 +42,7 @@ func (h *platformHandler) CreatePlatform(w http.ResponseWriter, r *http.Request)
 	internal.WriteJSONResponse(w, r, http.StatusCreated, platform)
 }
 
-func (h *platformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
+func (h *handler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
 	var req updatePlatformRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
@@ -87,7 +78,7 @@ func (h *platformHandler) UpdatePlatform(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *platformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request) {
+func (h *handler) DeletePlatform(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
@@ -110,7 +101,7 @@ func (h *platformHandler) DeletePlatform(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *platformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	platforms, err := h.service.GetPlatforms(contextWithTimeOut)
@@ -124,7 +115,7 @@ func (h *platformHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	internal.WriteJSONResponse(w, r, http.StatusOK, platforms)
 }
 
-func (h *platformHandler) GetPlatform(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetPlatform(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
