@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -22,8 +23,8 @@ func (m *mockDBTX) QueryRow(ctx context.Context, sql string, arguments ...any) p
 	return nil
 }
 
-func TestSetupRouter(t *testing.T) {
-	r := SetupRouter(&mockDBTX{})
+func TestInitializeRouter(t *testing.T) {
+	r := InitializeRouter(&mockDBTX{})
 
 	got := map[string]bool{}
 
@@ -66,6 +67,25 @@ func TestSetupRouter(t *testing.T) {
 	for _, route := range want {
 		if !got[route] {
 			t.Errorf("expected route %q to be registered", route)
+		}
+	}
+}
+
+func TestInitializeRouter_NestedRoutesReachHandlers(t *testing.T) {
+	r := InitializeRouter(&mockDBTX{})
+
+	cases := []struct{ method, path string }{
+		{http.MethodGet, "/platforms/1/products"},
+		{http.MethodGet, "/products/1/flows"},
+		{http.MethodGet, "/flows/1/capabilities"},
+		{http.MethodGet, "/products/1/capabilities"},
+	}
+	for _, c := range cases {
+		req := httptest.NewRequest(c.method, c.path, nil)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+		if rec.Code == http.StatusNotFound {
+			t.Errorf("%s %s: expected route to be reachable, got 404", c.method, c.path)
 		}
 	}
 }
