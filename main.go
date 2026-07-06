@@ -29,7 +29,7 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	r := router.SetupRouter(dbConn)
+	r := router.InitializeRouter(dbConn)
 	addr := internalConfig.GetConfigValue("ADDRESS")
 
 	srv := &http.Server{

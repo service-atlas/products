@@ -16,7 +16,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func SetupRouter(dbConn db.DBTX) http.Handler {
+func InitializeRouter(dbConn db.DBTX) http.Handler {
 	slog.Debug("Setting up router")
 	router := chi.NewRouter()
 
