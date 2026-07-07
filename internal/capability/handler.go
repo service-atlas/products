@@ -102,3 +102,33 @@ func (h *handler) GetCapabilitiesByProduct(w http.ResponseWriter, r *http.Reques
 	}
 	internal.WriteJSONResponse(w, r, http.StatusOK, capabilities)
 }
+
+func (h *handler) UpdateCapability(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
+		return
+	}
+	req := &updateCapabilityRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := req.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctxWithTimeout, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	capability, err := h.service.UpdateCapability(ctxWithTimeout, *req)
+	if err != nil {
+		if errors.Is(err, NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
+			return
+		}
+		slog.Error("Failed to update capability", slog.Int("capability_id", id), slog.String("error", err.Error()))
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to update capability"}, http.StatusInternalServerError)
+		return
+	}
+	internal.WriteJSONResponse(w, r, http.StatusOK, capability)
+}

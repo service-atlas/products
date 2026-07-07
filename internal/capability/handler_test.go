@@ -20,6 +20,7 @@ type mockCapabilityService struct {
 	getCapabilityFunc            func(ctx context.Context, id int) (db.Capability, error)
 	getCapabilitiesByProductFunc func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error)
 	getCapabilitiesByFlowFunc    func(ctx context.Context, id int) ([]db.Capability, error)
+	updateCapabilityFunc         func(ctx context.Context, req updateCapabilityRequest) (db.Capability, error)
 }
 
 func (m *mockCapabilityService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
@@ -36,6 +37,10 @@ func (m *mockCapabilityService) GetCapabilitiesByProduct(ctx context.Context, id
 
 func (m *mockCapabilityService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.Capability, error) {
 	return m.getCapabilitiesByFlowFunc(ctx, id)
+}
+
+func (m *mockCapabilityService) UpdateCapability(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
+	return m.updateCapabilityFunc(ctx, req)
 }
 
 func TestHandler_CreateCapability(t *testing.T) {
@@ -488,6 +493,97 @@ func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
 			}
 			if tt.assertBody != nil {
 				tt.assertBody(t, w.Body.Bytes())
+			}
+		})
+	}
+}
+
+func TestHandler_UpdateCapability(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		requestBody    any
+		mockSetup      func(m *mockCapabilityService)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			id:   "1",
+			requestBody: updateCapabilityRequest{
+				Id:   1,
+				Name: "Updated Name",
+			},
+			mockSetup: func(m *mockCapabilityService) {
+				m.updateCapabilityFunc = func(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
+					return db.Capability{ID: 1, Name: req.Name}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Not Found",
+			id:   "1",
+			requestBody: updateCapabilityRequest{
+				Id:   1,
+				Name: "Updated Name",
+			},
+			mockSetup: func(m *mockCapabilityService) {
+				m.updateCapabilityFunc = func(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
+					return db.Capability{}, NotFoundError{Msg: "Capability not found"}
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "Validation Error",
+			id:             "1",
+			requestBody:    updateCapabilityRequest{Name: ""},
+			mockSetup:      func(m *mockCapabilityService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Service Error",
+			id:   "1",
+			requestBody: updateCapabilityRequest{
+				Id:   1,
+				Name: "Updated Name",
+			},
+			mockSetup: func(m *mockCapabilityService) {
+				m.updateCapabilityFunc = func(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
+					return db.Capability{}, errors.New("service error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var body []byte
+			if s, ok := tt.requestBody.(string); ok {
+				body = []byte(s)
+			} else {
+				body, _ = json.Marshal(tt.requestBody)
+			}
+
+			req := httptest.NewRequest(http.MethodPut, "/capabilities/"+tt.id, bytes.NewBuffer(body))
+			if tt.id != "" {
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", tt.id)
+				req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+			}
+
+			w := httptest.NewRecorder()
+			mockSvc := &mockCapabilityService{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockSvc)
+			}
+			h := &handler{service: mockSvc}
+
+			h.UpdateCapability(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
 			}
 		})
 	}
