@@ -1,15 +1,22 @@
 info:
-  name: Get Capability
+  name: Update Capability
   type: http
-  seq: 2
+  seq: 5
 
 http:
-  method: GET
+  method: PUT
   url: "{{baseUrl}}/capabilities/:id"
   params:
     - name: id
       value: "1"
       type: path
+  body:
+    type: json
+    data: |-
+      {
+      "name": "a test capability",
+          "description": "test 2"
+      }
   auth: inherit
 
 runtime:
@@ -30,11 +37,18 @@ examples:
   - name: sample
     request:
       url: "{{baseUrl}}/capabilities/:id"
-      method: GET
+      method: PUT
       params:
         - name: id
           value: "1"
           type: path
+      body:
+        type: json
+        data: |-
+          {
+          "name": "a test capability",
+              "description": "test 2"
+          }
     response:
       status: 200
       statusText: OK
@@ -44,9 +58,9 @@ examples:
         - name: vary
           value: Origin, Accept-Encoding
         - name: date
-          value: Sun, 28 Jun 2026 21:28:34 GMT
+          value: Tue, 07 Jul 2026 01:12:49 GMT
         - name: content-length
-          value: "136"
+          value: "150"
       body:
         type: json
         data: |-
@@ -54,20 +68,20 @@ examples:
             "id": 1,
             "flow_id": 1,
             "name": "a test capability",
-            "description": "test",
+            "description": "test 2",
             "created_at": "2026-06-25T20:08:53.813971-05:00",
-            "updated_at": "2026-06-25T20:08:53.813971-05:00"
+            "updated_at": "2026-07-06T20:12:49.69306-05:00"
           }
 
 docs: |-
-  # Get Capability
+  # Update Capability
 
-  Get a capabilty by id
+  Update a capability name and/or description
 
   ## Possible Status Codes
   | Status Code | Notes |
   | -- | --|
-  | 200 | Created |
-  | 400 | Invalid id |
+  | 200 | Updated |
+  | 400 | Invalid id or name |
   | 404 | Capability not found |
   | 500 | Internal server error |

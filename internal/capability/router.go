@@ -12,6 +12,7 @@ type capabilityService interface {
 	GetCapability(ctx context.Context, id int) (db.Capability, error)
 	GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error)
 	GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.Capability, error)
+	UpdateCapability(ctx context.Context, req updateCapabilityRequest) (db.Capability, error)
 }
 
 func RegisterRoutes(r chi.Router, dbConn db.DBTX) {
@@ -26,5 +27,6 @@ func registerRoutesWithHandler(r chi.Router, capHandler *handler) {
 	r.Route("/capabilities", func(u chi.Router) {
 		u.Post("/", capHandler.CreateCapability)
 		u.Get("/{id}", capHandler.GetCapability)
+		u.Put("/{id}", capHandler.UpdateCapability)
 	})
 }

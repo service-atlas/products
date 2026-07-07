@@ -33,6 +33,10 @@ func (m *mockService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.C
 	m.called["GetCapabilitiesByFlow"] = true
 	return nil, nil
 }
+func (m *mockService) UpdateCapability(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
+	m.called["UpdateCapability"] = true
+	return db.Capability{}, nil
+}
 
 func TestRegisterRoutesWithHandler(t *testing.T) {
 	h := newHandler(newMockService())
@@ -55,6 +59,7 @@ func TestRegisterRoutesWithHandler(t *testing.T) {
 		"GET /flows/{id}/capabilities",
 		"POST /capabilities/",
 		"GET /capabilities/{id}",
+		"PUT /capabilities/{id}",
 	}
 
 	for _, route := range want {

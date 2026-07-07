@@ -68,6 +68,13 @@ func TestCreateCapabilityRequest_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Invalid name",
+			req: createCapabilityRequest{
+				Name: "   ",
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -76,5 +83,94 @@ func TestCreateCapabilityRequest_Validate(t *testing.T) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestUpdateCapabilityRequest_ToParams(t *testing.T) {
+	id := 1
+	req := updateCapabilityRequest{
+		Name:        "Test Cap",
+		Description: "Test Description",
+		Id:          id,
+	}
+
+	params := req.ToParams()
+
+	if params.ID != id {
+		t.Errorf("expected ID %d, got %d", id, params.ID)
+	}
+	if params.Name != req.Name {
+		t.Errorf("expected Name %s, got %s", req.Name, params.Name)
+	}
+	if !params.Description.Valid || params.Description.String != req.Description {
+		t.Errorf("expected Description %s, got %v", req.Description, params.Description)
+	}
+	if !params.UpdatedAt.Valid {
+		t.Error("expected UpdatedAt to be valid")
+	}
+}
+
+func TestUpdateCapabilityRequest_ToParams_EmptyDescription(t *testing.T) {
+	req := updateCapabilityRequest{
+		Name: "Test Cap",
+	}
+
+	params := req.ToParams()
+
+	if params.Description.Valid {
+		t.Error("expected Description to be invalid for empty string")
+	}
+}
+
+func TestUpdateCapabilityRequest_Validate(t *testing.T) {
+	tests := []struct {
+		Req       updateCapabilityRequest
+		WantError bool
+		ErrText   string
+	}{
+		{
+			Req: updateCapabilityRequest{
+				Name: "",
+				Id:   1,
+			},
+			WantError: true,
+			ErrText:   "name is required",
+		},
+		{
+			Req: updateCapabilityRequest{
+				Name:        "Test Cap",
+				Description: "",
+				Id:          1,
+			},
+			WantError: false,
+		},
+		{
+			Req: updateCapabilityRequest{
+				Name:        "Test Cap",
+				Description: "Test Description",
+				Id:          1,
+			},
+			WantError: false,
+		},
+		{
+			Req: updateCapabilityRequest{
+				Name:        "Test Cap",
+				Description: "Test Description",
+			},
+			WantError: true,
+			ErrText:   "id is required",
+		},
+	}
+	for _, test := range tests {
+		err := test.Req.Validate()
+		if err != nil && !test.WantError {
+			t.Errorf("expected no error, got %v", err)
+		}
+		if err == nil && test.WantError {
+			t.Errorf("expected error, got nil")
+		}
+		if err != nil && test.WantError && err.Error() != test.ErrText {
+			t.Errorf("expected error %s, got %v", test.ErrText, err)
+		}
 	}
 }
