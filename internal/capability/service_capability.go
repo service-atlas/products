@@ -84,3 +84,20 @@ func (s *postgresService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]
 	}
 	return capabilities, nil
 }
+
+func (s *postgresService) UpdateCapability(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
+	rowsAffected, err := s.queries.UpdateCapability(ctx, req.ToParams())
+	if err != nil {
+		return db.Capability{}, err
+	}
+	if rowsAffected == 0 {
+		return db.Capability{}, NotFoundError{Msg: "capability not found"}
+	}
+	capability, err := s.queries.GetCapability(ctx, req.Id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return db.Capability{}, NotFoundError{Msg: "capability not found"}
+		}
+	}
+	return capability, nil
+}
