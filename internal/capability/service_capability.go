@@ -98,6 +98,7 @@ func (s *postgresService) UpdateCapability(ctx context.Context, req updateCapabi
 		if errors.Is(err, pgx.ErrNoRows) {
 			return db.Capability{}, NotFoundError{Msg: "capability not found"}
 		}
+		return db.Capability{}, err
 	}
 	return capability, nil
 }

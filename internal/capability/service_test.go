@@ -537,6 +537,22 @@ func TestService_UpdateCapability(t *testing.T) {
 			},
 			expectedError: "db error",
 		},
+		{
+			name: "Database Error on GetCapability",
+			req: updateCapabilityRequest{
+				Id:   1,
+				Name: "Updated Name",
+			},
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.updateCapabilityFunc = func(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error) {
+					return 1, nil
+				}
+				m.getCapabilityFunc = func(ctx context.Context, id int) (db.Capability, error) {
+					return db.Capability{}, errors.New("get capability error")
+				}
+			},
+			expectedError: "get capability error",
+		},
 	}
 
 	for _, tt := range tests {
