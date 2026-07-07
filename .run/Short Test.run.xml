@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Short Test" type="GoTestRunConfiguration" factoryName="Go Test">
+    <module name="products" />
+    <working_directory value="$PROJECT_DIR$" />
+    <go_parameters value="--short " />
+    <kind value="DIRECTORY" />
+    <package value="products" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$" />
+    <framework value="gotest" />
+    <method v="2" />
+  </configuration>
+</component>
