@@ -555,6 +555,23 @@ func TestHandler_UpdateCapability(t *testing.T) {
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "Verify ID Overwrite",
+			id:   "1",
+			requestBody: updateCapabilityRequest{
+				Id:   999,
+				Name: "Updated Name",
+			},
+			mockSetup: func(m *mockCapabilityService) {
+				m.updateCapabilityFunc = func(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
+					if req.Id != 1 {
+						return db.Capability{}, errors.New("ID was not overridden")
+					}
+					return db.Capability{ID: 1, Name: req.Name}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
 	}
 
 	for _, tt := range tests {
