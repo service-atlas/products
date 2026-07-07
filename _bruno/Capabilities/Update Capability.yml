@@ -1,0 +1,87 @@
+info:
+  name: Update Capability
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/capabilities/:id"
+  params:
+    - name: id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+      "name": "a test capability",
+          "description": "test 2"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body
+      operator: isJson
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/capabilities/:id"
+      method: PUT
+      params:
+        - name: id
+          value: "1"
+          type: path
+      body:
+        type: json
+        data: |-
+          {
+          "name": "a test capability",
+              "description": "test 2"
+          }
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: content-type
+          value: application/json
+        - name: vary
+          value: Origin, Accept-Encoding
+        - name: date
+          value: Tue, 07 Jul 2026 01:12:49 GMT
+        - name: content-length
+          value: "150"
+      body:
+        type: json
+        data: |-
+          {
+            "id": 1,
+            "flow_id": 1,
+            "name": "a test capability",
+            "description": "test 2",
+            "created_at": "2026-06-25T20:08:53.813971-05:00",
+            "updated_at": "2026-07-06T20:12:49.69306-05:00"
+          }
+
+docs: |-
+  # Update Capability
+
+  Update a capability name and/or description
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 200 | Updated |
+  | 400 | Invalid id or name |
+  | 404 | Capabilty not found |
+  | 500 | Internal server error |
