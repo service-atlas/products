@@ -114,3 +114,56 @@ func TestUpdateCapabilityRequest_ToParams_EmptyDescription(t *testing.T) {
 		t.Error("expected Description to be invalid for empty string")
 	}
 }
+
+func TestUpdateCapabilityRequest_Validate(t *testing.T) {
+	tests := []struct {
+		Req       updateCapabilityRequest
+		WantError bool
+		ErrText   string
+	}{
+		{
+			Req: updateCapabilityRequest{
+				Name: "",
+				Id:   1,
+			},
+			WantError: true,
+			ErrText:   "name is required",
+		},
+		{
+			Req: updateCapabilityRequest{
+				Name:        "Test Cap",
+				Description: "",
+				Id:          1,
+			},
+			WantError: false,
+		},
+		{
+			Req: updateCapabilityRequest{
+				Name:        "Test Cap",
+				Description: "Test Description",
+				Id:          1,
+			},
+			WantError: false,
+		},
+		{
+			Req: updateCapabilityRequest{
+				Name:        "Test Cap",
+				Description: "Test Description",
+			},
+			WantError: true,
+			ErrText:   "id is required",
+		},
+	}
+	for _, test := range tests {
+		err := test.Req.Validate()
+		if err != nil && !test.WantError {
+			t.Errorf("expected no error, got %v", err)
+		}
+		if err == nil && test.WantError {
+			t.Errorf("expected error, got nil")
+		}
+		if err != nil && test.WantError && err.Error() != test.ErrText {
+			t.Errorf("expected error %s, got %v", test.ErrText, err)
+		}
+	}
+}

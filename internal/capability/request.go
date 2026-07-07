@@ -3,6 +3,7 @@ package capability
 import (
 	"errors"
 	"products/internal/capability/db"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -43,6 +44,16 @@ type updateCapabilityRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Id          int    `json:"id"`
+}
+
+func (r *updateCapabilityRequest) Validate() error {
+	if r.Id == 0 {
+		return errors.New("id is required")
+	}
+	if len(strings.TrimSpace(r.Name)) == 0 {
+		return errors.New("name is required")
+	}
+	return nil
 }
 
 func (r *updateCapabilityRequest) ToParams() db.UpdateCapabilityParams {
