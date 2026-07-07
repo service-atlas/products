@@ -68,6 +68,13 @@ func TestCreateCapabilityRequest_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Invalid name",
+			req: createCapabilityRequest{
+				Name: "   ",
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

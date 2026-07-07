@@ -31,7 +31,7 @@ func (r *createCapabilityRequest) ToParams() db.CreateCapabilityParams {
 }
 
 func (r *createCapabilityRequest) Validate() error {
-	if len(r.Name) == 0 {
+	if len(strings.TrimSpace(r.Name)) == 0 {
 		return errors.New("name is required")
 	}
 	if r.FlowId == 0 {
