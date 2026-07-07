@@ -83,5 +83,5 @@ docs: |-
   | -- | --|
   | 200 | Updated |
   | 400 | Invalid id or name |
-  | 404 | Capabilty not found |
+  | 404 | Capability not found |
   | 500 | Internal server error |

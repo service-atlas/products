@@ -69,5 +69,5 @@ docs: |-
   | -- | --|
   | 200 | Created |
   | 400 | Invalid id |
-  | 404 | Capabilty not found |
+  | 404 | Capability not found |
   | 500 | Internal server error |
