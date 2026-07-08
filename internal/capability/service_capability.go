@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"products/internal"
 	"products/internal/capability/db"
 
 	"github.com/jackc/pgx/v5"
@@ -101,4 +102,15 @@ func (s *postgresService) UpdateCapability(ctx context.Context, req updateCapabi
 		return db.Capability{}, err
 	}
 	return capability, nil
+}
+
+func (s *postgresService) DeleteCapability(ctx context.Context, id int) error {
+	rowsAffected, err := s.queries.DeleteCapability(ctx, id)
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return internal.NewNotFoundError(id, "capability")
+	}
+	return nil
 }
