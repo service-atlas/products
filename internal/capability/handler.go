@@ -150,6 +150,7 @@ func (h *handler) DeleteCapability(w http.ResponseWriter, r *http.Request) {
 		}
 		slog.Error("Failed to delete capability", slog.Int("capability_id", id), slog.String("error", err.Error()))
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete capability"}, http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
