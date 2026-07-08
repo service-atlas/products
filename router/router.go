@@ -24,6 +24,7 @@ func InitializeRouter(dbConn db.DBTX) http.Handler {
 	router.Use(internal.WebRequestLogger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Compress(5))
+	router.Use(middleware.RedirectSlashes)
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://127.0.0.1:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},

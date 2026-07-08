@@ -62,6 +62,8 @@ func TestInitializeRouter(t *testing.T) {
 		"GET /flows/{id}/capabilities",
 		"POST /capabilities/",
 		"GET /capabilities/{id}",
+		"DELETE /capabilities/{id}",
+		"PUT /capabilities/{id}",
 	}
 
 	for _, route := range want {
