@@ -133,3 +133,24 @@ func (h *handler) UpdateCapability(w http.ResponseWriter, r *http.Request) {
 	}
 	internal.WriteJSONResponse(w, r, http.StatusOK, capability)
 }
+
+func (h *handler) DeleteCapability(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		http.Error(w, "Invalid capability ID", http.StatusBadRequest)
+		return
+	}
+	ctxWithTimout, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	err := h.service.DeleteCapability(ctxWithTimout, id)
+	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
+			return
+		}
+		slog.Error("Failed to delete capability", slog.Int("capability_id", id), slog.String("error", err.Error()))
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete capability"}, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

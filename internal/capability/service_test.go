@@ -3,6 +3,7 @@ package capability
 import (
 	"context"
 	"errors"
+	"products/internal"
 	"products/internal/capability/db"
 	"reflect"
 	"testing"
@@ -554,7 +555,6 @@ func TestService_UpdateCapability(t *testing.T) {
 			expectedError: "get capability error",
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := &mockCapabilityQuerier{}
@@ -584,6 +584,80 @@ func TestService_UpdateCapability(t *testing.T) {
 
 			if !reflect.DeepEqual(cap, tt.expectedCap) {
 				t.Errorf("expected capability %+v, got %+v", tt.expectedCap, cap)
+			}
+		})
+	}
+}
+
+func TestService_DeleteCapability(t *testing.T) {
+	tests := []struct {
+		name          string
+		id            int
+		mockSetup     func(m *mockCapabilityQuerier)
+		checkError    func(t *testing.T, err error)
+		expectedError string
+	}{
+		{
+			name: "Success",
+			id:   1,
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.deleteCapabilityFunc = func(ctx context.Context, id int) (int64, error) {
+					return 1, nil
+				}
+			},
+		},
+		{
+			name: "Not Found",
+			id:   999,
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.deleteCapabilityFunc = func(ctx context.Context, id int) (int64, error) {
+					return 0, nil
+				}
+			},
+			checkError: func(t *testing.T, err error) {
+				if !errors.Is(err, internal.NotFoundError{}) {
+					t.Errorf("expected NotFoundError, got %T", err)
+				}
+			},
+			expectedError: "capability not found",
+		},
+		{
+			name: "Database Error",
+			id:   1,
+			mockSetup: func(m *mockCapabilityQuerier) {
+				m.deleteCapabilityFunc = func(ctx context.Context, id int) (int64, error) {
+					return 0, errors.New("db error")
+				}
+			},
+			expectedError: "db error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &mockCapabilityQuerier{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+			s := &postgresService{queries: mock}
+
+			err := s.DeleteCapability(context.Background(), tt.id)
+
+			if tt.expectedError != "" {
+				if err == nil {
+					t.Errorf("expected error %q, got nil", tt.expectedError)
+				} else {
+					if tt.checkError != nil {
+						tt.checkError(t, err)
+					} else if err.Error() != tt.expectedError {
+						t.Errorf("expected error %q, got %q", tt.expectedError, err.Error())
+					}
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
 			}
 		})
 	}

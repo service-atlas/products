@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"products/internal"
 	"products/internal/capability/db"
 	"testing"
 
@@ -21,6 +22,7 @@ type mockCapabilityService struct {
 	getCapabilitiesByProductFunc func(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error)
 	getCapabilitiesByFlowFunc    func(ctx context.Context, id int) ([]db.Capability, error)
 	updateCapabilityFunc         func(ctx context.Context, req updateCapabilityRequest) (db.Capability, error)
+	deleteCapabilityFunc         func(ctx context.Context, id int) error
 }
 
 func (m *mockCapabilityService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
@@ -41,6 +43,10 @@ func (m *mockCapabilityService) GetCapabilitiesByFlow(ctx context.Context, id in
 
 func (m *mockCapabilityService) UpdateCapability(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
 	return m.updateCapabilityFunc(ctx, req)
+}
+
+func (m *mockCapabilityService) DeleteCapability(ctx context.Context, id int) error {
+	return m.deleteCapabilityFunc(ctx, id)
 }
 
 func TestHandler_CreateCapability(t *testing.T) {
@@ -573,7 +579,6 @@ func TestHandler_UpdateCapability(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var body []byte
@@ -598,6 +603,76 @@ func TestHandler_UpdateCapability(t *testing.T) {
 			h := &handler{service: mockSvc}
 
 			h.UpdateCapability(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
+func TestHandler_DeleteCapability(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		mockSetup      func(m *mockCapabilityService)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			id:   "1",
+			mockSetup: func(m *mockCapabilityService) {
+				m.deleteCapabilityFunc = func(ctx context.Context, id int) error {
+					return nil
+				}
+			},
+			expectedStatus: http.StatusNoContent,
+		},
+		{
+			name: "Not Found",
+			id:   "999",
+			mockSetup: func(m *mockCapabilityService) {
+				m.deleteCapabilityFunc = func(ctx context.Context, id int) error {
+					return internal.NewNotFoundError(999, "Capability not found")
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "Service Error",
+			id:   "1",
+			mockSetup: func(m *mockCapabilityService) {
+				m.deleteCapabilityFunc = func(ctx context.Context, id int) error {
+					return errors.New("service error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name:           "Invalid ID",
+			id:             "abc",
+			mockSetup:      func(m *mockCapabilityService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodDelete, "/capabilities/"+tt.id, nil)
+			if tt.id != "" {
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", tt.id)
+				req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+			}
+
+			w := httptest.NewRecorder()
+			mockSvc := &mockCapabilityService{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockSvc)
+			}
+			h := &handler{service: mockSvc}
+
+			h.DeleteCapability(w, req)
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)

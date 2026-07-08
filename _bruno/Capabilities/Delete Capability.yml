@@ -1,0 +1,73 @@
+info:
+  name: Delete Capability
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/capabilities/:id"
+  params:
+    - name: id
+      value: "3"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+      "name": "a test capability",
+          "description": "test 2"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "204"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: sample
+    request:
+      url: "{{baseUrl}}/capabilities/:id"
+      method: DELETE
+      params:
+        - name: id
+          value: "3"
+          type: path
+      body:
+        type: json
+        data: |-
+          {
+          "name": "a test capability",
+              "description": "test 2"
+          }
+    response:
+      status: 204
+      statusText: No Content
+      headers:
+        - name: vary
+          value: Origin
+        - name: date
+          value: Wed, 08 Jul 2026 01:58:29 GMT
+      body:
+        type: text
+        data: ""
+
+docs: |-
+  # Delete Capability
+
+  Delete a capability by id 
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 204 | Success |
+  | 400 | Invalid id |
+  | 404 | Capability not found |
+  | 500 | Internal server error |

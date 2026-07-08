@@ -17,25 +17,30 @@ func newMockService() *mockService {
 	return &mockService{called: make(map[string]bool)}
 }
 
-func (m *mockService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
+func (m *mockService) CreateCapability(_ context.Context, _ createCapabilityRequest) (db.Capability, error) {
 	m.called["CreateCapability"] = true
 	return db.Capability{}, nil
 }
-func (m *mockService) GetCapability(ctx context.Context, id int) (db.Capability, error) {
+func (m *mockService) GetCapability(_ context.Context, _ int) (db.Capability, error) {
 	m.called["GetCapability"] = true
 	return db.Capability{}, nil
 }
-func (m *mockService) GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
+func (m *mockService) GetCapabilitiesByProduct(_ context.Context, _ int) ([]db.GetCapabilitiesByProductRow, error) {
 	m.called["GetCapabilitiesByProduct"] = true
 	return nil, nil
 }
-func (m *mockService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.Capability, error) {
+func (m *mockService) GetCapabilitiesByFlow(_ context.Context, _ int) ([]db.Capability, error) {
 	m.called["GetCapabilitiesByFlow"] = true
 	return nil, nil
 }
-func (m *mockService) UpdateCapability(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
+func (m *mockService) UpdateCapability(_ context.Context, _ updateCapabilityRequest) (db.Capability, error) {
 	m.called["UpdateCapability"] = true
 	return db.Capability{}, nil
+}
+
+func (m *mockService) DeleteCapability(_ context.Context, _ int) error {
+	m.called["DeleteCapability"] = true
+	return nil
 }
 
 func TestRegisterRoutesWithHandler(t *testing.T) {
@@ -48,6 +53,7 @@ func TestRegisterRoutesWithHandler(t *testing.T) {
 
 	err := chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		got[method+" "+route] = true
+
 		return nil
 	})
 	if err != nil {
@@ -60,6 +66,7 @@ func TestRegisterRoutesWithHandler(t *testing.T) {
 		"POST /capabilities/",
 		"GET /capabilities/{id}",
 		"PUT /capabilities/{id}",
+		"DELETE /capabilities/{id}",
 	}
 
 	for _, route := range want {
