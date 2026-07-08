@@ -144,12 +144,12 @@ func (h *handler) DeleteCapability(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	err := h.service.DeleteCapability(ctxWithTimout, id)
 	if err != nil {
-		if errors.Is(err, NotFoundError{}) {
+		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
 			return
 		}
 		slog.Error("Failed to delete capability", slog.Int("capability_id", id), slog.String("error", err.Error()))
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete capability"}, http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }

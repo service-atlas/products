@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"products/internal"
 	"products/internal/capability/db"
 	"testing"
 
@@ -625,14 +626,14 @@ func TestHandler_DeleteCapability(t *testing.T) {
 					return nil
 				}
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNoContent,
 		},
 		{
 			name: "Not Found",
 			id:   "999",
 			mockSetup: func(m *mockCapabilityService) {
 				m.deleteCapabilityFunc = func(ctx context.Context, id int) error {
-					return NotFoundError{Msg: "Capability not found"}
+					return internal.NewNotFoundError(999, "Capability not found")
 				}
 			},
 			expectedStatus: http.StatusNotFound,
