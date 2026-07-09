@@ -70,3 +70,26 @@ func (r *updateCapabilityRequest) ToParams() db.UpdateCapabilityParams {
 		},
 	}
 }
+
+type createCapabilityStepRequest struct {
+	FLowStepId   int    `json:"flow_step_id"`
+	CapabilityId int    `json:"capability_id"`
+	Target       string `json:"target"`
+	Protocol     string `json:"protocol"`
+}
+
+func (r *createCapabilityStepRequest) Validate() error {
+	if r.CapabilityId == 0 {
+		return errors.New("capability_id is required")
+	}
+	if r.FLowStepId == 0 {
+		return errors.New("flow_step_id is required")
+	}
+	if len(strings.TrimSpace(r.Target)) == 0 {
+		return errors.New("target is required")
+	}
+	if len(strings.TrimSpace(r.Protocol)) == 0 {
+		return errors.New("protocol is required")
+	}
+	return nil
+}
