@@ -16,3 +16,13 @@ type Capability struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
+
+type CapabilityStep struct {
+	ID           int                `json:"id"`
+	CapabilityID int                `json:"capability_id"`
+	FlowStepID   int                `json:"flow_step_id"`
+	Protocol     pgtype.Text        `json:"protocol"`
+	Target       pgtype.Text        `json:"target"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
