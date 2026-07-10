@@ -6,15 +6,15 @@ import (
 
 func TestCreateCapabilityRequest_ToParams(t *testing.T) {
 	req := createCapabilityRequest{
-		FlowId:      1,
+		ProductId:   1,
 		Name:        "Test Cap",
 		Description: "Test Description",
 	}
 
 	params := req.ToParams()
 
-	if params.FlowID != req.FlowId {
-		t.Errorf("expected FlowID %d, got %d", req.FlowId, params.FlowID)
+	if params.ProductID != req.ProductId {
+		t.Errorf("expected ProductId %d, got %d", req.ProductId, params.ProductID)
 	}
 	if params.Name != req.Name {
 		t.Errorf("expected Name %s, got %s", req.Name, params.Name)
@@ -29,8 +29,8 @@ func TestCreateCapabilityRequest_ToParams(t *testing.T) {
 
 func TestCreateCapabilityRequest_ToParams_EmptyDescription(t *testing.T) {
 	req := createCapabilityRequest{
-		FlowId: 1,
-		Name:   "Test Cap",
+		ProductId: 1,
+		Name:      "Test Cap",
 	}
 
 	params := req.ToParams()
@@ -49,8 +49,8 @@ func TestCreateCapabilityRequest_Validate(t *testing.T) {
 		{
 			name: "Valid request",
 			req: createCapabilityRequest{
-				Name:   "Test",
-				FlowId: 1,
+				Name:      "Test",
+				ProductId: 1,
 			},
 			wantErr: false,
 		},
