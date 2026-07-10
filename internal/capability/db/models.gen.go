@@ -10,7 +10,7 @@ import (
 
 type Capability struct {
 	ID          int                `json:"id"`
-	FlowID      int                `json:"flow_id"`
+	ProductID   int                `json:"product_id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
