@@ -22,12 +22,7 @@ join flows f on fs.flow_id = f.id
 where f.id = @flow_id;
 
 -- name: GetCapabilitiesByProduct :many
-SELECT
-    id,
-    product_id,
-    name,
-    created_at,
-    updated_at
+SELECT *
 FROM capabilities c
 WHERE product_id = @product_id;
 

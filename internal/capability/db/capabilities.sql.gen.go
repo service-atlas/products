@@ -110,37 +110,25 @@ func (q *Queries) GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]GetC
 }
 
 const getCapabilitiesByProduct = `-- name: GetCapabilitiesByProduct :many
-SELECT
-    id,
-    product_id,
-    name,
-    created_at,
-    updated_at
+SELECT id, product_id, name, description, created_at, updated_at
 FROM capabilities c
 WHERE product_id = $1
 `
 
-type GetCapabilitiesByProductRow struct {
-	ID        int                `json:"id"`
-	ProductID int                `json:"product_id"`
-	Name      string             `json:"name"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetCapabilitiesByProduct(ctx context.Context, productID int) ([]GetCapabilitiesByProductRow, error) {
+func (q *Queries) GetCapabilitiesByProduct(ctx context.Context, productID int) ([]Capability, error) {
 	rows, err := q.db.Query(ctx, getCapabilitiesByProduct, productID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetCapabilitiesByProductRow
+	var items []Capability
 	for rows.Next() {
-		var i GetCapabilitiesByProductRow
+		var i Capability
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProductID,
 			&i.Name,
+			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

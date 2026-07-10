@@ -12,7 +12,7 @@ type Querier interface {
 	CreateCapability(ctx context.Context, arg CreateCapabilityParams) (Capability, error)
 	DeleteCapability(ctx context.Context, id int) (int64, error)
 	GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]GetCapabilitiesByFlowRow, error)
-	GetCapabilitiesByProduct(ctx context.Context, productID int) ([]GetCapabilitiesByProductRow, error)
+	GetCapabilitiesByProduct(ctx context.Context, productID int) ([]Capability, error)
 	GetCapability(ctx context.Context, id int) (Capability, error)
 	GetFlow(ctx context.Context, id int) (string, error)
 	GetProduct(ctx context.Context, id int) (string, error)
