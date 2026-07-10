@@ -14,7 +14,7 @@ databaseChangeLog:
                   constraints:
                     primaryKey: true
               - column:
-                  name: flow_id
+                  name: product_id
                   type: int
                   constraints:
                     nullable: false
@@ -39,11 +39,11 @@ databaseChangeLog:
                   constraints:
                     nullable: false
         - addForeignKeyConstraint:
-            baseColumnNames: flow_id
+            baseColumnNames: product_id
             baseTableName: capabilities
-            constraintName: fk_capabilities_flows
+            constraintName: fk_capabilities_products
             referencedColumnNames: id
-            referencedTableName: flows
+            referencedTableName: products
             onDelete: CASCADE
   - changeSet:
       id: create-capability-steps-table
