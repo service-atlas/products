@@ -250,6 +250,16 @@ func (q *Queries) GetFlow(ctx context.Context, id int) (string, error) {
 	return name, err
 }
 
+const getFlowStep = `-- name: GetFlowStep :one
+SELECT id FROM flow_steps WHERE id = $1
+`
+
+func (q *Queries) GetFlowStep(ctx context.Context, id int) (int, error) {
+	row := q.db.QueryRow(ctx, getFlowStep, id)
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getProduct = `-- name: GetProduct :one
 SELECT name FROM products WHERE id = $1
 `
