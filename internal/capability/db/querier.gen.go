@@ -10,10 +10,13 @@ import (
 
 type Querier interface {
 	CreateCapability(ctx context.Context, arg CreateCapabilityParams) (Capability, error)
+	CreateCapabilityStep(ctx context.Context, arg CreateCapabilityStepParams) (CapabilityStep, error)
 	DeleteCapability(ctx context.Context, id int) (int64, error)
+	DeleteCapabilityStep(ctx context.Context, capabilityID int) (int64, error)
 	GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]GetCapabilitiesByFlowRow, error)
 	GetCapabilitiesByProduct(ctx context.Context, productID int) ([]Capability, error)
 	GetCapability(ctx context.Context, id int) (Capability, error)
+	GetCapabilitySteps(ctx context.Context, capabilityID int) ([]CapabilityStep, error)
 	GetFlow(ctx context.Context, id int) (string, error)
 	GetProduct(ctx context.Context, id int) (string, error)
 	UpdateCapability(ctx context.Context, arg UpdateCapabilityParams) (int64, error)
