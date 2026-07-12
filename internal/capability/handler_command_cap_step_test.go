@@ -22,14 +22,14 @@ func TestHandler_CreateCapabilityStep(t *testing.T) {
 		{
 			name: "Success",
 			requestBody: createCapabilityStepRequest{
-				FLowStepId:   1,
+				FlowStepId:   1,
 				CapabilityId: 1,
 				Target:       "Target",
 				Protocol:     "Protocol",
 			},
 			mockSetup: func(m *mockCapabilityService) {
 				m.createCapabilityStepFunc = func(ctx context.Context, req createCapabilityStepRequest) (db.CapabilityStep, error) {
-					return db.CapabilityStep{ID: 1, CapabilityID: req.CapabilityId, FlowStepID: req.FLowStepId}, nil
+					return db.CapabilityStep{ID: 1, CapabilityID: req.CapabilityId, FlowStepID: req.FlowStepId}, nil
 				}
 			},
 			expectedStatus: http.StatusCreated,
@@ -51,7 +51,7 @@ func TestHandler_CreateCapabilityStep(t *testing.T) {
 		{
 			name: "Capability Not Found",
 			requestBody: createCapabilityStepRequest{
-				FLowStepId:   1,
+				FlowStepId:   1,
 				CapabilityId: 999,
 				Target:       "Target",
 				Protocol:     "Protocol",
@@ -66,7 +66,7 @@ func TestHandler_CreateCapabilityStep(t *testing.T) {
 		{
 			name: "Service Error",
 			requestBody: createCapabilityStepRequest{
-				FLowStepId:   1,
+				FlowStepId:   1,
 				CapabilityId: 1,
 				Target:       "Target",
 				Protocol:     "Protocol",
