@@ -62,7 +62,7 @@ func TestCreateCapabilityRequest_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Missing flow id",
+			name: "Missing product id",
 			req: createCapabilityRequest{
 				Name: "Test",
 			},
