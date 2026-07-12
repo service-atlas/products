@@ -20,6 +20,9 @@ type mockCapabilityQuerier struct {
 	getFlowFunc                  func(ctx context.Context, id int) (string, error)
 	getProductFunc               func(ctx context.Context, id int) (string, error)
 	updateCapabilityFunc         func(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error)
+	createCapabilityStepFunc     func(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error)
+	getCapabilityStepsFunc       func(ctx context.Context, id int) ([]db.CapabilityStep, error)
+	deleteCapabilityStepFunc     func(ctx context.Context, id int) (int64, error)
 }
 
 func (m *mockCapabilityQuerier) CreateCapability(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error) {
@@ -52,6 +55,18 @@ func (m *mockCapabilityQuerier) GetProduct(ctx context.Context, id int) (string,
 
 func (m *mockCapabilityQuerier) UpdateCapability(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error) {
 	return m.updateCapabilityFunc(ctx, arg)
+}
+
+func (m *mockCapabilityQuerier) CreateCapabilityStep(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error) {
+	return m.createCapabilityStepFunc(ctx, arg)
+}
+
+func (m *mockCapabilityQuerier) GetCapabilitySteps(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+	return m.getCapabilityStepsFunc(ctx, id)
+}
+
+func (m *mockCapabilityQuerier) DeleteCapabilityStep(ctx context.Context, id int) (int64, error) {
+	return m.deleteCapabilityStepFunc(ctx, id)
 }
 
 func TestService_CreateCapability(t *testing.T) {
