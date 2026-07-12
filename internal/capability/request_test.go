@@ -174,3 +174,93 @@ func TestUpdateCapabilityRequest_Validate(t *testing.T) {
 		}
 	}
 }
+
+func TestCreateCapabilityStepRequest_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     createCapabilityStepRequest
+		wantErr bool
+	}{
+		{
+			name: "Valid request",
+			req: createCapabilityStepRequest{
+				CapabilityId: 1,
+				FLowStepId:   1,
+				Target:       "target",
+				Protocol:     "protocol",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Missing capability id",
+			req: createCapabilityStepRequest{
+				FLowStepId: 1,
+				Target:     "target",
+				Protocol:   "protocol",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Missing flow step id",
+			req: createCapabilityStepRequest{
+				CapabilityId: 1,
+				Target:       "target",
+				Protocol:     "protocol",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Missing target",
+			req: createCapabilityStepRequest{
+				CapabilityId: 1,
+				FLowStepId:   1,
+				Protocol:     "protocol",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Missing protocol",
+			req: createCapabilityStepRequest{
+				CapabilityId: 1,
+				FLowStepId:   1,
+				Target:       "target",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestCreateCapabilityStepRequest_ToParams(t *testing.T) {
+	req := createCapabilityStepRequest{
+		CapabilityId: 1,
+		FLowStepId:   2,
+		Target:       "test-target",
+		Protocol:     "test-protocol",
+	}
+
+	params := req.ToParams()
+
+	if params.CapabilityID != req.CapabilityId {
+		t.Errorf("expected CapabilityID %d, got %d", req.CapabilityId, params.CapabilityID)
+	}
+	if params.FlowStepID != req.FLowStepId {
+		t.Errorf("expected FlowStepID %d, got %d", req.FLowStepId, params.FlowStepID)
+	}
+	if !params.Target.Valid || params.Target.String != req.Target {
+		t.Errorf("expected Target %s, got %v", req.Target, params.Target)
+	}
+	if !params.Protocol.Valid || params.Protocol.String != req.Protocol {
+		t.Errorf("expected Protocol %s, got %v", req.Protocol, params.Protocol)
+	}
+	if !params.Timestamp.Valid {
+		t.Error("expected Timestamp to be valid")
+	}
+}

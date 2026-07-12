@@ -93,3 +93,22 @@ func (r *createCapabilityStepRequest) Validate() error {
 	}
 	return nil
 }
+
+func (r *createCapabilityStepRequest) ToParams() db.CreateCapabilityStepParams {
+	return db.CreateCapabilityStepParams{
+		CapabilityID: r.CapabilityId,
+		FlowStepID:   r.FLowStepId,
+		Target: pgtype.Text{
+			Valid:  r.Target != "",
+			String: r.Target,
+		},
+		Protocol: pgtype.Text{
+			Valid:  r.Protocol != "",
+			String: r.Protocol,
+		},
+		Timestamp: pgtype.Timestamptz{
+			Valid: true,
+			Time:  time.Now().UTC(),
+		},
+	}
+}
