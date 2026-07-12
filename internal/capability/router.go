@@ -33,6 +33,6 @@ func registerRoutesWithHandler(r chi.Router, capHandler *handler) {
 		u.Delete("/{id}", capHandler.DeleteCapability)
 	})
 	r.Route("/capability-steps", func(u chi.Router) {
-		//u.Post("/", capHandler.CreateCapabilityStep)
+		u.Post("/", capHandler.CreateCapabilityStep)
 	})
 }

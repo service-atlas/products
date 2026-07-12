@@ -154,3 +154,29 @@ func (h *handler) DeleteCapability(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *handler) CreateCapabilityStep(w http.ResponseWriter, r *http.Request) {
+	req := &createCapabilityStepRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid Body"}, http.StatusBadRequest)
+		return
+	}
+	err := req.Validate()
+	if err != nil {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid Body"}, http.StatusBadRequest)
+		return
+	}
+	ctxWithTimeout, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	capStep, err := h.service.CreateCapabilityStep(ctxWithTimeout, *req)
+	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusBadRequest)
+			return
+		}
+		slog.Error("Failed to create capability step", slog.String("error", err.Error()))
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create capability step"}, http.StatusInternalServerError)
+		return
+	}
+	internal.WriteJSONResponse(w, r, http.StatusCreated, capStep)
+}
