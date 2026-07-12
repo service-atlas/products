@@ -20,14 +20,14 @@ func (s *postgresService) CreateCapabilityStep(ctx context.Context, req createCa
 	wg.Go(func() {
 		n, err := s.queries.GetFlowStep(ctx, req.FlowStepId)
 		if err != nil || n == 0 {
-			errChan <- "flow"
+			errChan <- "flow_step"
 		}
 	})
 	wg.Wait()
 	close(errChan)
 	for t := range errChan {
 		switch t {
-		case "flow":
+		case "flow_step":
 			return db.CapabilityStep{}, internal.NewNotFoundError(req.FlowStepId, t)
 		default:
 			return db.CapabilityStep{}, internal.NewNotFoundError(req.CapabilityId, t)

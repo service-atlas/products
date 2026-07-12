@@ -171,7 +171,7 @@ func (h *handler) CreateCapabilityStep(w http.ResponseWriter, r *http.Request) {
 	capStep, err := h.service.CreateCapabilityStep(ctxWithTimeout, *req)
 	if err != nil {
 		if errors.Is(err, internal.NotFoundError{}) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusBadRequest)
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return
 		}
 		slog.Error("Failed to create capability step", slog.String("error", err.Error()))

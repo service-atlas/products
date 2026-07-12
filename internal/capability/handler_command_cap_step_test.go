@@ -61,7 +61,7 @@ func TestHandler_CreateCapabilityStep(t *testing.T) {
 					return db.CapabilityStep{}, internal.NewNotFoundError(999, "Capability not found")
 				}
 			},
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name: "Service Error",
