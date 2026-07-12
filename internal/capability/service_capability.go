@@ -11,7 +11,7 @@ import (
 )
 
 func (s *postgresService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
-	name, err := s.queries.GetFlow(ctx, req.ProductId)
+	name, err := s.queries.GetProduct(ctx, req.ProductId)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return db.Capability{}, NotFoundError{

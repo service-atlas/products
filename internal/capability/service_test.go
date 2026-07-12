@@ -70,8 +70,8 @@ func TestService_CreateCapability(t *testing.T) {
 				Name:      "Test Cap",
 			},
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
-					return "Test Flow", nil
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
+					return "Test Product", nil
 				}
 				m.createCapabilityFunc = func(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error) {
 					return db.Capability{ID: 1, Name: arg.Name}, nil
@@ -80,13 +80,13 @@ func TestService_CreateCapability(t *testing.T) {
 			expectedCap: db.Capability{ID: 1, Name: "Test Cap"},
 		},
 		{
-			name: "Flow Not Found - sql.ErrNoRows",
+			name: "Product Not Found - sql.ErrNoRows",
 			req: createCapabilityRequest{
 				ProductId: 999,
 				Name:      "Test Cap",
 			},
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
 					return "", pgx.ErrNoRows
 				}
 			},
@@ -104,7 +104,7 @@ func TestService_CreateCapability(t *testing.T) {
 				Name:      "Test Cap",
 			},
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
 					return "", nil
 				}
 			},
@@ -122,7 +122,7 @@ func TestService_CreateCapability(t *testing.T) {
 				Name:      "Test Cap",
 			},
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
 					return "", errors.New("db error")
 				}
 			},
@@ -135,7 +135,7 @@ func TestService_CreateCapability(t *testing.T) {
 				Name:      "Test Cap",
 			},
 			mockSetup: func(m *mockCapabilityQuerier) {
-				m.getFlowFunc = func(ctx context.Context, id int) (string, error) {
+				m.getProductFunc = func(ctx context.Context, id int) (string, error) {
 					return "Test Flow", nil
 				}
 				m.createCapabilityFunc = func(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error) {
