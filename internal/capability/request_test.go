@@ -185,7 +185,7 @@ func TestCreateCapabilityStepRequest_Validate(t *testing.T) {
 			name: "Valid request",
 			req: createCapabilityStepRequest{
 				CapabilityId: 1,
-				FLowStepId:   1,
+				FlowStepId:   1,
 				Target:       "target",
 				Protocol:     "protocol",
 			},
@@ -194,7 +194,7 @@ func TestCreateCapabilityStepRequest_Validate(t *testing.T) {
 		{
 			name: "Missing capability id",
 			req: createCapabilityStepRequest{
-				FLowStepId: 1,
+				FlowStepId: 1,
 				Target:     "target",
 				Protocol:   "protocol",
 			},
@@ -213,7 +213,7 @@ func TestCreateCapabilityStepRequest_Validate(t *testing.T) {
 			name: "Missing target",
 			req: createCapabilityStepRequest{
 				CapabilityId: 1,
-				FLowStepId:   1,
+				FlowStepId:   1,
 				Protocol:     "protocol",
 			},
 			wantErr: true,
@@ -222,7 +222,7 @@ func TestCreateCapabilityStepRequest_Validate(t *testing.T) {
 			name: "Missing protocol",
 			req: createCapabilityStepRequest{
 				CapabilityId: 1,
-				FLowStepId:   1,
+				FlowStepId:   1,
 				Target:       "target",
 			},
 			wantErr: true,
@@ -241,7 +241,7 @@ func TestCreateCapabilityStepRequest_Validate(t *testing.T) {
 func TestCreateCapabilityStepRequest_ToParams(t *testing.T) {
 	req := createCapabilityStepRequest{
 		CapabilityId: 1,
-		FLowStepId:   2,
+		FlowStepId:   2,
 		Target:       "test-target",
 		Protocol:     "test-protocol",
 	}
@@ -251,8 +251,8 @@ func TestCreateCapabilityStepRequest_ToParams(t *testing.T) {
 	if params.CapabilityID != req.CapabilityId {
 		t.Errorf("expected CapabilityID %d, got %d", req.CapabilityId, params.CapabilityID)
 	}
-	if params.FlowStepID != req.FLowStepId {
-		t.Errorf("expected FlowStepID %d, got %d", req.FLowStepId, params.FlowStepID)
+	if params.FlowStepID != req.FlowStepId {
+		t.Errorf("expected FlowStepID %d, got %d", req.FlowStepId, params.FlowStepID)
 	}
 	if !params.Target.Valid || params.Target.String != req.Target {
 		t.Errorf("expected Target %s, got %v", req.Target, params.Target)

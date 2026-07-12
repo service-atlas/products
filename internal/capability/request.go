@@ -72,7 +72,7 @@ func (r *updateCapabilityRequest) ToParams() db.UpdateCapabilityParams {
 }
 
 type createCapabilityStepRequest struct {
-	FLowStepId   int    `json:"flow_step_id"`
+	FlowStepId   int    `json:"flow_step_id"`
 	CapabilityId int    `json:"capability_id"`
 	Target       string `json:"target"`
 	Protocol     string `json:"protocol"`
@@ -82,7 +82,7 @@ func (r *createCapabilityStepRequest) Validate() error {
 	if r.CapabilityId == 0 {
 		return errors.New("capability_id is required")
 	}
-	if r.FLowStepId == 0 {
+	if r.FlowStepId == 0 {
 		return errors.New("flow_step_id is required")
 	}
 	if len(strings.TrimSpace(r.Target)) == 0 {
@@ -97,7 +97,7 @@ func (r *createCapabilityStepRequest) Validate() error {
 func (r *createCapabilityStepRequest) ToParams() db.CreateCapabilityStepParams {
 	return db.CreateCapabilityStepParams{
 		CapabilityID: r.CapabilityId,
-		FlowStepID:   r.FLowStepId,
+		FlowStepID:   r.FlowStepId,
 		Target: pgtype.Text{
 			Valid:  r.Target != "",
 			String: r.Target,
