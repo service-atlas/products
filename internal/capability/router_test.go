@@ -25,11 +25,11 @@ func (m *mockService) GetCapability(_ context.Context, _ int) (db.Capability, er
 	m.called["GetCapability"] = true
 	return db.Capability{}, nil
 }
-func (m *mockService) GetCapabilitiesByProduct(_ context.Context, _ int) ([]db.GetCapabilitiesByProductRow, error) {
+func (m *mockService) GetCapabilitiesByProduct(_ context.Context, _ int) ([]db.Capability, error) {
 	m.called["GetCapabilitiesByProduct"] = true
 	return nil, nil
 }
-func (m *mockService) GetCapabilitiesByFlow(_ context.Context, _ int) ([]db.Capability, error) {
+func (m *mockService) GetCapabilitiesByFlow(_ context.Context, _ int) ([]db.GetCapabilitiesByFlowRow, error) {
 	m.called["GetCapabilitiesByFlow"] = true
 	return nil, nil
 }

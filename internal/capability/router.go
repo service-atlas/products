@@ -10,8 +10,8 @@ import (
 type capabilityService interface {
 	CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error)
 	GetCapability(ctx context.Context, id int) (db.Capability, error)
-	GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error)
-	GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.Capability, error)
+	GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.Capability, error)
+	GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.GetCapabilitiesByFlowRow, error)
 	UpdateCapability(ctx context.Context, req updateCapabilityRequest) (db.Capability, error)
 	DeleteCapability(ctx context.Context, id int) error
 }

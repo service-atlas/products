@@ -1,25 +1,30 @@
 -- name: CreateCapability :one
-INSERT INTO capabilities(flow_id, name, description, created_at, updated_at)
-VALUES(@flow_id, @name, @description, @timestamp, @timestamp)
+INSERT INTO capabilities(product_id, name, description, created_at, updated_at)
+VALUES(@product_id, @name, @description, @timestamp, @timestamp)
 RETURNING *;
 
 -- name: GetCapability :one
-SELECT id, flow_id, name, description, created_at, updated_at FROM capabilities WHERE id = @id;
+SELECT id, product_id, name, description, created_at, updated_at FROM capabilities WHERE id = @id;
 
 -- name: GetCapabilitiesByFlow :many
-SELECT * FROM capabilities WHERE flow_id = @flow_id;
+SELECT DISTINCT
+    c.id,
+    c.product_id,
+    c.name,
+    c.description,
+    c.created_at,
+    c.updated_at,
+    f.name AS flow_name
+FROM capabilities c
+join capability_steps cs on c.id = cs.capability_id
+join flow_steps fs on cs.flow_step_id = fs.id
+join flows f on fs.flow_id = f.id
+where f.id = @flow_id;
 
 -- name: GetCapabilitiesByProduct :many
-SELECT
-    c.id,
-    c.flow_id,
-    c.name,
-    f.name as flow_name,
-    c.created_at,
-    c.updated_at
+SELECT *
 FROM capabilities c
-INNER JOIN flows f ON f.id = c.flow_id
-WHERE f.product_id = @product_id;
+WHERE product_id = @product_id;
 
 -- name: UpdateCapability :execrows
 UPDATE capabilities SET name = @name, description = @description, updated_at = @updated_at WHERE id = @id;

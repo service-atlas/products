@@ -11,7 +11,7 @@ import (
 )
 
 func (s *postgresService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
-	name, err := s.queries.GetFlow(ctx, req.FlowId)
+	name, err := s.queries.GetProduct(ctx, req.ProductId)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return db.Capability{}, NotFoundError{
@@ -46,7 +46,7 @@ func (s *postgresService) GetCapability(ctx context.Context, id int) (db.Capabil
 	return capability, nil
 }
 
-func (s *postgresService) GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.GetCapabilitiesByProductRow, error) {
+func (s *postgresService) GetCapabilitiesByProduct(ctx context.Context, id int) ([]db.Capability, error) {
 	_, err := s.queries.GetProduct(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -61,12 +61,12 @@ func (s *postgresService) GetCapabilitiesByProduct(ctx context.Context, id int) 
 		return nil, err
 	}
 	if capabilities == nil {
-		capabilities = []db.GetCapabilitiesByProductRow{}
+		capabilities = []db.Capability{}
 	}
 	return capabilities, nil
 }
 
-func (s *postgresService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.Capability, error) {
+func (s *postgresService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]db.GetCapabilitiesByFlowRow, error) {
 	_, err := s.queries.GetFlow(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -81,7 +81,7 @@ func (s *postgresService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]
 		return nil, err
 	}
 	if capabilities == nil {
-		capabilities = []db.Capability{}
+		capabilities = []db.GetCapabilitiesByFlowRow{}
 	}
 	return capabilities, nil
 }
