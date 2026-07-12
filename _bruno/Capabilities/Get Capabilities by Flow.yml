@@ -26,41 +26,6 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-examples:
-  - name: sample
-    request:
-      url: "{{baseUrl}}/flows/:id/capabilities"
-      method: GET
-      params:
-        - name: id
-          value: "1"
-          type: path
-    response:
-      status: 200
-      statusText: OK
-      headers:
-        - name: content-type
-          value: application/json
-        - name: vary
-          value: Origin, Accept-Encoding
-        - name: date
-          value: Sun, 28 Jun 2026 21:29:42 GMT
-        - name: content-length
-          value: "138"
-      body:
-        type: json
-        data: |-
-          [
-            {
-              "id": 1,
-              "flow_id": 1,
-              "name": "a test capability",
-              "description": "test",
-              "created_at": "2026-06-25T20:08:53.813971-05:00",
-              "updated_at": "2026-06-25T20:08:53.813971-05:00"
-            }
-          ]
-
 docs: |-
   # Get Capabilities by Flow Id
 
