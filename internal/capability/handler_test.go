@@ -14,6 +14,7 @@ type mockCapabilityService struct {
 	updateCapabilityFunc         func(ctx context.Context, req updateCapabilityRequest) (db.Capability, error)
 	deleteCapabilityFunc         func(ctx context.Context, id int) error
 	createCapabilityStepFunc     func(ctx context.Context, req createCapabilityStepRequest) (db.CapabilityStep, error)
+	deleteCapabilityStepFunc     func(ctx context.Context, id int) error
 }
 
 func (m *mockCapabilityService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
@@ -42,6 +43,10 @@ func (m *mockCapabilityService) DeleteCapability(ctx context.Context, id int) er
 
 func (m *mockCapabilityService) CreateCapabilityStep(ctx context.Context, req createCapabilityStepRequest) (db.CapabilityStep, error) {
 	return m.createCapabilityStepFunc(ctx, req)
+}
+
+func (m *mockCapabilityService) DeleteCapabilityStep(ctx context.Context, id int) error {
+	return m.deleteCapabilityStepFunc(ctx, id)
 }
 
 func TestNewHandler(t *testing.T) {

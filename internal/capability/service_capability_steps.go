@@ -59,3 +59,14 @@ func (s *postgresService) CreateCapabilityStep(ctx context.Context, req createCa
 	}
 	return capStep, nil
 }
+
+func (s *postgresService) DeleteCapabilityStep(ctx context.Context, id int) error {
+	rows, err := s.queries.DeleteCapabilityStep(ctx, id)
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return internal.NewNotFoundError(id, "capability-step")
+	}
+	return nil
+}

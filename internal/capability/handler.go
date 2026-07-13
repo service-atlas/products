@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"products/internal"
+	"strconv"
 	"time"
 )
 
@@ -179,4 +180,20 @@ func (h *handler) CreateCapabilityStep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	internal.WriteJSONResponse(w, r, http.StatusCreated, capStep)
+}
+
+func (h *handler) DeleteCapabilityStep(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "id is invalid"}, http.StatusBadRequest)
+		return
+	}
+	ctxWithTimeout, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	err := h.service.DeleteCapabilityStep(ctxWithTimeout, id)
+	if err != nil {
+		internal.LoggerFromContext(r.Context()).Error("Error deleting capability step", slog.String("error", err.Error()))
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete capability step", Instance: strconv.Itoa(id)}, http.StatusInternalServerError)
+		return
+	}
 }
