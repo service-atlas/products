@@ -70,3 +70,45 @@ func (r *updateCapabilityRequest) ToParams() db.UpdateCapabilityParams {
 		},
 	}
 }
+
+type createCapabilityStepRequest struct {
+	FlowStepId   int    `json:"flow_step_id"`
+	CapabilityId int    `json:"capability_id"`
+	Target       string `json:"target"`
+	Protocol     string `json:"protocol"`
+}
+
+func (r *createCapabilityStepRequest) Validate() error {
+	if r.CapabilityId == 0 {
+		return errors.New("capability_id is required")
+	}
+	if r.FlowStepId == 0 {
+		return errors.New("flow_step_id is required")
+	}
+	if len(strings.TrimSpace(r.Target)) == 0 {
+		return errors.New("target is required")
+	}
+	if len(strings.TrimSpace(r.Protocol)) == 0 {
+		return errors.New("protocol is required")
+	}
+	return nil
+}
+
+func (r *createCapabilityStepRequest) ToParams() db.CreateCapabilityStepParams {
+	return db.CreateCapabilityStepParams{
+		CapabilityID: r.CapabilityId,
+		FlowStepID:   r.FlowStepId,
+		Target: pgtype.Text{
+			Valid:  r.Target != "",
+			String: r.Target,
+		},
+		Protocol: pgtype.Text{
+			Valid:  r.Protocol != "",
+			String: r.Protocol,
+		},
+		Timestamp: pgtype.Timestamptz{
+			Valid: true,
+			Time:  time.Now().UTC(),
+		},
+	}
+}

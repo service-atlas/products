@@ -43,12 +43,59 @@ func (q *Queries) CreateCapability(ctx context.Context, arg CreateCapabilityPara
 	return i, err
 }
 
+const createCapabilityStep = `-- name: CreateCapabilityStep :one
+INSERT INTO capability_steps(capability_id, flow_step_id, protocol, target, created_at, updated_at)
+VALUES($1, $2, $3, $4, $5, $5)
+RETURNING id, capability_id, flow_step_id, protocol, target, created_at, updated_at
+`
+
+type CreateCapabilityStepParams struct {
+	CapabilityID int                `json:"capability_id"`
+	FlowStepID   int                `json:"flow_step_id"`
+	Protocol     pgtype.Text        `json:"protocol"`
+	Target       pgtype.Text        `json:"target"`
+	Timestamp    pgtype.Timestamptz `json:"timestamp"`
+}
+
+func (q *Queries) CreateCapabilityStep(ctx context.Context, arg CreateCapabilityStepParams) (CapabilityStep, error) {
+	row := q.db.QueryRow(ctx, createCapabilityStep,
+		arg.CapabilityID,
+		arg.FlowStepID,
+		arg.Protocol,
+		arg.Target,
+		arg.Timestamp,
+	)
+	var i CapabilityStep
+	err := row.Scan(
+		&i.ID,
+		&i.CapabilityID,
+		&i.FlowStepID,
+		&i.Protocol,
+		&i.Target,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const deleteCapability = `-- name: DeleteCapability :execrows
 DELETE FROM capabilities WHERE id = $1
 `
 
 func (q *Queries) DeleteCapability(ctx context.Context, id int) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteCapability, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteCapabilityStep = `-- name: DeleteCapabilityStep :execrows
+DELETE FROM capability_steps WHERE capability_id = $1
+`
+
+func (q *Queries) DeleteCapabilityStep(ctx context.Context, capabilityID int) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteCapabilityStep, capabilityID)
 	if err != nil {
 		return 0, err
 	}
@@ -160,6 +207,38 @@ func (q *Queries) GetCapability(ctx context.Context, id int) (Capability, error)
 	return i, err
 }
 
+const getCapabilitySteps = `-- name: GetCapabilitySteps :many
+SELECT id, capability_id, flow_step_id, protocol, target, created_at, updated_at FROM capability_steps WHERE capability_id = $1
+`
+
+func (q *Queries) GetCapabilitySteps(ctx context.Context, capabilityID int) ([]CapabilityStep, error) {
+	rows, err := q.db.Query(ctx, getCapabilitySteps, capabilityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CapabilityStep
+	for rows.Next() {
+		var i CapabilityStep
+		if err := rows.Scan(
+			&i.ID,
+			&i.CapabilityID,
+			&i.FlowStepID,
+			&i.Protocol,
+			&i.Target,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFlow = `-- name: GetFlow :one
 SELECT name FROM flows WHERE id = $1
 `
@@ -169,6 +248,16 @@ func (q *Queries) GetFlow(ctx context.Context, id int) (string, error) {
 	var name string
 	err := row.Scan(&name)
 	return name, err
+}
+
+const getFlowStep = `-- name: GetFlowStep :one
+SELECT id FROM flow_steps WHERE id = $1
+`
+
+func (q *Queries) GetFlowStep(ctx context.Context, id int) (int, error) {
+	row := q.db.QueryRow(ctx, getFlowStep, id)
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getProduct = `-- name: GetProduct :one

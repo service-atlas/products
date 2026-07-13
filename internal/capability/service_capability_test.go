@@ -19,39 +19,95 @@ type mockCapabilityQuerier struct {
 	getCapabilityFunc            func(ctx context.Context, id int) (db.Capability, error)
 	getFlowFunc                  func(ctx context.Context, id int) (string, error)
 	getProductFunc               func(ctx context.Context, id int) (string, error)
+	getFlowStepFunc              func(ctx context.Context, id int) (int, error)
 	updateCapabilityFunc         func(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error)
+	createCapabilityStepFunc     func(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error)
+	getCapabilityStepsFunc       func(ctx context.Context, id int) ([]db.CapabilityStep, error)
+	deleteCapabilityStepFunc     func(ctx context.Context, id int) (int64, error)
 }
 
 func (m *mockCapabilityQuerier) CreateCapability(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error) {
-	return m.createCapabilityFunc(ctx, arg)
+	if m != nil && m.createCapabilityFunc != nil {
+		return m.createCapabilityFunc(ctx, arg)
+	}
+	return db.Capability{}, nil
 }
 
 func (m *mockCapabilityQuerier) DeleteCapability(ctx context.Context, id int) (int64, error) {
-	return m.deleteCapabilityFunc(ctx, id)
+	if m != nil && m.deleteCapabilityFunc != nil {
+		return m.deleteCapabilityFunc(ctx, id)
+	}
+	return 1, nil
 }
 
 func (m *mockCapabilityQuerier) GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]db.GetCapabilitiesByFlowRow, error) {
-	return m.getCapabilitiesByFlowFunc(ctx, flowID)
+	if m != nil && m.getCapabilitiesByFlowFunc != nil {
+		return m.getCapabilitiesByFlowFunc(ctx, flowID)
+	}
+	return nil, nil
 }
 
 func (m *mockCapabilityQuerier) GetCapabilitiesByProduct(ctx context.Context, productID int) ([]db.Capability, error) {
-	return m.getCapabilitiesByProductFunc(ctx, productID)
+	if m != nil && m.getCapabilitiesByProductFunc != nil {
+		return m.getCapabilitiesByProductFunc(ctx, productID)
+	}
+	return nil, nil
 }
 
 func (m *mockCapabilityQuerier) GetCapability(ctx context.Context, id int) (db.Capability, error) {
-	return m.getCapabilityFunc(ctx, id)
+	if m != nil && m.getCapabilityFunc != nil {
+		return m.getCapabilityFunc(ctx, id)
+	}
+	return db.Capability{ID: id}, nil
 }
 
 func (m *mockCapabilityQuerier) GetFlow(ctx context.Context, id int) (string, error) {
-	return m.getFlowFunc(ctx, id)
+	if m != nil && m.getFlowFunc != nil {
+		return m.getFlowFunc(ctx, id)
+	}
+	return "Test Flow", nil
 }
 
 func (m *mockCapabilityQuerier) GetProduct(ctx context.Context, id int) (string, error) {
-	return m.getProductFunc(ctx, id)
+	if m != nil && m.getProductFunc != nil {
+		return m.getProductFunc(ctx, id)
+	}
+	return "Test Product", nil
 }
 
 func (m *mockCapabilityQuerier) UpdateCapability(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error) {
-	return m.updateCapabilityFunc(ctx, arg)
+	if m != nil && m.updateCapabilityFunc != nil {
+		return m.updateCapabilityFunc(ctx, arg)
+	}
+	return 1, nil
+}
+
+func (m *mockCapabilityQuerier) CreateCapabilityStep(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error) {
+	if m != nil && m.createCapabilityStepFunc != nil {
+		return m.createCapabilityStepFunc(ctx, arg)
+	}
+	return db.CapabilityStep{}, nil
+}
+
+func (m *mockCapabilityQuerier) GetCapabilitySteps(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+	if m != nil && m.getCapabilityStepsFunc != nil {
+		return m.getCapabilityStepsFunc(ctx, id)
+	}
+	return nil, nil
+}
+
+func (m *mockCapabilityQuerier) DeleteCapabilityStep(ctx context.Context, id int) (int64, error) {
+	if m != nil && m.deleteCapabilityStepFunc != nil {
+		return m.deleteCapabilityStepFunc(ctx, id)
+	}
+	return 1, nil
+}
+
+func (m *mockCapabilityQuerier) GetFlowStep(ctx context.Context, id int) (int, error) {
+	if m != nil && m.getFlowStepFunc != nil {
+		return m.getFlowStepFunc(ctx, id)
+	}
+	return 1, nil
 }
 
 func TestService_CreateCapability(t *testing.T) {

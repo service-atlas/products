@@ -37,3 +37,17 @@ SELECT name FROM flows WHERE id = @id;
 
 -- name: GetProduct :one
 SELECT name FROM products WHERE id = @id;
+
+-- name: GetFlowStep :one
+SELECT id FROM flow_steps WHERE id = @id;
+
+-- name: CreateCapabilityStep :one
+INSERT INTO capability_steps(capability_id, flow_step_id, protocol, target, created_at, updated_at)
+VALUES(@capability_id, @flow_step_id, @protocol, @target, @timestamp, @timestamp)
+RETURNING *;
+
+-- name: GetCapabilitySteps :many
+SELECT * FROM capability_steps WHERE capability_id = @capability_id;
+
+-- name: DeleteCapabilityStep :execrows
+DELETE FROM capability_steps WHERE capability_id = @capability_id;
