@@ -3,8 +3,12 @@ package capability
 import (
 	"context"
 	"errors"
+	"products/internal"
 	"products/internal/capability/db"
+	"strings"
 	"testing"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type mockQuerier struct {
@@ -33,6 +37,42 @@ func (m *mockQuerier) CreateCapabilityStep(ctx context.Context, arg db.CreateCap
 		return m.CreateCapabilityStepFunc(ctx, arg)
 	}
 	return db.CapabilityStep{}, nil
+}
+
+func (m *mockQuerier) GetFlow(ctx context.Context, id int) (string, error) {
+	return "", nil
+}
+
+func (m *mockQuerier) GetProduct(ctx context.Context, id int) (string, error) {
+	return "", nil
+}
+
+func (m *mockQuerier) CreateCapability(ctx context.Context, arg db.CreateCapabilityParams) (db.Capability, error) {
+	return db.Capability{}, nil
+}
+
+func (m *mockQuerier) DeleteCapability(ctx context.Context, id int) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockQuerier) DeleteCapabilityStep(ctx context.Context, capabilityID int) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockQuerier) GetCapabilitiesByFlow(ctx context.Context, flowID int) ([]db.GetCapabilitiesByFlowRow, error) {
+	return nil, nil
+}
+
+func (m *mockQuerier) GetCapabilitiesByProduct(ctx context.Context, productID int) ([]db.Capability, error) {
+	return nil, nil
+}
+
+func (m *mockQuerier) GetCapabilitySteps(ctx context.Context, capabilityID int) ([]db.CapabilityStep, error) {
+	return nil, nil
+}
+
+func (m *mockQuerier) UpdateCapability(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error) {
+	return 0, nil
 }
 
 func TestCreateCapabilityStep(t *testing.T) {
@@ -65,18 +105,102 @@ func TestCreateCapabilityStep(t *testing.T) {
 	t.Run("CapabilityNotFound", func(t *testing.T) {
 		mock := &mockQuerier{
 			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
-				return db.Capability{}, errors.New("not found")
+				return db.Capability{}, pgx.ErrNoRows
 			},
 			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
 				return 1, nil
 			},
 		}
 		service := &postgresService{queries: mock}
-		req := createCapabilityStepRequest{CapabilityId: 1, FlowStepId: 1, Target: "Target", Protocol: "Protocol"}
+		req := createCapabilityStepRequest{CapabilityId: 1, FlowStepId: 2, Target: "Target", Protocol: "Protocol"}
 
 		_, err := service.CreateCapabilityStep(ctx, req)
 		if err == nil {
 			t.Fatal("expected error, got nil")
+		}
+
+		if pathErr, ok := errors.AsType[internal.NotFoundError](err); ok {
+			e := pathErr.Error()
+			if !strings.Contains(e, "1") {
+				t.Errorf("expected ID 1, got error %v", e)
+			}
+		} else if customErr, ok := errors.AsType[NotFoundError](err); ok {
+			// This is the local NotFoundError which might be returned by GetCapability
+			// However, CreateCapabilityStep is supposed to catch it and return internal.NotFoundError
+			t.Errorf("expected internal.NotFoundError, got local NotFoundError: %v", customErr)
+		} else {
+			t.Errorf("expected internal.NotFoundError, got %T: %v", err, err)
+		}
+	})
+
+	t.Run("CapabilityGeneralError", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{}, errors.New("some db error")
+			},
+			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
+				return 1, nil
+			},
+		}
+		service := &postgresService{queries: mock}
+		req := createCapabilityStepRequest{CapabilityId: 1, FlowStepId: 2, Target: "Target", Protocol: "Protocol"}
+
+		_, err := service.CreateCapabilityStep(ctx, req)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if err.Error() != "error getting capability" {
+			t.Errorf("expected 'error getting capability', got %v", err.Error())
+		}
+	})
+
+	t.Run("FlowStepNotFound", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{ID: 1}, nil
+			},
+			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
+				return 0, pgx.ErrNoRows
+			},
+		}
+		service := &postgresService{queries: mock}
+		req := createCapabilityStepRequest{CapabilityId: 1, FlowStepId: 2, Target: "Target", Protocol: "Protocol"}
+
+		_, err := service.CreateCapabilityStep(ctx, req)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if pathErr, ok := errors.AsType[internal.NotFoundError](err); ok {
+			e := pathErr.Error()
+			if !strings.Contains(e, "2") {
+				t.Errorf("expected ID 2, got error %v", e)
+			}
+		} else {
+			t.Errorf("expected NotFoundError, got %T", err)
+		}
+	})
+
+	t.Run("FlowStepGeneralError", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{ID: 1}, nil
+			},
+			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
+				return 0, errors.New("some db error")
+			},
+		}
+		service := &postgresService{queries: mock}
+		req := createCapabilityStepRequest{CapabilityId: 1, FlowStepId: 2, Target: "Target", Protocol: "Protocol"}
+
+		_, err := service.CreateCapabilityStep(ctx, req)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if err.Error() != "error getting flow step" {
+			t.Errorf("expected 'error getting flow step', got %v", err.Error())
 		}
 	})
 
