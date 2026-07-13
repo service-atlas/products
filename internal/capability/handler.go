@@ -174,7 +174,7 @@ func (h *handler) CreateCapabilityStep(w http.ResponseWriter, r *http.Request) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return
 		}
-		slog.Error("Failed to create capability step", slog.String("error", err.Error()))
+		internal.LoggerFromContext(r.Context()).Error("Failed to create capability step", slog.String("error", err.Error()))
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create capability step"}, http.StatusInternalServerError)
 		return
 	}
