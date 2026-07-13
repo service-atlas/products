@@ -71,7 +71,7 @@ examples:
 docs: |-
   # Create Capability Step
 
-  Creates a new capability for a specific flow.
+  Creates a new capability step for a capability and flow step
 
   ## Possible Status Codes
   | Status Code | Notes |
