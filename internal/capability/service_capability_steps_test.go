@@ -17,6 +17,7 @@ type mockQuerier struct {
 	CreateCapabilityStepFunc func(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error)
 	GetFlowStepFunc          func(ctx context.Context, id int) (int, error)
 	DeleteCapabilityStepFunc func(ctx context.Context, id int) (int64, error)
+	GetCapabilityStepsFunc   func(ctx context.Context, id int) ([]db.CapabilityStep, error)
 }
 
 func (m *mockQuerier) GetFlowStep(ctx context.Context, id int) (int, error) {
@@ -72,6 +73,9 @@ func (m *mockQuerier) GetCapabilitiesByProduct(ctx context.Context, productID in
 }
 
 func (m *mockQuerier) GetCapabilitySteps(ctx context.Context, capabilityID int) ([]db.CapabilityStep, error) {
+	if m != nil && m.GetCapabilityStepsFunc != nil {
+		return m.GetCapabilityStepsFunc(ctx, capabilityID)
+	}
 	return nil, nil
 }
 
@@ -278,6 +282,64 @@ func TestDeleteCapabilityStep(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
+		if err.Error() != "db error" {
+			t.Errorf("expected 'db error', got %v", err.Error())
+		}
+	})
+}
+
+func TestGetCapabilitySteps(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("Success", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{ID: 1}, nil
+			},
+			GetCapabilityStepsFunc: func(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+				return []db.CapabilityStep{{ID: 1, CapabilityID: 1}, {ID: 2, CapabilityID: 1}}, nil
+			},
+		}
+		service := &postgresService{queries: mock}
+
+		steps, err := service.GetCapabilitySteps(ctx, 1)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(steps) != 2 {
+			t.Errorf("expected 2 steps, got %d", len(steps))
+		}
+	})
+
+	t.Run("CapabilityNotFound", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{}, pgx.ErrNoRows
+			},
+		}
+		service := &postgresService{queries: mock}
+
+		_, err := service.GetCapabilitySteps(ctx, 1)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+
+	t.Run("GeneralError", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{ID: 1}, nil
+			},
+			GetCapabilityStepsFunc: func(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+				return nil, errors.New("db error")
+			},
+		}
+		service := &postgresService{queries: mock}
+
+		_, err := service.GetCapabilitySteps(ctx, 1)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
 		if err.Error() != "db error" {
 			t.Errorf("expected 'db error', got %v", err.Error())
 		}

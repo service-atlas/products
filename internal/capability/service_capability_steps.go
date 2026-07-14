@@ -70,3 +70,15 @@ func (s *postgresService) DeleteCapabilityStep(ctx context.Context, id int) erro
 	}
 	return nil
 }
+
+func (s *postgresService) GetCapabilitySteps(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+	_, err := s.GetCapability(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	steps, err := s.queries.GetCapabilitySteps(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return steps, nil
+}

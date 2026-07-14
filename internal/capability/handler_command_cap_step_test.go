@@ -173,3 +173,69 @@ func TestHandler_DeleteCapabilityStep(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_GetCapabilitySteps(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		mockSetup      func(m *mockCapabilityService)
+		expectedStatus int
+	}{
+		{
+			name: "Success",
+			id:   "1",
+			mockSetup: func(m *mockCapabilityService) {
+				m.getCapabilityStepsFunc = func(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+					return []db.CapabilityStep{{ID: 1, CapabilityID: 1}}, nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Invalid ID",
+			id:             "abc",
+			mockSetup:      func(m *mockCapabilityService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "Capability Not Found",
+			id:   "999",
+			mockSetup: func(m *mockCapabilityService) {
+				m.getCapabilityStepsFunc = func(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+					return nil, internal.NewNotFoundError(999, "Capability not found")
+				}
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "Service Error",
+			id:   "1",
+			mockSetup: func(m *mockCapabilityService) {
+				m.getCapabilityStepsFunc = func(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+					return nil, errors.New("service error")
+				}
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/capabilities/"+tt.id+"/steps", nil)
+			req.SetPathValue("id", tt.id)
+			w := httptest.NewRecorder()
+
+			mockSvc := &mockCapabilityService{}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockSvc)
+			}
+
+			h := &handler{service: mockSvc}
+			h.GetCapabilitySteps(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
