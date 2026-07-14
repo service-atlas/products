@@ -1,0 +1,65 @@
+info:
+  name: Delete Capability Step
+  type: http
+  seq: 8
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/capability-steps/:id"
+  params:
+    - name: id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "204"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: example
+    request:
+      url: "{{baseUrl}}/capability-steps/:id"
+      method: DELETE
+      params:
+        - name: id
+          value: "1"
+          type: path
+      body:
+        type: json
+        data: ""
+    response:
+      status: 204
+      statusText: No Content
+      headers:
+        - name: vary
+          value: Origin
+        - name: date
+          value: Tue, 14 Jul 2026 00:11:00 GMT
+      body:
+        type: text
+        data: ""
+
+docs: |-
+  # Delete Capability Step
+
+  Delete a capability step by id 
+
+  ## Possible Status Codes
+  | Status Code | Notes |
+  | -- | --|
+  | 204 | Success |
+  | 400 | Invalid id |
+  | 404 | Capability step not found |
+  | 500 | Internal server error |
