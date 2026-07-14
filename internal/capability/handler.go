@@ -192,8 +192,13 @@ func (h *handler) DeleteCapabilityStep(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	err := h.service.DeleteCapabilityStep(ctxWithTimeout, id)
 	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability step not found", Instance: strconv.Itoa(id)}, http.StatusNotFound)
+			return
+		}
 		internal.LoggerFromContext(r.Context()).Error("Error deleting capability step", slog.String("error", err.Error()))
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete capability step", Instance: strconv.Itoa(id)}, http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusNoContent)
 }

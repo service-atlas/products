@@ -16,6 +16,7 @@ type mockQuerier struct {
 	GetCapabilityFunc        func(ctx context.Context, id int) (db.Capability, error)
 	CreateCapabilityStepFunc func(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error)
 	GetFlowStepFunc          func(ctx context.Context, id int) (int, error)
+	DeleteCapabilityStepFunc func(ctx context.Context, id int) (int64, error)
 }
 
 func (m *mockQuerier) GetFlowStep(ctx context.Context, id int) (int, error) {
@@ -55,7 +56,10 @@ func (m *mockQuerier) DeleteCapability(ctx context.Context, id int) (int64, erro
 	return 0, nil
 }
 
-func (m *mockQuerier) DeleteCapabilityStep(ctx context.Context, capabilityID int) (int64, error) {
+func (m *mockQuerier) DeleteCapabilityStep(ctx context.Context, id int) (int64, error) {
+	if m != nil && m.DeleteCapabilityStepFunc != nil {
+		return m.DeleteCapabilityStepFunc(ctx, id)
+	}
 	return 0, nil
 }
 
@@ -222,6 +226,60 @@ func TestCreateCapabilityStep(t *testing.T) {
 		_, err := service.CreateCapabilityStep(ctx, req)
 		if err == nil {
 			t.Fatal("expected error, got nil")
+		}
+	})
+}
+
+func TestDeleteCapabilityStep(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("Success", func(t *testing.T) {
+		mock := &mockQuerier{
+			DeleteCapabilityStepFunc: func(ctx context.Context, id int) (int64, error) {
+				return 1, nil
+			},
+		}
+		service := &postgresService{queries: mock}
+
+		err := service.DeleteCapabilityStep(ctx, 1)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		mock := &mockQuerier{
+			DeleteCapabilityStepFunc: func(ctx context.Context, id int) (int64, error) {
+				return 0, nil
+			},
+		}
+		service := &postgresService{queries: mock}
+
+		err := service.DeleteCapabilityStep(ctx, 1)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if _, ok := errors.AsType[internal.NotFoundError](err); !ok {
+			t.Errorf("expected internal.NotFoundError, got %T", err)
+		}
+	})
+
+	t.Run("GeneralError", func(t *testing.T) {
+		mock := &mockQuerier{
+			DeleteCapabilityStepFunc: func(ctx context.Context, id int) (int64, error) {
+				return 0, errors.New("db error")
+			},
+		}
+		service := &postgresService{queries: mock}
+
+		err := service.DeleteCapabilityStep(ctx, 1)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if err.Error() != "db error" {
+			t.Errorf("expected 'db error', got %v", err.Error())
 		}
 	})
 }
