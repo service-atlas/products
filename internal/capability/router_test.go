@@ -48,6 +48,11 @@ func (m *mockService) CreateCapabilityStep(_ context.Context, _ createCapability
 	return db.CapabilityStep{}, nil
 }
 
+func (m *mockService) DeleteCapabilityStep(_ context.Context, _ int) error {
+	m.called["DeleteCapabilityStep"] = true
+	return nil
+}
+
 func TestRegisterRoutesWithHandler(t *testing.T) {
 	h := newHandler(newMockService())
 
@@ -73,6 +78,7 @@ func TestRegisterRoutesWithHandler(t *testing.T) {
 		"PUT /capabilities/{id}",
 		"DELETE /capabilities/{id}",
 		"POST /capability-steps/",
+		"DELETE /capability-steps/{id}",
 	}
 
 	for _, route := range want {
