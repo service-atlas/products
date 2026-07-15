@@ -19,7 +19,7 @@ type mockCapabilityQuerier struct {
 	getCapabilityFunc            func(ctx context.Context, id int) (db.Capability, error)
 	getFlowFunc                  func(ctx context.Context, id int) (string, error)
 	getProductFunc               func(ctx context.Context, id int) (string, error)
-	getFlowStepFunc              func(ctx context.Context, id int) (int, error)
+	getFlowStepFunc              func(ctx context.Context, id int) (db.FlowStep, error)
 	updateCapabilityFunc         func(ctx context.Context, arg db.UpdateCapabilityParams) (int64, error)
 	createCapabilityStepFunc     func(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error)
 	getCapabilityStepsFunc       func(ctx context.Context, id int) ([]db.CapabilityStep, error)
@@ -103,11 +103,11 @@ func (m *mockCapabilityQuerier) DeleteCapabilityStep(ctx context.Context, id int
 	return 1, nil
 }
 
-func (m *mockCapabilityQuerier) GetFlowStep(ctx context.Context, id int) (int, error) {
+func (m *mockCapabilityQuerier) GetFlowStep(ctx context.Context, id int) (db.FlowStep, error) {
 	if m != nil && m.getFlowStepFunc != nil {
 		return m.getFlowStepFunc(ctx, id)
 	}
-	return 1, nil
+	return db.FlowStep{}, nil
 }
 
 func (m *mockCapabilityQuerier) GetFlowsFromSteps(ctx context.Context, capabilityId int) ([]int, error) {
@@ -151,7 +151,7 @@ func TestService_CreateCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, NotFoundError{}) {
+				if !errors.Is(err, internal.NotFoundError{}) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -169,7 +169,7 @@ func TestService_CreateCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, NotFoundError{}) {
+				if !errors.Is(err, internal.NotFoundError{}) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -366,7 +366,7 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, NotFoundError{}) {
+				if !errors.Is(err, internal.NotFoundError{}) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -476,7 +476,7 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, NotFoundError{}) {
+				if !errors.Is(err, internal.NotFoundError{}) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -579,7 +579,7 @@ func TestService_UpdateCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, NotFoundError{}) {
+				if !errors.Is(err, internal.NotFoundError{}) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
