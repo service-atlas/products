@@ -16,6 +16,7 @@ type capabilityService interface {
 	DeleteCapability(ctx context.Context, id int) error
 	CreateCapabilityStep(ctx context.Context, req createCapabilityStepRequest) (db.CapabilityStep, error)
 	DeleteCapabilityStep(ctx context.Context, id int) error
+	GetCapabilitySteps(ctx context.Context, id int) ([]db.CapabilityStep, error)
 }
 
 func RegisterRoutes(r chi.Router, dbConn db.DBTX) {
@@ -32,6 +33,7 @@ func registerRoutesWithHandler(r chi.Router, capHandler *handler) {
 		u.Get("/{id}", capHandler.GetCapability)
 		u.Put("/{id}", capHandler.UpdateCapability)
 		u.Delete("/{id}", capHandler.DeleteCapability)
+		u.Get("/{id}/steps", capHandler.GetCapabilitySteps)
 	})
 	r.Route("/capability-steps", func(u chi.Router) {
 		u.Post("/", capHandler.CreateCapabilityStep)

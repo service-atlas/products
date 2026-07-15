@@ -37,9 +37,7 @@ func (s *postgresService) GetCapability(ctx context.Context, id int) (db.Capabil
 	capability, err := s.queries.GetCapability(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return db.Capability{}, NotFoundError{
-				"Capability not found",
-			}
+			return db.Capability{}, internal.NewNotFoundError(id, "capability")
 		}
 		return db.Capability{}, err
 	}

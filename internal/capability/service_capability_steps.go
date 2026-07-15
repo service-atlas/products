@@ -17,7 +17,7 @@ func (s *postgresService) CreateCapabilityStep(ctx context.Context, req createCa
 	wg.Go(func() {
 		_, err := s.GetCapability(ctx, req.CapabilityId)
 		if err != nil {
-			if _, ok := errors.AsType[NotFoundError](err); ok || errors.Is(err, pgx.ErrNoRows) {
+			if _, ok := errors.AsType[internal.NotFoundError](err); ok || errors.Is(err, pgx.ErrNoRows) {
 				errChan <- "capability_not_found"
 			} else {
 				internal.LoggerFromContext(ctx).Error("error getting capability in create capability", slog.String("error", err.Error()))
@@ -69,4 +69,19 @@ func (s *postgresService) DeleteCapabilityStep(ctx context.Context, id int) erro
 		return internal.NewNotFoundError(id, "capability-step")
 	}
 	return nil
+}
+
+func (s *postgresService) GetCapabilitySteps(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+	_, err := s.GetCapability(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	steps, err := s.queries.GetCapabilitySteps(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if steps == nil {
+		steps = []db.CapabilityStep{}
+	}
+	return steps, nil
 }

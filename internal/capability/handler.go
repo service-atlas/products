@@ -202,3 +202,24 @@ func (h *handler) DeleteCapabilityStep(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *handler) GetCapabilitySteps(w http.ResponseWriter, r *http.Request) {
+	id, ok := internal.GetIntFromRequestPath("id", r)
+	if !ok {
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
+		return
+	}
+	ctxWithTimeout, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	steps, err := h.service.GetCapabilitySteps(ctxWithTimeout, id)
+	if err != nil {
+		if errors.Is(err, internal.NotFoundError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
+			return
+		}
+		slog.Error("Failed to fetch capability steps", slog.Int("capability_id", id), slog.String("error", err.Error()))
+		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch capability steps"}, http.StatusInternalServerError)
+		return
+	}
+	internal.WriteJSONResponse(w, r, http.StatusOK, steps)
+}
