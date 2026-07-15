@@ -260,6 +260,32 @@ func (q *Queries) GetFlowStep(ctx context.Context, id int) (int, error) {
 	return id, err
 }
 
+const getFlowsFromSteps = `-- name: GetFlowsFromSteps :many
+SELECT DISTINCT flow_id from flow_steps fs
+JOIN capability_steps cs on fs.id = cs.flow_step_id
+WHERE cs.capability_id = $1
+`
+
+func (q *Queries) GetFlowsFromSteps(ctx context.Context, capabilityID int) ([]int, error) {
+	rows, err := q.db.Query(ctx, getFlowsFromSteps, capabilityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int
+	for rows.Next() {
+		var flow_id int
+		if err := rows.Scan(&flow_id); err != nil {
+			return nil, err
+		}
+		items = append(items, flow_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProduct = `-- name: GetProduct :one
 SELECT name FROM products WHERE id = $1
 `

@@ -19,6 +19,7 @@ type Querier interface {
 	GetCapabilitySteps(ctx context.Context, capabilityID int) ([]CapabilityStep, error)
 	GetFlow(ctx context.Context, id int) (string, error)
 	GetFlowStep(ctx context.Context, id int) (int, error)
+	GetFlowsFromSteps(ctx context.Context, capabilityID int) ([]int, error)
 	GetProduct(ctx context.Context, id int) (string, error)
 	UpdateCapability(ctx context.Context, arg UpdateCapabilityParams) (int64, error)
 }

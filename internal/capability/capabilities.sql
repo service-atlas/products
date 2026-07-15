@@ -51,3 +51,8 @@ SELECT * FROM capability_steps WHERE capability_id = @capability_id;
 
 -- name: DeleteCapabilityStep :execrows
 DELETE FROM capability_steps WHERE capability_id = @capability_id;
+
+-- name: GetFlowsFromSteps :many
+SELECT DISTINCT flow_id from flow_steps fs
+JOIN capability_steps cs on fs.id = cs.flow_step_id
+WHERE cs.capability_id = @capability_id;

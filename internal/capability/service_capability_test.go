@@ -110,6 +110,10 @@ func (m *mockCapabilityQuerier) GetFlowStep(ctx context.Context, id int) (int, e
 	return 1, nil
 }
 
+func (m *mockCapabilityQuerier) GetFlowsFromSteps(ctx context.Context, capabilityId int) ([]int, error) {
+	return nil, nil
+}
+
 func TestService_CreateCapability(t *testing.T) {
 	tests := []struct {
 		name          string
