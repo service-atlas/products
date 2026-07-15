@@ -70,7 +70,7 @@ docs: |-
   ## Possible Status Codes
   | Status Code | Notes |
   | -- | --|
-  | 200 | Created |
+  | 200 | Ok |
   | 400 | Invalid id |
   | 404 | Capability not found |
   | 500 | Internal server error |
