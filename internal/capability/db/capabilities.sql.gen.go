@@ -251,13 +251,21 @@ func (q *Queries) GetFlow(ctx context.Context, id int) (string, error) {
 }
 
 const getFlowStep = `-- name: GetFlowStep :one
-SELECT id FROM flow_steps WHERE id = $1
+SELECT id, flow_id, current, next, created_at, updated_at FROM flow_steps WHERE id = $1
 `
 
-func (q *Queries) GetFlowStep(ctx context.Context, id int) (int, error) {
+func (q *Queries) GetFlowStep(ctx context.Context, id int) (FlowStep, error) {
 	row := q.db.QueryRow(ctx, getFlowStep, id)
-	err := row.Scan(&id)
-	return id, err
+	var i FlowStep
+	err := row.Scan(
+		&i.ID,
+		&i.FlowID,
+		&i.Current,
+		&i.Next,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getFlowsFromSteps = `-- name: GetFlowsFromSteps :many
