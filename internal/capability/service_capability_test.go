@@ -155,7 +155,7 @@ func TestService_CreateCapability(t *testing.T) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
-			expectedError: "Flow not found",
+			expectedError: "product not found with ID: 999",
 		},
 		{
 			name: "Flow Not Found - Empty Name",
@@ -173,7 +173,7 @@ func TestService_CreateCapability(t *testing.T) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
-			expectedError: "Flow not found",
+			expectedError: "product not found with ID: 999",
 		},
 		{
 			name: "Database Error on GetFlow",
@@ -370,7 +370,7 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
-			expectedError: "Product not found",
+			expectedError: "product not found with ID: 999",
 		},
 		{
 			name: "Database Error on GetProduct",
@@ -480,7 +480,7 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
-			expectedError: "Flow not found",
+			expectedError: "flow not found with ID: 999",
 		},
 		{
 			name: "Database Error on GetFlow",
