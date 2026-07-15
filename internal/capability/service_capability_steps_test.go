@@ -132,10 +132,6 @@ func TestCreateCapabilityStep(t *testing.T) {
 			if !strings.Contains(e, "1") {
 				t.Errorf("expected ID 1, got error %v", e)
 			}
-		} else if customErr, ok := errors.AsType[NotFoundError](err); ok {
-			// This is the local NotFoundError which might be returned by GetCapability
-			// However, CreateCapabilityStep is supposed to catch it and return internal.NotFoundError
-			t.Errorf("expected internal.NotFoundError, got local NotFoundError: %v", customErr)
 		} else {
 			t.Errorf("expected internal.NotFoundError, got %T: %v", err, err)
 		}

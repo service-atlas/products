@@ -265,11 +265,11 @@ func TestService_GetCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, NotFoundError{}) {
+				if !errors.Is(err, internal.NotFoundError{}) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
-			expectedError: "Capability not found",
+			expectedError: "capability not found with ID: 999",
 		},
 		{
 			name: "Database Error",
