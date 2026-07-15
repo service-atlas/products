@@ -228,6 +228,26 @@ func TestCreateCapabilityStep(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 	})
+
+	t.Run("NoStepsFound", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{ID: 1}, nil
+			},
+			GetCapabilityStepsFunc: func(ctx context.Context, id int) ([]db.CapabilityStep, error) {
+				return nil, nil
+			},
+		}
+		service := &postgresService{queries: mock}
+
+		steps, err := service.GetCapabilitySteps(ctx, 1)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if steps == nil || len(steps) != 0 {
+			t.Errorf("expected empty non-nil slice, got %v", steps)
+		}
+	})
 }
 
 func TestDeleteCapabilityStep(t *testing.T) {
