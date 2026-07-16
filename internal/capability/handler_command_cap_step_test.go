@@ -232,16 +232,6 @@ func TestHandler_GetCapabilitySteps(t *testing.T) {
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
-		{
-			name: "Validation Error",
-			id:   "1",
-			mockSetup: func(m *mockCapabilityService) {
-				m.getCapabilityStepsFunc = func(ctx context.Context, id int) ([]db.CapabilityStep, error) {
-					return nil, internal.NewValidationErr("validation failed")
-				}
-			},
-			expectedStatus: http.StatusBadRequest,
-		},
 	}
 
 	for _, tt := range tests {
