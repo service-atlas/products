@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"errors"
 	"strconv"
 )
 
@@ -15,8 +14,7 @@ func (e NotFoundError) Error() string {
 }
 
 func (e NotFoundError) Is(target error) bool {
-	var notFoundError NotFoundError
-	ok := errors.As(target, &notFoundError)
+	_, ok := target.(NotFoundError)
 	return ok
 }
 
@@ -29,8 +27,7 @@ func (e ValidationError) Error() string {
 }
 
 func (e ValidationError) Is(target error) bool {
-	var validationErr ValidationError
-	ok := errors.As(target, &validationErr)
+	_, ok := target.(ValidationError)
 	return ok
 }
 
