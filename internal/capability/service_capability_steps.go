@@ -48,6 +48,7 @@ func (s *postgresService) CreateCapabilityStep(ctx context.Context, req createCa
 		if len(flowIds) > 1 {
 			logger.Error("capability steps from database contain multiple flows", slog.Int("capability_id", req.CapabilityId))
 			errChan <- errors.New("multiple flow ids found in existing steps")
+			return
 		}
 		if len(flowIds) == 1 && flowIds[0] != flowStep.FlowID {
 			errChan <- internal.NewValidationErr("flow step doesn't belong to already bound flow")

@@ -174,6 +174,9 @@ func (h *handler) CreateCapabilityStep(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return
+		} else if errors.Is(err, internal.ValidationError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusBadRequest)
+			return
 		}
 		internal.LoggerFromContext(r.Context()).Error("Failed to create capability step", slog.String("error", err.Error()))
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create capability step"}, http.StatusInternalServerError)
@@ -215,6 +218,9 @@ func (h *handler) GetCapabilitySteps(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, internal.NotFoundError{}) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
+			return
+		} else if errors.Is(err, internal.ValidationError{}) {
+			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Flow step does not belong to linked flow"}, http.StatusBadRequest)
 			return
 		}
 		slog.Error("Failed to fetch capability steps", slog.Int("capability_id", id), slog.String("error", err.Error()))
