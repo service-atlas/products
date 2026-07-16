@@ -11,19 +11,15 @@ import (
 )
 
 func (s *postgresService) CreateCapability(ctx context.Context, req createCapabilityRequest) (db.Capability, error) {
-	name, err := s.queries.GetProduct(ctx, req.ProductId)
+	productName, err := s.queries.GetProduct(ctx, req.ProductId)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return db.Capability{}, NotFoundError{
-				"Flow not found",
-			}
+			return db.Capability{}, internal.NewNotFoundError(req.ProductId, "product")
 		}
 		return db.Capability{}, err
 	}
-	if name == "" {
-		return db.Capability{}, NotFoundError{
-			"Flow not found",
-		}
+	if productName == "" {
+		return db.Capability{}, internal.NewNotFoundError(req.ProductId, "product")
 	}
 	newCap, err := s.queries.CreateCapability(ctx, req.ToParams())
 	if err != nil {
@@ -48,9 +44,7 @@ func (s *postgresService) GetCapabilitiesByProduct(ctx context.Context, id int) 
 	_, err := s.queries.GetProduct(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, NotFoundError{
-				"Product not found",
-			}
+			return nil, internal.NewNotFoundError(id, "product")
 		}
 		return nil, err
 	}
@@ -68,9 +62,7 @@ func (s *postgresService) GetCapabilitiesByFlow(ctx context.Context, id int) ([]
 	_, err := s.queries.GetFlow(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, NotFoundError{
-				"Flow not found",
-			}
+			return nil, internal.NewNotFoundError(id, "flow")
 		}
 		return nil, err
 	}
@@ -90,12 +82,12 @@ func (s *postgresService) UpdateCapability(ctx context.Context, req updateCapabi
 		return db.Capability{}, err
 	}
 	if rowsAffected == 0 {
-		return db.Capability{}, NotFoundError{Msg: "capability not found"}
+		return db.Capability{}, internal.NewNotFoundError(req.Id, "capability")
 	}
 	capability, err := s.queries.GetCapability(ctx, req.Id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return db.Capability{}, NotFoundError{Msg: "capability not found"}
+			return db.Capability{}, internal.NewNotFoundError(req.Id, "capability")
 		}
 		return db.Capability{}, err
 	}

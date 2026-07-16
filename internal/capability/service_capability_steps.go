@@ -12,46 +12,53 @@ import (
 )
 
 func (s *postgresService) CreateCapabilityStep(ctx context.Context, req createCapabilityStepRequest) (db.CapabilityStep, error) {
-	errChan := make(chan string, 2)
+	errChan := make(chan error, 2)
 	wg := new(sync.WaitGroup)
 	wg.Go(func() {
 		_, err := s.GetCapability(ctx, req.CapabilityId)
 		if err != nil {
 			if _, ok := errors.AsType[internal.NotFoundError](err); ok || errors.Is(err, pgx.ErrNoRows) {
-				errChan <- "capability_not_found"
-			} else {
-				internal.LoggerFromContext(ctx).Error("error getting capability in create capability", slog.String("error", err.Error()))
-				errChan <- "capability_general"
+				errChan <- internal.NewNotFoundError(req.CapabilityId, "capability")
+				return
 			}
+			internal.LoggerFromContext(ctx).Error("error getting capability in create capability", slog.String("error", err.Error()))
+			errChan <- err
 		}
+
 	})
 
 	wg.Go(func() {
-		_, err := s.queries.GetFlowStep(ctx, req.FlowStepId)
+		logger := internal.LoggerFromContext(ctx)
+		flowStep, err := s.queries.GetFlowStep(ctx, req.FlowStepId)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				errChan <- "flow_step_not_found"
-			} else {
-				internal.LoggerFromContext(ctx).Error("error getting flow step in create capability", slog.String("error", err.Error()))
-				errChan <- "flow_step_general"
+				errChan <- internal.NewNotFoundError(req.FlowStepId, "flow_step")
+				return
 			}
+			logger.Error("error getting flow step in create capability", slog.String("error", err.Error()))
+			errChan <- err
+			return
+		}
+
+		flowIds, err := s.queries.GetFlowsFromSteps(ctx, req.CapabilityId)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		if len(flowIds) > 1 {
+			logger.Error("capability steps from database contain multiple flows", slog.Int("capability_id", req.CapabilityId))
+			errChan <- errors.New("multiple flow ids found in existing steps")
+			return
+		}
+		if len(flowIds) == 1 && flowIds[0] != flowStep.FlowID {
+			errChan <- internal.NewValidationErr("flow step doesn't belong to already bound flow")
 		}
 
 	})
 	wg.Wait()
 	close(errChan)
-	for t := range errChan {
-		switch t {
-		case "flow_step_not_found":
-			return db.CapabilityStep{}, internal.NewNotFoundError(req.FlowStepId, t)
-		case "flow_step_general":
-			return db.CapabilityStep{}, errors.New("error getting flow step")
-		case "capability_not_found":
-			return db.CapabilityStep{}, internal.NewNotFoundError(req.CapabilityId, t)
-		case "capability_general":
-			return db.CapabilityStep{}, errors.New("error getting capability")
-		}
-
+	for err := range errChan {
+		return db.CapabilityStep{}, err
 	}
 	capStep, err := s.queries.CreateCapabilityStep(ctx, req.ToParams())
 	if err != nil {

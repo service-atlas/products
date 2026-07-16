@@ -121,7 +121,7 @@ func TestHandler_UpdateCapability(t *testing.T) {
 			},
 			mockSetup: func(m *mockCapabilityService) {
 				m.updateCapabilityFunc = func(ctx context.Context, req updateCapabilityRequest) (db.Capability, error) {
-					return db.Capability{}, NotFoundError{Msg: "Capability not found"}
+					return db.Capability{}, internal.NewNotFoundError(1, "capability")
 				}
 			},
 			expectedStatus: http.StatusNotFound,

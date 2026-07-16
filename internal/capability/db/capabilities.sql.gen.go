@@ -251,13 +251,47 @@ func (q *Queries) GetFlow(ctx context.Context, id int) (string, error) {
 }
 
 const getFlowStep = `-- name: GetFlowStep :one
-SELECT id FROM flow_steps WHERE id = $1
+SELECT id, flow_id, current, next, created_at, updated_at FROM flow_steps WHERE id = $1
 `
 
-func (q *Queries) GetFlowStep(ctx context.Context, id int) (int, error) {
+func (q *Queries) GetFlowStep(ctx context.Context, id int) (FlowStep, error) {
 	row := q.db.QueryRow(ctx, getFlowStep, id)
-	err := row.Scan(&id)
-	return id, err
+	var i FlowStep
+	err := row.Scan(
+		&i.ID,
+		&i.FlowID,
+		&i.Current,
+		&i.Next,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getFlowsFromSteps = `-- name: GetFlowsFromSteps :many
+SELECT DISTINCT flow_id from flow_steps fs
+JOIN capability_steps cs on fs.id = cs.flow_step_id
+WHERE cs.capability_id = $1
+`
+
+func (q *Queries) GetFlowsFromSteps(ctx context.Context, capabilityID int) ([]int, error) {
+	rows, err := q.db.Query(ctx, getFlowsFromSteps, capabilityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int
+	for rows.Next() {
+		var flow_id int
+		if err := rows.Scan(&flow_id); err != nil {
+			return nil, err
+		}
+		items = append(items, flow_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getProduct = `-- name: GetProduct :one

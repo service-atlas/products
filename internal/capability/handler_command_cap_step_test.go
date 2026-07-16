@@ -78,6 +78,21 @@ func TestHandler_CreateCapabilityStep(t *testing.T) {
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "Validation Error",
+			requestBody: createCapabilityStepRequest{
+				FlowStepId:   1,
+				CapabilityId: 1,
+				Target:       "Target",
+				Protocol:     "Protocol",
+			},
+			mockSetup: func(m *mockCapabilityService) {
+				m.createCapabilityStepFunc = func(ctx context.Context, req createCapabilityStepRequest) (db.CapabilityStep, error) {
+					return db.CapabilityStep{}, internal.NewValidationErr("validation error")
+				}
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
 	}
 
 	for _, tt := range tests {

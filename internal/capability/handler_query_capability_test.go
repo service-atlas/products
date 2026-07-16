@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"products/internal"
 	"products/internal/capability/db"
 	"testing"
 
@@ -44,7 +45,7 @@ func TestHandler_GetCapability(t *testing.T) {
 			id:   "999",
 			mockSetup: func(m *mockCapabilityService) {
 				m.getCapabilityFunc = func(ctx context.Context, id int) (db.Capability, error) {
-					return db.Capability{}, NotFoundError{Msg: "Capability not found"}
+					return db.Capability{}, internal.NewNotFoundError(999, "capability")
 				}
 			},
 			expectedStatus: http.StatusNotFound,
@@ -163,7 +164,7 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 			id:   "999",
 			mockSetup: func(m *mockCapabilityService) {
 				m.getCapabilitiesByFlowFunc = func(ctx context.Context, id int) ([]db.GetCapabilitiesByFlowRow, error) {
-					return nil, NotFoundError{Msg: "Flow not found"}
+					return nil, internal.NewNotFoundError(999, "flow")
 				}
 			},
 			expectedStatus: http.StatusNotFound,
@@ -282,7 +283,7 @@ func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
 			id:   "999",
 			mockSetup: func(m *mockCapabilityService) {
 				m.getCapabilitiesByProductFunc = func(ctx context.Context, id int) ([]db.Capability, error) {
-					return nil, NotFoundError{Msg: "Product not found"}
+					return nil, internal.NewNotFoundError(999, "capability")
 				}
 			},
 			expectedStatus: http.StatusNotFound,

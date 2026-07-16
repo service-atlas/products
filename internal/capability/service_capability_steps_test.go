@@ -15,16 +15,17 @@ type mockQuerier struct {
 	db.Querier
 	GetCapabilityFunc        func(ctx context.Context, id int) (db.Capability, error)
 	CreateCapabilityStepFunc func(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error)
-	GetFlowStepFunc          func(ctx context.Context, id int) (int, error)
+	GetFlowStepFunc          func(ctx context.Context, id int) (db.FlowStep, error)
 	DeleteCapabilityStepFunc func(ctx context.Context, id int) (int64, error)
 	GetCapabilityStepsFunc   func(ctx context.Context, id int) ([]db.CapabilityStep, error)
+	GetFlowsFromStepsFunc    func(ctx context.Context, id int) ([]int, error)
 }
 
-func (m *mockQuerier) GetFlowStep(ctx context.Context, id int) (int, error) {
+func (m *mockQuerier) GetFlowStep(ctx context.Context, id int) (db.FlowStep, error) {
 	if m != nil && m.GetFlowStepFunc != nil {
 		return m.GetFlowStepFunc(ctx, id)
 	}
-	return 1, nil
+	return db.FlowStep{}, nil
 }
 
 func (m *mockQuerier) GetCapability(ctx context.Context, id int) (db.Capability, error) {
@@ -83,6 +84,13 @@ func (m *mockQuerier) UpdateCapability(ctx context.Context, arg db.UpdateCapabil
 	return 0, nil
 }
 
+func (m *mockQuerier) GetFlowsFromSteps(ctx context.Context, id int) ([]int, error) {
+	if m != nil && m.GetFlowsFromStepsFunc != nil {
+		return m.GetFlowsFromStepsFunc(ctx, id)
+	}
+	return nil, nil
+}
+
 func TestCreateCapabilityStep(t *testing.T) {
 	ctx := context.Background()
 
@@ -91,8 +99,11 @@ func TestCreateCapabilityStep(t *testing.T) {
 			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
 				return db.Capability{ID: 1}, nil
 			},
-			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
-				return 1, nil
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{ID: 1, FlowID: 10}, nil
+			},
+			GetFlowsFromStepsFunc: func(ctx context.Context, id int) ([]int, error) {
+				return []int{10}, nil
 			},
 			CreateCapabilityStepFunc: func(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error) {
 				return db.CapabilityStep{CapabilityID: 1, FlowStepID: 1}, nil
@@ -115,8 +126,8 @@ func TestCreateCapabilityStep(t *testing.T) {
 			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
 				return db.Capability{}, pgx.ErrNoRows
 			},
-			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
-				return 1, nil
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{ID: 1}, nil
 			},
 		}
 		service := &postgresService{queries: mock}
@@ -142,8 +153,8 @@ func TestCreateCapabilityStep(t *testing.T) {
 			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
 				return db.Capability{}, errors.New("some db error")
 			},
-			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
-				return 1, nil
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{ID: 1}, nil
 			},
 		}
 		service := &postgresService{queries: mock}
@@ -154,8 +165,8 @@ func TestCreateCapabilityStep(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		if err.Error() != "error getting capability" {
-			t.Errorf("expected 'error getting capability', got %v", err.Error())
+		if err.Error() != "some db error" {
+			t.Errorf("expected 'some db error', got %v", err.Error())
 		}
 	})
 
@@ -164,8 +175,8 @@ func TestCreateCapabilityStep(t *testing.T) {
 			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
 				return db.Capability{ID: 1}, nil
 			},
-			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
-				return 0, pgx.ErrNoRows
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{}, pgx.ErrNoRows
 			},
 		}
 		service := &postgresService{queries: mock}
@@ -191,8 +202,8 @@ func TestCreateCapabilityStep(t *testing.T) {
 			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
 				return db.Capability{ID: 1}, nil
 			},
-			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
-				return 0, errors.New("some db error")
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{}, errors.New("some db error")
 			},
 		}
 		service := &postgresService{queries: mock}
@@ -203,8 +214,86 @@ func TestCreateCapabilityStep(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		if err.Error() != "error getting flow step" {
-			t.Errorf("expected 'error getting flow step', got %v", err.Error())
+		if err.Error() != "some db error" {
+			t.Errorf("expected 'some db error', got %v", err.Error())
+		}
+	})
+
+	t.Run("GetFlowsFromStepsError", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{ID: 1}, nil
+			},
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{ID: 2, FlowID: 10}, nil
+			},
+			GetFlowsFromStepsFunc: func(ctx context.Context, id int) ([]int, error) {
+				return nil, errors.New("flows db error")
+			},
+		}
+		service := &postgresService{queries: mock}
+		req := createCapabilityStepRequest{CapabilityId: 1, FlowStepId: 2, Target: "Target", Protocol: "Protocol"}
+
+		_, err := service.CreateCapabilityStep(ctx, req)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if err.Error() != "flows db error" {
+			t.Errorf("expected 'flows db error', got %v", err.Error())
+		}
+	})
+
+	t.Run("MultipleFlowsError", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{ID: 1}, nil
+			},
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{ID: 2, FlowID: 10}, nil
+			},
+			GetFlowsFromStepsFunc: func(ctx context.Context, id int) ([]int, error) {
+				return []int{10, 11}, nil
+			},
+		}
+		service := &postgresService{queries: mock}
+		req := createCapabilityStepRequest{CapabilityId: 1, FlowStepId: 2, Target: "Target", Protocol: "Protocol"}
+
+		_, err := service.CreateCapabilityStep(ctx, req)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if err.Error() != "multiple flow ids found in existing steps" {
+			t.Errorf("expected 'multiple flow ids found in existing steps', got %v", err.Error())
+		}
+	})
+
+	t.Run("MismatchedFlowError", func(t *testing.T) {
+		mock := &mockQuerier{
+			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
+				return db.Capability{ID: 1}, nil
+			},
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{ID: 2, FlowID: 10}, nil
+			},
+			GetFlowsFromStepsFunc: func(ctx context.Context, id int) ([]int, error) {
+				return []int{11}, nil
+			},
+		}
+		service := &postgresService{queries: mock}
+		req := createCapabilityStepRequest{CapabilityId: 1, FlowStepId: 2, Target: "Target", Protocol: "Protocol"}
+
+		_, err := service.CreateCapabilityStep(ctx, req)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if _, ok := errors.AsType[internal.ValidationError](err); !ok {
+			t.Errorf("expected ValidationError, got %T", err)
+		}
+		if err.Error() != "flow step doesn't belong to already bound flow" {
+			t.Errorf("expected 'flow step doesn't belong to already bound flow', got %v", err.Error())
 		}
 	})
 
@@ -213,8 +302,8 @@ func TestCreateCapabilityStep(t *testing.T) {
 			GetCapabilityFunc: func(ctx context.Context, id int) (db.Capability, error) {
 				return db.Capability{ID: 1}, nil
 			},
-			GetFlowStepFunc: func(ctx context.Context, id int) (int, error) {
-				return 1, nil
+			GetFlowStepFunc: func(ctx context.Context, id int) (db.FlowStep, error) {
+				return db.FlowStep{ID: 1}, nil
 			},
 			CreateCapabilityStepFunc: func(ctx context.Context, arg db.CreateCapabilityStepParams) (db.CapabilityStep, error) {
 				return db.CapabilityStep{}, errors.New("db error")
