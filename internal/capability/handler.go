@@ -3,7 +3,6 @@ package capability
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"products/internal"
@@ -51,7 +50,7 @@ func (h *handler) GetCapability(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	capability, err := h.service.GetCapability(ctxWithTimeout, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
 			return
 		}
@@ -72,7 +71,7 @@ func (h *handler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http.Request) 
 	defer cancel()
 	capabilities, err := h.service.GetCapabilitiesByFlow(ctxWithTimeout, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Flow not found"}, http.StatusNotFound)
 			return
 		}
@@ -93,7 +92,7 @@ func (h *handler) GetCapabilitiesByProduct(w http.ResponseWriter, r *http.Reques
 	defer cancel()
 	capabilities, err := h.service.GetCapabilitiesByProduct(ctxWithTimeout, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
 			return
 		}
@@ -124,7 +123,7 @@ func (h *handler) UpdateCapability(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	capability, err := h.service.UpdateCapability(ctxWithTimeout, *req)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
 			return
 		}
@@ -145,7 +144,7 @@ func (h *handler) DeleteCapability(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	err := h.service.DeleteCapability(ctxWithTimout, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
 			return
 		}
@@ -171,10 +170,10 @@ func (h *handler) CreateCapabilityStep(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	capStep, err := h.service.CreateCapabilityStep(ctxWithTimeout, *req)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return
-		} else if errors.Is(err, internal.ValidationError{}) {
+		} else if internal.IsValidationError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusBadRequest)
 			return
 		}
@@ -195,7 +194,7 @@ func (h *handler) DeleteCapabilityStep(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	err := h.service.DeleteCapabilityStep(ctxWithTimeout, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability step not found", Instance: strconv.Itoa(id)}, http.StatusNotFound)
 			return
 		}
@@ -216,7 +215,7 @@ func (h *handler) GetCapabilitySteps(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	steps, err := h.service.GetCapabilitySteps(ctxWithTimeout, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Capability not found"}, http.StatusNotFound)
 			return
 		}

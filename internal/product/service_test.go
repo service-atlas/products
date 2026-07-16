@@ -135,7 +135,7 @@ func TestPostgresService_GetProductById(t *testing.T) {
 		}
 		s := postgresService{queries: m}
 		_, err := s.GetProductById(ctx, 1)
-		if !errors.Is(err, internal.NotFoundError{}) {
+		if !internal.IsNotFoundError(err) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})
@@ -183,7 +183,7 @@ func TestPostgresService_UpdateProduct(t *testing.T) {
 		}
 		s := postgresService{queries: m}
 		_, err := s.UpdateProduct(ctx, req, 1)
-		if !errors.Is(err, internal.NotFoundError{}) {
+		if !internal.IsNotFoundError(err) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})
@@ -230,7 +230,7 @@ func TestPostgresService_DeleteProduct(t *testing.T) {
 		}
 		s := postgresService{queries: m}
 		_, err := s.DeleteProduct(ctx, 1)
-		if !errors.Is(err, internal.NotFoundError{}) {
+		if !internal.IsNotFoundError(err) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})
