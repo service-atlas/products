@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/service-atlas/go-common/errorenvelope"
 )
 
 type mockPlatformService struct {
@@ -349,7 +350,7 @@ func TestDeletePlatform(t *testing.T) {
 
 			if tt.expectedBody != "" {
 				if rr.Code >= 400 {
-					var envelope internal.ErrorEnvelope
+					var envelope errorenvelope.ErrorEnvelope
 					if err := json.NewDecoder(rr.Body).Decode(&envelope); err != nil {
 						t.Fatalf("failed to decode error response: %v", err)
 					}

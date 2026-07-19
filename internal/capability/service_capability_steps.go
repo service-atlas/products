@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/service-atlas/go-common/httplog"
 )
 
 func (s *postgresService) CreateCapabilityStep(ctx context.Context, req createCapabilityStepRequest) (db.CapabilityStep, error) {
@@ -21,14 +22,14 @@ func (s *postgresService) CreateCapabilityStep(ctx context.Context, req createCa
 				errChan <- internal.NewNotFoundError(req.CapabilityId, "capability")
 				return
 			}
-			internal.LoggerFromContext(ctx).Error("error getting capability in create capability", slog.String("error", err.Error()))
+			httplog.LoggerFromContext(ctx).Error("error getting capability in create capability", slog.String("error", err.Error()))
 			errChan <- err
 		}
 
 	})
 
 	wg.Go(func() {
-		logger := internal.LoggerFromContext(ctx)
+		logger := httplog.LoggerFromContext(ctx)
 		flowStep, err := s.queries.GetFlowStep(ctx, req.FlowStepId)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {

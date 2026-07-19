@@ -9,6 +9,10 @@ import (
 	"products/internal"
 	"strings"
 	"time"
+
+	"github.com/service-atlas/go-common/errorenvelope"
+	"github.com/service-atlas/go-common/httphelpers"
+	"github.com/service-atlas/go-common/httplog"
 )
 
 func newHandler(service flowService) *handler {
@@ -24,17 +28,17 @@ type handler struct {
 func (h *handler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
 		return
 	}
 
 	req := &createFlowRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
 		return
 	}
 	if strings.TrimSpace(req.Name) == "" {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Flow name cannot be empty"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Flow name cannot be empty"}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("flow creation timed out"))
@@ -42,19 +46,19 @@ func (h *handler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 	flow, err := h.flowService.CreateFlow(contextWithTimeOut, *req, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create flow"}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to create flow"}, http.StatusInternalServerError)
 		return
 	}
-	internal.WriteJSONResponse(w, r, http.StatusCreated, flow)
+	httphelpers.WriteJSONResponse(w, r, http.StatusCreated, flow)
 }
 
 func (h *handler) GetFlowById(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("fetching flow timed out"))
@@ -62,19 +66,19 @@ func (h *handler) GetFlowById(w http.ResponseWriter, r *http.Request) {
 	flow, err := h.flowService.GetFlowById(contextWithTimeOut, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flow", Instance: r.URL.Path}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to fetch flow", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
-	internal.WriteJSONResponse(w, r, http.StatusOK, flow)
+	httphelpers.WriteJSONResponse(w, r, http.StatusOK, flow)
 }
 
 func (h *handler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid product ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid product ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("fetching flows timed out"))
@@ -82,30 +86,30 @@ func (h *handler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
 	flows, err := h.flowService.GetFlowsByProduct(contextWithTimeOut, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flows"}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to fetch flows"}, http.StatusInternalServerError)
 		return
 	}
-	internal.WriteJSONResponse(w, r, http.StatusOK, flows)
+	httphelpers.WriteJSONResponse(w, r, http.StatusOK, flows)
 }
 
 func (h *handler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 
 	req := &updateFlowRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid request body", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 
 	if req.Name == "" && req.Description == "" {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "No updatable fields provided", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "No updatable fields provided", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 
@@ -115,20 +119,20 @@ func (h *handler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
 	flow, err := h.flowService.UpdateFlow(contextWithTimeOut, *req, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to update flow", Instance: r.URL.Path}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to update flow", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
 
-	internal.WriteJSONResponse(w, r, http.StatusOK, flow)
+	httphelpers.WriteJSONResponse(w, r, http.StatusOK, flow)
 }
 
 func (h *handler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 
@@ -138,10 +142,10 @@ func (h *handler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
 	err := h.flowService.DeleteFlow(contextWithTimeOut, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete flow", Instance: r.URL.Path}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to delete flow", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
 
@@ -151,27 +155,27 @@ func (h *handler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
 func (h *handler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 	req := &createFlowStepRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid request body", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 	req.FlowId = id
 
 	if req.Current == "" || req.Next == "" {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Current and next UUIDs are required", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Current and next UUIDs are required", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 
 	if _, err := toPgUUID(req.Current); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid current UUID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid current UUID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 	if _, err := toPgUUID(req.Next); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid next UUID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid next UUID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 
@@ -180,34 +184,34 @@ func (h *handler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 	flowStep, err := h.flowService.CreateFlowStep(contextWithTimeOut, *req)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
 
 		if _, ok := errors.AsType[DependencyValidationError](err); ok {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusUnprocessableEntity)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusUnprocessableEntity)
 			return
 		}
 
 		if _, ok := errors.AsType[ConflictError](err); ok {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusConflict)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusConflict)
 			return
 		}
 
-		logger := internal.LoggerFromContext(r.Context())
+		logger := httplog.LoggerFromContext(r.Context())
 		logger.Error("Failed to create flow step",
 			slog.String("error", err.Error()),
 			slog.Int("flow_id", id))
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create flow step", Instance: r.URL.Path}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to create flow step", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
-	internal.WriteJSONResponse(w, r, http.StatusCreated, flowStep)
+	httphelpers.WriteJSONResponse(w, r, http.StatusCreated, flowStep)
 }
 
 func (h *handler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow step ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow step ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("deleting flow step timed out"))
@@ -215,14 +219,14 @@ func (h *handler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 	err := h.flowService.DeleteFlowStep(contextWithTimeOut, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
-		logger := internal.LoggerFromContext(r.Context())
+		logger := httplog.LoggerFromContext(r.Context())
 		logger.Error("Failed to delete flow step",
 			slog.String("error", err.Error()),
 			slog.Int("flow_step_id", id))
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to delete flow step", Instance: r.URL.Path}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to delete flow step", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -231,7 +235,7 @@ func (h *handler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 func (h *handler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("fetching flow steps timed out"))
@@ -239,19 +243,19 @@ func (h *handler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
 	flowSteps, err := h.flowService.GetFlowSteps(contextWithTimeOut, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flow steps", Instance: r.URL.Path}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to fetch flow steps", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
-	internal.WriteJSONResponse(w, r, http.StatusOK, flowSteps)
+	httphelpers.WriteJSONResponse(w, r, http.StatusOK, flowSteps)
 }
 
 func (h *handler) GetFlowPath(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeoutCause(r.Context(), 5*time.Second, errors.New("fetching flow path timed out"))
@@ -259,11 +263,11 @@ func (h *handler) GetFlowPath(w http.ResponseWriter, r *http.Request) {
 	flowPath, err := h.flowService.GetFlowPath(contextWithTimeOut, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch flow path", Instance: r.URL.Path}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to fetch flow path", Instance: r.URL.Path}, http.StatusInternalServerError)
 		return
 	}
-	internal.WriteJSONResponse(w, r, http.StatusOK, flowPath)
+	httphelpers.WriteJSONResponse(w, r, http.StatusOK, flowPath)
 }
