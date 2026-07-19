@@ -3,7 +3,6 @@ package platform
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"products/internal"
 	"products/internal/platform/db"
@@ -67,7 +66,7 @@ func (h *handler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	_, err := h.service.UpdatePlatform(contextWithTimeOut, req, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}
@@ -88,12 +87,11 @@ func (h *handler) DeletePlatform(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	_, err := h.service.DeletePlatform(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}
-		logger := internal.LoggerFromContext(r.Context())
-		logger.Error("Failed to delete platform", "error", err, "platform_id", id)
+		internal.LoggerFromContext(r.Context()).Error("Failed to delete platform", "error", err, "platform_id", id)
 		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Internal server error"}, http.StatusInternalServerError)
 		return
 	}
@@ -125,7 +123,7 @@ func (h *handler) GetPlatform(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	platform, err := h.service.GetPlatform(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}

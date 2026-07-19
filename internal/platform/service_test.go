@@ -95,7 +95,7 @@ func TestPostgresService_GetPlatform(t *testing.T) {
 		}
 		s := postgresService{db: m}
 		_, err := s.GetPlatform(ctx, 1)
-		if !errors.Is(err, internal.NotFoundError{}) {
+		if !internal.IsNotFoundError(err) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})
@@ -162,7 +162,7 @@ func TestPostgresService_UpdatePlatform(t *testing.T) {
 		}
 		s := postgresService{db: m}
 		_, err := s.UpdatePlatform(ctx, req, 1)
-		if !errors.Is(err, internal.NotFoundError{}) {
+		if !internal.IsNotFoundError(err) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})
@@ -175,7 +175,7 @@ func TestPostgresService_UpdatePlatform(t *testing.T) {
 		}
 		s := postgresService{db: m}
 		_, err := s.UpdatePlatform(ctx, req, 1)
-		if !errors.Is(err, internal.NotFoundError{}) {
+		if !internal.IsNotFoundError(err) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})
@@ -208,7 +208,7 @@ func TestPostgresService_DeletePlatform(t *testing.T) {
 		}
 		s := postgresService{db: m}
 		_, err := s.DeletePlatform(ctx, 1)
-		if !errors.Is(err, internal.NotFoundError{}) {
+		if !internal.IsNotFoundError(err) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})
@@ -221,7 +221,7 @@ func TestPostgresService_DeletePlatform(t *testing.T) {
 		}
 		s := postgresService{db: m}
 		_, err := s.DeletePlatform(ctx, 1)
-		if !errors.Is(err, internal.NotFoundError{}) {
+		if !internal.IsNotFoundError(err) {
 			t.Errorf("expected NotFoundError, got %v", err)
 		}
 	})

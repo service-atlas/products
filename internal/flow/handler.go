@@ -41,7 +41,7 @@ func (h *handler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	flow, err := h.flowService.CreateFlow(contextWithTimeOut, *req, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error()}, http.StatusNotFound)
 			return
 		}
@@ -61,7 +61,7 @@ func (h *handler) GetFlowById(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	flow, err := h.flowService.GetFlowById(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
@@ -81,7 +81,7 @@ func (h *handler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	flows, err := h.flowService.GetFlowsByProduct(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
@@ -114,7 +114,7 @@ func (h *handler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
 
 	flow, err := h.flowService.UpdateFlow(contextWithTimeOut, *req, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
@@ -137,7 +137,7 @@ func (h *handler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
 
 	err := h.flowService.DeleteFlow(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
@@ -179,7 +179,7 @@ func (h *handler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	flowStep, err := h.flowService.CreateFlowStep(contextWithTimeOut, *req)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
@@ -214,7 +214,7 @@ func (h *handler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	err := h.flowService.DeleteFlowStep(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
@@ -238,7 +238,7 @@ func (h *handler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	flowSteps, err := h.flowService.GetFlowSteps(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}
@@ -258,7 +258,7 @@ func (h *handler) GetFlowPath(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	flowPath, err := h.flowService.GetFlowPath(contextWithTimeOut, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: err.Error(), Instance: r.URL.Path}, http.StatusNotFound)
 			return
 		}

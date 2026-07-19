@@ -3,7 +3,6 @@ package product
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"products/internal"
 	"products/internal/product/db"
@@ -54,7 +53,7 @@ func (h *handler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 	if _, err := h.service.DeleteProduct(contextWithTimeOut, id); err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
 			return
 		}
@@ -87,7 +86,7 @@ func (h *handler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	if _, err := h.service.UpdateProduct(ctx, req, id); err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
 			return
 		}
@@ -133,7 +132,7 @@ func (h *handler) GetProductById(w http.ResponseWriter, r *http.Request) {
 
 	product, err := h.service.GetProductById(ctx, id)
 	if err != nil {
-		if errors.Is(err, internal.NotFoundError{}) {
+		if internal.IsNotFoundError(err) {
 			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Product not found"}, http.StatusNotFound)
 			return
 		}

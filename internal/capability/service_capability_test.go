@@ -151,7 +151,7 @@ func TestService_CreateCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, internal.NotFoundError{}) {
+				if !internal.IsNotFoundError(err) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -169,7 +169,7 @@ func TestService_CreateCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, internal.NotFoundError{}) {
+				if !internal.IsNotFoundError(err) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -269,7 +269,7 @@ func TestService_GetCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, internal.NotFoundError{}) {
+				if !internal.IsNotFoundError(err) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -366,7 +366,7 @@ func TestService_GetCapabilitiesByProduct(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, internal.NotFoundError{}) {
+				if !internal.IsNotFoundError(err) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -476,7 +476,7 @@ func TestService_GetCapabilitiesByFlow(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, internal.NotFoundError{}) {
+				if !internal.IsNotFoundError(err) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -579,7 +579,7 @@ func TestService_UpdateCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, internal.NotFoundError{}) {
+				if !internal.IsNotFoundError(err) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},
@@ -675,7 +675,7 @@ func TestService_DeleteCapability(t *testing.T) {
 				}
 			},
 			checkError: func(t *testing.T, err error) {
-				if !errors.Is(err, internal.NotFoundError{}) {
+				if !internal.IsNotFoundError(err) {
 					t.Errorf("expected NotFoundError, got %T", err)
 				}
 			},

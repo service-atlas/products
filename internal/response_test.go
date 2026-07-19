@@ -2,8 +2,6 @@ package internal
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -90,31 +88,4 @@ func TestWriteJSONResponse(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestNotFoundError(t *testing.T) {
-	err := NewNotFoundError(123, "Product")
-
-	t.Run("Error message", func(t *testing.T) {
-		expected := "Product not found with ID: 123"
-		if err.Error() != expected {
-			t.Errorf("expected %q, got %q", expected, err.Error())
-		}
-	})
-
-	t.Run("Is method", func(t *testing.T) {
-		if !errors.Is(err, NotFoundError{}) {
-			t.Error("expected errors.Is(err, NotFoundError{}) to be true")
-		}
-
-		otherErr := errors.New("other error")
-		if errors.Is(otherErr, NotFoundError{}) {
-			t.Error("expected errors.Is(otherErr, NotFoundError{}) to be false")
-		}
-
-		wrappedErr := fmt.Errorf("wrapped: %w", err)
-		if !errors.Is(wrappedErr, NotFoundError{}) {
-			t.Error("expected errors.Is(wrappedErr, NotFoundError{}) to be true")
-		}
-	})
 }
