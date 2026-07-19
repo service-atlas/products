@@ -1,12 +1,13 @@
 module products
 
-go 1.26
+go 1.26.1
 
 require (
 	github.com/go-chi/chi/v5 v5.3.0
 	github.com/go-chi/cors v1.2.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
+	github.com/service-atlas/go-common v0.0.0-20260719230042-ea28e026d3f1
 )
 
 require (
