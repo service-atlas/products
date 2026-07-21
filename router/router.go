@@ -3,7 +3,6 @@ package router
 import (
 	"log/slog"
 	"net/http"
-	"products/internal"
 	"products/internal/capability"
 	"products/internal/db"
 	"products/internal/flow"
@@ -14,20 +13,25 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/service-atlas/go-common/corsconfig"
+	"github.com/service-atlas/go-common/httphelpers"
+	"github.com/service-atlas/go-common/httplog"
 )
 
 func InitializeRouter(dbConn db.DBTX) http.Handler {
 	slog.Debug("Setting up router")
 	router := chi.NewRouter()
+	// Set the path value look function to chi.UrlParam in case http ever fails
+	httphelpers.SetPathValueLookup(chi.URLParam)
 
-	router.Use(internal.RequestIDLogger)
-	router.Use(internal.WebRequestLogger)
+	router.Use(httplog.WebRequestLogger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Compress(5))
+	corsCfg := corsconfig.GetCORSConfig()
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://127.0.0.1:3000"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowedOrigins:   corsCfg.AllowedOrigins,
+		AllowedMethods:   corsCfg.AllowedMethods,
+		AllowedHeaders:   corsCfg.AllowedHeaders,
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))

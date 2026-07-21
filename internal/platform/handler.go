@@ -7,6 +7,10 @@ import (
 	"products/internal"
 	"products/internal/platform/db"
 	"time"
+
+	"github.com/service-atlas/go-common/errorenvelope"
+	"github.com/service-atlas/go-common/httphelpers"
+	"github.com/service-atlas/go-common/httplog"
 )
 
 func newHandler(svc platformService) *handler {
@@ -22,44 +26,44 @@ type handler struct {
 func (h *handler) CreatePlatform(w http.ResponseWriter, r *http.Request) {
 	var req createPlatformRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
 		return
 	}
 
 	if req.Name == "" {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Name is required"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Name is required"}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 	platform, err := h.service.CreatePlatform(contextWithTimeOut, req)
 	if err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to create platform"}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to create platform"}, http.StatusInternalServerError)
 		return
 	}
 
-	internal.WriteJSONResponse(w, r, http.StatusCreated, platform)
+	httphelpers.WriteJSONResponse(w, r, http.StatusCreated, platform)
 }
 
 func (h *handler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
 	var req updatePlatformRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
 		return
 	}
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
 		return
 	}
 
 	if req.Name == "" {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Name is required"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Name is required"}, http.StatusBadRequest)
 		return
 	}
 
 	if req.ID != id {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform ID does not match path"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Platform ID does not match path"}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -67,10 +71,10 @@ func (h *handler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
 	_, err := h.service.UpdatePlatform(contextWithTimeOut, req, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to update platform"}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to update platform"}, http.StatusInternalServerError)
 		return
 	}
 
@@ -80,7 +84,7 @@ func (h *handler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
 func (h *handler) DeletePlatform(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -88,11 +92,11 @@ func (h *handler) DeletePlatform(w http.ResponseWriter, r *http.Request) {
 	_, err := h.service.DeletePlatform(contextWithTimeOut, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}
-		internal.LoggerFromContext(r.Context()).Error("Failed to delete platform", "error", err, "platform_id", id)
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Internal server error"}, http.StatusInternalServerError)
+		httplog.LoggerFromContext(r.Context()).Error("Failed to delete platform", "error", err, "platform_id", id)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Internal server error"}, http.StatusInternalServerError)
 		return
 	}
 
@@ -104,19 +108,19 @@ func (h *handler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	platforms, err := h.service.GetPlatforms(contextWithTimeOut)
 	if err != nil {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch platforms"}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to fetch platforms"}, http.StatusInternalServerError)
 		return
 	}
 	if platforms == nil {
 		platforms = []db.Platform{}
 	}
-	internal.WriteJSONResponse(w, r, http.StatusOK, platforms)
+	httphelpers.WriteJSONResponse(w, r, http.StatusOK, platforms)
 }
 
 func (h *handler) GetPlatform(w http.ResponseWriter, r *http.Request) {
 	id, ok := internal.GetIntFromRequestPath("id", r)
 	if !ok {
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
 		return
 	}
 	contextWithTimeOut, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -124,12 +128,12 @@ func (h *handler) GetPlatform(w http.ResponseWriter, r *http.Request) {
 	platform, err := h.service.GetPlatform(contextWithTimeOut, id)
 	if err != nil {
 		if internal.IsNotFoundError(err) {
-			internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
+			errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Platform not found"}, http.StatusNotFound)
 			return
 		}
-		internal.HandleHttpError(w, internal.ErrorEnvelope{Detail: "Failed to fetch platform"}, http.StatusInternalServerError)
+		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Failed to fetch platform"}, http.StatusInternalServerError)
 		return
 	}
 
-	internal.WriteJSONResponse(w, r, http.StatusOK, platform)
+	httphelpers.WriteJSONResponse(w, r, http.StatusOK, platform)
 }
