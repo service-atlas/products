@@ -1,4 +1,5 @@
 # Service Atlas Products
+![Coverage](https://img.shields.io/badge/Coverage-2-red)
 
 > [!WARNING]
 > **Status:** Draft — Open for Discussion | **Version:** 0.2.0 | **Date:** 2026-03-30
