@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -13,10 +14,11 @@ import (
 	"syscall"
 	"time"
 
-	internalConfig "products/internal/config"
-	"products/router"
+	internalConfig "products/internal/config" //nolint:depguard
+	"products/router"                         //nolint:depguard
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool" //nolint:depguard
+	"github.com/service-atlas/secrets-provider"
 )
 
 func main() {
@@ -82,25 +84,28 @@ func getDbConn() (*pgxpool.Pool, error) {
 }
 
 func getConnStr() (string, error) {
-	user := internalConfig.GetConfigValue("DB_USERNAME")
-	pass := internalConfig.GetConfigValue("DB_PASSWORD")
-	dbHostPort := internalConfig.GetConfigValue("DB_URL")
 
-	if user == "" || pass == "" || dbHostPort == "" {
-		slog.Error("Database environment variables DB_USERNAME, DB_PASSWORD, or DB_URL are not set")
-		return "", errors.New("database environment variables not set")
+	sProvider, err := secretsprovider.NewProvider()
+	if err != nil {
+		return "", fmt.Errorf("failed to get secret provider: %w", err)
 	}
 
-	if !strings.Contains(dbHostPort, "://") {
-		dbHostPort = "postgres://" + dbHostPort
+	ctx := context.Background()
+	dbInfo, err := sProvider.GetDatabaseInfo(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get database info from secret provider: %w", err)
 	}
-	u, err := url.Parse(dbHostPort)
+
+	if !strings.Contains(dbInfo.URL, "://") {
+		dbInfo.URL = "postgres://" + dbInfo.URL
+	}
+	u, err := url.Parse(dbInfo.URL)
 	if err != nil {
 		slog.Error("Failed to parse DB_URL", "error", err)
 		return "", err
 	}
 	u.Scheme = "postgres"
-	u.User = url.UserPassword(user, pass)
+	u.User = url.UserPassword(dbInfo.Username, dbInfo.Password)
 
 	return u.String(), nil
 }
