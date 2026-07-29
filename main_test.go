@@ -57,6 +57,20 @@ func TestGetConnStr(t *testing.T) {
 			err:         errors.New("provider error"),
 			expectedErr: true,
 		},
+		{
+			name:        "Error from empty url",
+			expectedErr: true,
+			dbInfo: &secretsprovider.DatabaseInfo{
+				URL: "",
+			},
+		},
+		{
+			name:        "Error from just spaces in url",
+			expectedErr: true,
+			dbInfo: &secretsprovider.DatabaseInfo{
+				URL: "   ",
+			},
+		},
 	}
 
 	for _, tt := range tests {

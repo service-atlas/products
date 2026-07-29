@@ -116,6 +116,9 @@ func getConnStr(ctx context.Context, sProvider secretsprovider.Provider) (string
 		return "", fmt.Errorf("failed to get database info from secret provider: %w", err)
 	}
 
+	if strings.TrimSpace(dbInfo.URL) == "" {
+		return "", errors.New("url cannot be empty")
+	}
 	if !strings.Contains(dbInfo.URL, "://") {
 		dbInfo.URL = "postgres://" + dbInfo.URL
 	}
