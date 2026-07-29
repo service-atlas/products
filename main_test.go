@@ -1,74 +1,72 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"testing"
+
+	"github.com/service-atlas/secrets-provider" //nolint:depguard
 )
+
+type mockProvider struct {
+	dbInfo *secretsprovider.DatabaseInfo
+	err    error
+}
+
+func (m *mockProvider) GetDatabaseInfo(_ context.Context) (secretsprovider.DatabaseInfo, error) {
+	if m.err != nil {
+		return secretsprovider.DatabaseInfo{}, m.err
+	}
+	return *m.dbInfo, nil
+}
+
+func (m *mockProvider) GetSecret(_ context.Context, _ string) (string, error) {
+	return "", nil
+}
 
 func TestGetConnStr(t *testing.T) {
 	tests := []struct {
 		name        string
-		env         map[string]string
+		dbInfo      *secretsprovider.DatabaseInfo
+		err         error
 		expected    string
 		expectedErr bool
 	}{
 		{
 			name: "All variables set without scheme",
-			env: map[string]string{
-				"DB_USERNAME": "user",
-				"DB_PASSWORD": "pass",
-				"DB_URL":      "localhost:5432/dbname",
+			dbInfo: &secretsprovider.DatabaseInfo{
+				Username: "user",
+				Password: "pass",
+				URL:      "localhost:5432/dbname",
 			},
 			expected:    "postgres://user:pass@localhost:5432/dbname",
 			expectedErr: false,
 		},
 		{
 			name: "All variables set with scheme",
-			env: map[string]string{
-				"DB_USERNAME": "user",
-				"DB_PASSWORD": "pass",
-				"DB_URL":      "postgres://localhost:5432/dbname",
+			dbInfo: &secretsprovider.DatabaseInfo{
+				Username: "user",
+				Password: "pass",
+				URL:      "postgres://localhost:5432/dbname",
 			},
 			expected:    "postgres://user:pass@localhost:5432/dbname",
 			expectedErr: false,
 		},
 		{
-			name: "Missing DB_USERNAME",
-			env: map[string]string{
-				"DB_PASSWORD": "pass",
-				"DB_URL":      "localhost:5432/dbname",
-			},
-			expectedErr: true,
-		},
-		{
-			name: "Missing DB_PASSWORD",
-			env: map[string]string{
-				"DB_USERNAME": "user",
-				"DB_URL":      "localhost:5432/dbname",
-			},
-			expectedErr: true,
-		},
-		{
-			name: "Missing DB_URL",
-			env: map[string]string{
-				"DB_USERNAME": "user",
-				"DB_PASSWORD": "pass",
-			},
+			name:        "Error from provider",
+			err:         errors.New("provider error"),
 			expectedErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Clear env first to ensure isolation
-			t.Setenv("DB_USERNAME", "")
-			t.Setenv("DB_PASSWORD", "")
-			t.Setenv("DB_URL", "")
-
-			for k, v := range tt.env {
-				t.Setenv(k, v)
+			mProvider := &mockProvider{
+				dbInfo: tt.dbInfo,
+				err:    tt.err,
 			}
 
-			got, err := getConnStr()
+			got, err := getConnStr(t.Context(), mProvider)
 			if (err != nil) != tt.expectedErr {
 				t.Errorf("getConnStr() error = %v, expectedErr %v", err, tt.expectedErr)
 				return

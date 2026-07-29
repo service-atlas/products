@@ -17,6 +17,7 @@ import (
 	internalConfig "products/internal/config" //nolint:depguard
 	"products/router"                         //nolint:depguard
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool" //nolint:depguard
 	"github.com/service-atlas/secrets-provider"
 )
@@ -56,7 +57,15 @@ func main() {
 }
 
 func getDbConn() (*pgxpool.Pool, error) {
-	connStr, err := getConnStr()
+	sProvider, err := secretsprovider.NewProvider()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get secret provider: %w", err)
+	}
+	ctx := context.Background()
+
+	conStrCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	connStr, err := getConnStr(conStrCtx, sProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -67,14 +76,32 @@ func getDbConn() (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	config.BeforeConnect = func(ctx context.Context, cfg *pgx.ConnConfig) error {
+		newConnStr, err := getConnStr(ctx, sProvider)
+		if err != nil {
+			slog.Error("Failed to get updated connection string", "error", err)
+			return err
+		}
+		updatedCfg, err := pgx.ParseConfig(newConnStr)
+		if err != nil {
+			slog.Error("Failed to parse updated connection string", "error", err)
+			return err
+		}
+		cfg.User = updatedCfg.User
+		cfg.Password = updatedCfg.Password
+		return nil
+	}
+
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		slog.Error("Failed to connect to database", "error", err)
 		return nil, err
 	}
 
 	// Verify connection
-	if err := pool.Ping(context.Background()); err != nil {
+	pingCtx, pCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer pCancel()
+	if err := pool.Ping(pingCtx); err != nil {
 		slog.Error("Failed to ping database", "error", err)
 		return nil, err
 	}
@@ -83,14 +110,7 @@ func getDbConn() (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func getConnStr() (string, error) {
-
-	sProvider, err := secretsprovider.NewProvider()
-	if err != nil {
-		return "", fmt.Errorf("failed to get secret provider: %w", err)
-	}
-
-	ctx := context.Background()
+func getConnStr(ctx context.Context, sProvider secretsprovider.Provider) (string, error) {
 	dbInfo, err := sProvider.GetDatabaseInfo(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get database info from secret provider: %w", err)
