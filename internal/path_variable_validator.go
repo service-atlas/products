@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"uuid"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 type PathValidator func(string, *http.Request) (string, bool)
@@ -25,7 +25,7 @@ func GetGuidFromRequestPath(varName string, req *http.Request) (string, bool) {
 }
 
 func IsValidGuid(guidVal string) (string, bool) {
-	err := uuid.Validate(guidVal)
+	_, err := uuid.Parse(guidVal)
 	return guidVal, err == nil
 }
 

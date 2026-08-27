@@ -3,8 +3,8 @@ package flow
 import (
 	"products/internal/flow/db"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
