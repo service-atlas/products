@@ -11,8 +11,8 @@ import (
 	"products/internal/flow/db"
 	"strings"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -470,7 +470,7 @@ func TestService_CreateFlowStep(t *testing.T) {
 					return db.Flow{ID: 1}, nil
 				}
 			},
-			expectedError: "invalid UUID length: 7",
+			expectedError: "invalid uuid",
 		},
 		{
 			name: "Database Error on Create",

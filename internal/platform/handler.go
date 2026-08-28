@@ -51,7 +51,7 @@ func (h *handler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid request body"}, http.StatusBadRequest)
 		return
 	}
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
 		return
@@ -82,7 +82,7 @@ func (h *handler) UpdatePlatform(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) DeletePlatform(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
 		return
@@ -118,7 +118,7 @@ func (h *handler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetPlatform(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid platform ID"}, http.StatusBadRequest)
 		return
