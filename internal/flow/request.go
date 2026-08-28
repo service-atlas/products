@@ -2,6 +2,7 @@ package flow
 
 import (
 	"products/internal/flow/db"
+	"strings"
 	"time"
 	"uuid"
 
@@ -89,6 +90,12 @@ func (r *createFlowStepRequest) ToParams() (db.CreateFlowStepParams, error) {
 }
 
 func toPgUUID(val string) (pgtype.UUID, error) {
+	const uuidURNPrefix = "urn:uuid:"
+
+	if len(val) >= len(uuidURNPrefix) && strings.EqualFold(val[:len(uuidURNPrefix)], uuidURNPrefix) {
+		val = val[len(uuidURNPrefix):]
+	}
+
 	uuidVal, err := uuid.Parse(val)
 	if err != nil {
 		return pgtype.UUID{Valid: false}, err

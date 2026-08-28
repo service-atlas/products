@@ -26,7 +26,7 @@ type handler struct {
 }
 
 func (h *handler) CreateFlow(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid product ID"}, http.StatusBadRequest)
 		return
@@ -56,7 +56,7 @@ func (h *handler) CreateFlow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetFlowById(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
@@ -76,7 +76,7 @@ func (h *handler) GetFlowById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid product ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
@@ -96,7 +96,7 @@ func (h *handler) GetFlowsByProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
@@ -130,7 +130,7 @@ func (h *handler) UpdateFlow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
@@ -153,7 +153,7 @@ func (h *handler) DeleteFlow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
@@ -209,7 +209,7 @@ func (h *handler) CreateFlowStep(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow step ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
@@ -233,7 +233,7 @@ func (h *handler) DeleteFlowStep(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return
@@ -253,7 +253,7 @@ func (h *handler) GetFlowSteps(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetFlowPath(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid flow ID", Instance: r.URL.Path}, http.StatusBadRequest)
 		return

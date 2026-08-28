@@ -107,6 +107,7 @@ func TestHandler_GetCapability(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/capabilities/"+tt.id, nil)
+			req.SetPathValue("id", tt.id)
 			if tt.id != "" {
 				rctx := chi.NewRouteContext()
 				rctx.URLParams.Add("id", tt.id)
@@ -226,6 +227,7 @@ func TestHandler_GetCapabilitiesByFlow(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/flows/"+tt.id+"/capabilities", nil)
+			req.SetPathValue("id", tt.id)
 			if tt.id != "" {
 				rctx := chi.NewRouteContext()
 				rctx.URLParams.Add("id", tt.id)
@@ -345,6 +347,7 @@ func TestHandler_GetCapabilitiesByProduct(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/products/"+tt.id+"/capabilities", nil)
+			req.SetPathValue("id", tt.id)
 			if tt.id != "" {
 				rctx := chi.NewRouteContext()
 				rctx.URLParams.Add("id", tt.id)

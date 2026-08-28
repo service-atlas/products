@@ -45,7 +45,7 @@ func (h *handler) CreateCapability(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetCapability(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
 		return
@@ -66,7 +66,7 @@ func (h *handler) GetCapability(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
 		return
@@ -87,7 +87,7 @@ func (h *handler) GetCapabilitiesByFlow(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *handler) GetCapabilitiesByProduct(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
 		return
@@ -108,7 +108,7 @@ func (h *handler) GetCapabilitiesByProduct(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *handler) UpdateCapability(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
 		return
@@ -139,7 +139,7 @@ func (h *handler) UpdateCapability(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) DeleteCapability(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		http.Error(w, "Invalid capability ID", http.StatusBadRequest)
 		return
@@ -189,7 +189,7 @@ func (h *handler) CreateCapabilityStep(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) DeleteCapabilityStep(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "id is invalid"}, http.StatusBadRequest)
 		return
@@ -210,7 +210,7 @@ func (h *handler) DeleteCapabilityStep(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetCapabilitySteps(w http.ResponseWriter, r *http.Request) {
-	id, ok := internal.GetIntFromRequestPath("id", r)
+	id, ok := httphelpers.GetIntFromRequestPath("id", r)
 	if !ok {
 		errorenvelope.HandleHttpError(w, errorenvelope.ErrorEnvelope{Detail: "Invalid capability ID"}, http.StatusBadRequest)
 		return

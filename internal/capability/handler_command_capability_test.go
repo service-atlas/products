@@ -175,6 +175,7 @@ func TestHandler_UpdateCapability(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPut, "/capabilities/"+tt.id, bytes.NewBuffer(body))
+			req.SetPathValue("id", tt.id)
 			if tt.id != "" {
 				rctx := chi.NewRouteContext()
 				rctx.URLParams.Add("id", tt.id)
@@ -245,6 +246,7 @@ func TestHandler_DeleteCapability(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodDelete, "/capabilities/"+tt.id, nil)
+			req.SetPathValue("id", tt.id)
 			if tt.id != "" {
 				rctx := chi.NewRouteContext()
 				rctx.URLParams.Add("id", tt.id)
