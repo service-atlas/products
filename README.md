@@ -1,6 +1,6 @@
 # Service Atlas Products
 
-![Coverage](https://img.shields.io/badge/Coverage-74.4%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-74.5%25-brightgreen)
 
 Service Atlas Products is the business semantic layer of the Service Atlas ecosystem. While the core Service Atlas backend models technical service dependencies between infrastructure nodes, this service organizes those dependencies into the language of products, teams, and business value.
 
